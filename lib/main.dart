@@ -4,8 +4,9 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Pass your access token to MapboxOptions so you can load a map
-  String ACCESS_TOKEN = const String.fromEnvironment("TOKEN");
+  const ACCESS_TOKEN = String.fromEnvironment("token");
+
+
   MapboxOptions.setAccessToken(ACCESS_TOKEN);
 
   // Define options for your camera
