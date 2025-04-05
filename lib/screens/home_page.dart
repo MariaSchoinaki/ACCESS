@@ -83,14 +83,73 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: mapbox.MapWidget(
-        key: const ValueKey("mapWidget"),
-        cameraOptions: initialCameraOptions,
-        styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
-        onMapCreated: (controller) {
-          mapboxMap = controller;
-          _getCurrentLocation();
-        },
+      resizeToAvoidBottomInset: false,
+      body: Column(
+        children: [
+          // Search bar
+          Container(
+            color: Color(0xFFF5F5F5),
+            padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Αναζήτηση...',
+                  prefixIcon: Icon(Icons.search),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(12),
+                ),
+                onSubmitted: (value) {
+                  // TODO: search automation with mapbox geolocation api
+                },
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: mapbox.MapWidget(
+              key: const ValueKey("mapWidget"),
+              cameraOptions: initialCameraOptions,
+              styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+              onMapCreated: (controller) {
+                mapboxMap = controller;
+                _getCurrentLocation();
+              },
+            ),
+          ),
+
+          // Bottom Tab
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "bottom tab",
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
