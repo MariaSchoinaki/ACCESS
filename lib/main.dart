@@ -19,5 +19,6 @@ void main() {
   // Run your application, passing your CameraOptions to the MapWidget
   runApp(MaterialApp(home: MapWidget(
     cameraOptions: camera,
+      styleUri: MapboxStyles.SATELLITE_STREETS
   )));
 }
