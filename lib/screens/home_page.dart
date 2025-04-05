@@ -123,30 +123,49 @@ class _HomePageState extends State<HomePage> {
           ),
 
           // Bottom Tab
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(2),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Home
+                  GestureDetector(
+                    onTap: () {
+                      // TODO:
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.home, color: Colors.black),
+                        SizedBox(height: 4),
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  "bottom tab",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
+
+                  // My Account
+                  GestureDetector(
+                    onTap: () {
+                      // TODO:
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.person, color: Colors.black),
+                        SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
