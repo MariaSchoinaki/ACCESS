@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 void main() {
-  runApp(const MyApp());
-}
+  WidgetsFlutterBinding.ensureInitialized();
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // Pass your access token to MapboxOptions so you can load a map
+  String ACCESS_TOKEN = const String.fromEnvironment("TOKEN");
+  MapboxOptions.setAccessToken(ACCESS_TOKEN);
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ACCESS App',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(), // Αρχική οθόνη
-    );
-  }
+  // Define options for your camera
+  CameraOptions camera = CameraOptions(
+      center: Point(coordinates: Position(-98.0, 39.5)),
+      zoom: 2,
+      bearing: 0,
+      pitch: 0);
+
+  // Run your application, passing your CameraOptions to the MapWidget
+  runApp(MaterialApp(home: MapWidget(
+    cameraOptions: camera,
+  )));
 }
