@@ -84,45 +84,91 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: Column(
+      body: Stack(
         children: [
-          // Search bar
-          Container(
-            color: Color(0xFFF5F5F5),
-            padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Αναζήτηση...',
-                  prefixIcon: Icon(Icons.search),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(12),
+          Column(
+            children: [
+              // Search bar
+              Container(
+                color: const Color(0xFFF5F5F5),
+                padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                  ),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Αναζήτηση...',
+                      prefixIcon: Icon(Icons.search),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(12),
+                    ),
+                    onSubmitted: (value) {
+                      // TODO: search
+                    },
+                  ),
                 ),
-                onSubmitted: (value) {
-                  // TODO: search automation with mapbox geolocation api
-                },
               ),
+
+              Expanded(
+                child: mapbox.MapWidget(
+                  key: const ValueKey("mapWidget"),
+                  cameraOptions: initialCameraOptions,
+                  styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+                  onMapCreated: (controller) {
+                    mapboxMap = controller;
+                    _getCurrentLocation();
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          // ZOOM BUTTONS
+          Positioned(
+            right: 16,
+            bottom: 100,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  heroTag: "location",
+                  mini: true,
+                  onPressed: _getCurrentLocation,
+                  child: const Icon(Icons.my_location),
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton(
+                  heroTag: "zoomIn",
+                  mini: true,
+                  child: const Icon(Icons.add),
+                  onPressed: () async {
+                    final currentZoom = await mapboxMap?.getCameraState();
+                    mapboxMap?.flyTo(
+                      mapbox.CameraOptions(zoom: (currentZoom?.zoom ?? 14.0) + 1),
+                      mapbox.MapAnimationOptions(duration: 500),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton(
+                  heroTag: "zoomOut",
+                  mini: true,
+                  child: const Icon(Icons.remove),
+                  onPressed: () async {
+                    final currentZoom = await mapboxMap?.getCameraState();
+                    mapboxMap?.flyTo(
+                      mapbox.CameraOptions(zoom: (currentZoom?.zoom ?? 14.0) - 1),
+                      mapbox.MapAnimationOptions(duration: 500),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
 
-          Expanded(
-            child: mapbox.MapWidget(
-              key: const ValueKey("mapWidget"),
-              cameraOptions: initialCameraOptions,
-              styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
-              onMapCreated: (controller) {
-                mapboxMap = controller;
-                _getCurrentLocation();
-              },
-            ),
-          ),
-
-          // Bottom Tab
+          // Κάτω Μπάρα Πλοήγησης
           Positioned(
             bottom: 0,
             left: 0,
@@ -137,10 +183,9 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Home
                   GestureDetector(
                     onTap: () {
-                      // TODO:
+                      // TODO
                     },
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -150,11 +195,9 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-
-                  // My Account
                   GestureDetector(
                     onTap: () {
-                      // TODO:
+                      // TODO
                     },
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
