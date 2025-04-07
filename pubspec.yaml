@@ -13,6 +13,7 @@ dependencies:
 
   # Maps & Geolocation
   mapbox_maps_flutter: ^2.7.0
+  flutter_polyline_points: ^2.1.0
   geolocator: ^13.0.4
   permission_handler: ^11.4.0
 
