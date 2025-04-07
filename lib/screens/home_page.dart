@@ -4,6 +4,11 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/map_bloc/map_event.dart';
 import '../blocs/map_bloc/map_state.dart';
+import '../blocs/search_bloc/search_bloc.dart';
+import '../blocs/search_bloc/search_event.dart';
+import '../blocs/search_bloc/search_state.dart';
+import '../services/search_service.dart';
+import 'dart:developer';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -17,9 +22,15 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => MapBloc()..add(RequestLocationPermission()),
+    final TextEditingController _searchController = TextEditingController();
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
+        BlocProvider(create: (_) => SearchBloc(SearchService())),
+      ],
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: BlocBuilder<MapBloc, MapState>(
           builder: (context, state) {
             return Stack(
@@ -35,13 +46,50 @@ class HomePage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
                         ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Αναζήτηση...',
-                            prefixIcon: Icon(Icons.search),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.all(12),
-                          ),
+                        child: BlocBuilder<SearchBloc, SearchState>(
+                          builder: (context, state) {
+                            return Column(
+                              children: [
+                                TextField(
+                                  controller: _searchController,
+                                  onChanged: (value) {
+                                    context.read<SearchBloc>().add(SearchQueryChanged(value));
+                                  },
+                                  decoration: const InputDecoration(
+                                    hintText: 'Αναζήτηση...',
+                                    prefixIcon: Icon(Icons.search),
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.all(12),
+                                  ),
+                                ),
+                                if (state is SearchLoading)
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                if (state is SearchLoaded)
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    itemCount: state.results.length,
+                                    itemBuilder: (context, index) {
+                                      final result = state.results[index];
+                                      return ListTile(
+                                        title: Text(result.name),
+                                        onTap: () {
+                                          _searchController.text = result.name;
+                                          FocusScope.of(context).unfocus();
+                                          context.read<SearchBloc>().add(SearchQueryChanged(""));
+                                          context.read<MapBloc>().add(FlyTo(result.latitude, result.longitude));
+                                        },
+                                      );
+                                    },
+                                  ),
+                                if (state is SearchError)
+                                  Text('Error: ${state.message}'),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
