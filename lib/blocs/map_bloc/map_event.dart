@@ -14,3 +14,10 @@ class InitializeMap extends MapEvent {
   final mapbox.MapboxMap mapController;
   InitializeMap(this.mapController);
 }
+
+class FlyTo extends MapEvent {
+  final double latitude;
+  final double longitude;
+
+  FlyTo(this.latitude, this.longitude);
+}

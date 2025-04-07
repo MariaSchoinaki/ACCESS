@@ -78,5 +78,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       );
       emit(state.copyWith(zoomLevel: newZoom));
     });
+    on<FlyTo>((event, emit) async {
+      final point = mapbox.Point(
+        coordinates: mapbox.Position(event.longitude, event.latitude),
+      );
+
+      state.mapController?.flyTo(
+        mapbox.CameraOptions(center: point, zoom: 16.0),
+        mapbox.MapAnimationOptions(duration: 1000),
+      );
+    });
   }
 }
