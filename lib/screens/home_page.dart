@@ -52,7 +52,7 @@ class HomePage extends StatelessWidget {
                               children: [
                                 TextField(
                                   controller: _searchController,
-                                  onChanged: (value) {
+                                  onSubmitted: (value) { // to be changed to onChanged
                                     context.read<SearchBloc>().add(SearchQueryChanged(value));
                                   },
                                   decoration: const InputDecoration(
