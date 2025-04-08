@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String location = '';
   final TextEditingController _searchController = TextEditingController();
+  mapbox.MapboxMap? mapboxMap;
 
   final mapbox.CameraOptions initialCameraOptions = mapbox.CameraOptions(
     center: mapbox.Point(coordinates: mapbox.Position(23.7325, 37.9908)),
@@ -128,6 +129,17 @@ class _HomePageState extends State<HomePage> {
                         onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
                         onMapCreated: (controller) {
                           context.read<MapBloc>().add(InitializeMap(controller));
+                          setState(() {
+                            mapboxMap = controller;
+                            mapboxMap?.location.updateSettings(
+                              mapbox.LocationComponentSettings(
+                                  enabled: true,
+                                  pulsingEnabled: false,
+                                  showAccuracyRing: true,
+                                  puckBearingEnabled: true
+                              )
+                            );
+                          });
                         },
                       ),
                     ),

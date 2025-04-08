@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -10,7 +9,6 @@ import 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
 
-  mapbox.PointAnnotation? _currentAnnotation;
   late mapbox.PointAnnotationManager? _annotationManager;
 
   MapBloc() : super(MapState()) {
@@ -54,6 +52,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ),
       );
 
+      /**
       await state.mapController?.style.addLayer(
         mapbox.CircleLayer(
           id: 'user-location-layer',
@@ -63,7 +62,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           circleStrokeColor: 0,
           circleStrokeWidth: 2,
         ),
-      );
+      );*/
     });
 
     on<ZoomIn>((event, emit) async {
