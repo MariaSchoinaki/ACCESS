@@ -48,6 +48,7 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
+  pin: "assets/images/pin.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -59,4 +60,5 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+  assets:
+    - assets/images/pin.png

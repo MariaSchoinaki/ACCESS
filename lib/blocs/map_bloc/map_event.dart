@@ -21,3 +21,14 @@ class FlyTo extends MapEvent {
 
   FlyTo(this.latitude, this.longitude);
 }
+
+class AddMarker extends MapEvent {
+  final double latitude;
+  final double longitude;
+
+  AddMarker(this.latitude, this.longitude);
+}
+
+class DeleteMarker extends MapEvent {
+  DeleteMarker();
+}

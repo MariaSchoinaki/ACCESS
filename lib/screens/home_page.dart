@@ -8,10 +8,17 @@ import '../blocs/search_bloc/search_bloc.dart';
 import '../blocs/search_bloc/search_event.dart';
 import '../blocs/search_bloc/search_state.dart';
 import '../services/search_service.dart';
-import 'dart:developer';
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String location = '';
+  final TextEditingController _searchController = TextEditingController();
 
   final mapbox.CameraOptions initialCameraOptions = mapbox.CameraOptions(
     center: mapbox.Point(coordinates: mapbox.Position(23.7325, 37.9908)),
@@ -20,9 +27,27 @@ class HomePage extends StatelessWidget {
     pitch: 0,
   );
 
+  _onLongTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
+    final lat = context.point.coordinates.lat.toDouble();
+    final lng = context.point.coordinates.lng.toDouble();
+
+    setState(() {
+      location = '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}';
+    });
+    _searchController.text = location;
+    widgetContext.read<MapBloc>().add(AddMarker(lat, lng));
+  }
+
+  _onTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
+    setState(() {
+      location = '';
+    });
+    _searchController.clear();
+    widgetContext.read<MapBloc>().add(DeleteMarker());
+  }
+
   @override
   Widget build(BuildContext context) {
-    final TextEditingController _searchController = TextEditingController();
 
     return MultiBlocProvider(
       providers: [
@@ -52,7 +77,7 @@ class HomePage extends StatelessWidget {
                               children: [
                                 TextField(
                                   controller: _searchController,
-                                  onSubmitted: (value) { // to be changed to onChanged
+                                  onSubmitted: (value) {
                                     context.read<SearchBloc>().add(SearchQueryChanged(value));
                                   },
                                   decoration: const InputDecoration(
@@ -81,6 +106,7 @@ class HomePage extends StatelessWidget {
                                           FocusScope.of(context).unfocus();
                                           context.read<SearchBloc>().add(SearchQueryChanged(""));
                                           context.read<MapBloc>().add(FlyTo(result.latitude, result.longitude));
+                                          context.read<MapBloc>().add(AddMarker(result.latitude, result.longitude));
                                         },
                                       );
                                     },
@@ -98,6 +124,8 @@ class HomePage extends StatelessWidget {
                         key: const ValueKey("mapWidget"),
                         cameraOptions: initialCameraOptions,
                         styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+                        onTapListener: (gestureContext) => _onTap(gestureContext, context),
+                        onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
                         onMapCreated: (controller) {
                           context.read<MapBloc>().add(InitializeMap(controller));
                         },
@@ -105,6 +133,88 @@ class HomePage extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                if (location.isNotEmpty)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 40,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'Lat: ${location.split(',')[0]}',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  TextSpan(
+                                    text: '   ', // Προσθήκη κενών μεταξύ των δύο
+                                  ),
+                                  TextSpan(
+                                    text: 'Lon: ${location.split(',')[1]}',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    //TODO: Implement directions service
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.directions),
+                                      SizedBox(width: 8),
+                                      Text('Directions'),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    //TODO: Implement start service
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.play_arrow),
+                                      SizedBox(width: 8),
+                                      Text('Start'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                    ),
+                  ),
+
+                //zoom
                 Positioned(
                   right: 16,
                   bottom: 100,
@@ -133,6 +243,8 @@ class HomePage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                //bottom bar
                 Positioned(
                   bottom: 0,
                   left: 0,
