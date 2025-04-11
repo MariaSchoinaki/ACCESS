@@ -1,0 +1,5 @@
+service_name: search_service
+port: 8080
+features:
+  - search
+  - suggestions
