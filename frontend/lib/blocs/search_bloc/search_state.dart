@@ -1,5 +1,4 @@
-// search_state.dart
-import 'package:access/services/search_service.dart';
+import 'package:ACCESS/models/mapbox_feature.dart';
 
 abstract class SearchState {}
 
