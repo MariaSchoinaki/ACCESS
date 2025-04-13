@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,7 +9,7 @@ Future<Response> handleSearchRequest(Request request) async {
     return Response.badRequest(body: jsonEncode({'error': 'Missing query'}));
   }
 
-  final mapboxToken = 'token';
+  final mapboxToken = Platform.environment['MAPBOX_TOKEN'] ?? '';
   final url = Uri.parse(
     'https://api.mapbox.com/geocoding/v5/mapbox.places/$query.json?access_token=$mapboxToken',
   );
