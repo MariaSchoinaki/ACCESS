@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
-        BlocProvider(create: (_) => SearchBloc(SearchService())),
+        BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
       ],
       child: Scaffold(
         resizeToAvoidBottomInset: false,

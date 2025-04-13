@@ -1,26 +1,28 @@
-# Use Dart SDK base image
-FROM dart:stable
 
-# Create app directory
+FROM dart:stable AS builder
+
 WORKDIR /app
-
-# Copy pubspec and resolve dependencies first (layer caching)
 COPY pubspec.* ./
 RUN dart pub get
 
-# Copy the rest of the project
-COPY . .
+COPY bin/ bin/
+COPY lib/ lib/
 
-# Optional: precompile to native (if you want faster startup)
-# RUN dart compile exe bin/server.dart -o bin/server
+RUN dart compile exe bin/search_main.dart -o bin/server
 
-# Set environment vars
+
+FROM debian:stable-slim
+
+RUN apt-get update && \
+    apt-get install -y libssl-dev ca-certificates tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/bin/server /app/server
+COPY --from=builder /app/.dart_tool /app/.dart_tool
+
 ENV PORT=8080
-
-# Expose the port
 EXPOSE 8080
 
-# Run the server
-CMD ["dart", "bin/search_service.dart"]
-# Or, if precompiled:
-# CMD ["./bin/server"]
+CMD ["./server"]
