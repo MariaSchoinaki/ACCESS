@@ -1,29 +1,28 @@
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'dart:convert';
 import '../models/mapbox_feature.dart';
 
 class SearchService {
-  final String _baseUrl;
+  late final Dio _dio;
 
-  /// Creates a SearchService that points to a local or remote backend.
-  SearchService({String? baseUrl})
-      : _baseUrl = baseUrl ?? 'http://localhost:8080';
+  SearchService({String? baseUrl}) {
+    _dio = Dio(BaseOptions(
+      baseUrl: baseUrl ?? 'http://192.168.1.11:8080',
+      headers: {'Content-Type': 'application/json'},
+    ));
+  }
 
-  /// Sends a GET request to the backend microservice to perform a search.
-  /// Returns a list of [MapboxFeature]s parsed from the backend response.
   Future<List<MapboxFeature>> search(String query) async {
-    final url = Uri.parse('$_baseUrl/search?q=$query');
-    final response = await http.get(url);
+    try {
+      final response = await _dio.get(
+        '/search',
+        queryParameters: {'q': query},
+      );
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-
-      // Ensure results exist and are properly formatted
-      final features = List<Map<String, dynamic>>.from(decoded['results'] ?? []);
-
+      final features = List<Map<String, dynamic>>.from(response.data['results'] ?? []);
       return features.map((json) => MapboxFeature.fromJson(json)).toList();
-    } else {
-      throw Exception('Search failed: ${response.body}');
+    } on DioException catch (e) {
+      throw Exception('Search failed: ${e.response?.data ?? e.message}');
     }
   }
 }
