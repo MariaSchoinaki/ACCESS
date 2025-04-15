@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ACCESS/blocs/search_bloc/search_event.dart';
-import 'package:ACCESS/blocs/search_bloc/search_state.dart';
-import 'package:ACCESS/services/search_service.dart';
+import 'package:access/blocs/search_bloc/search_event.dart';
+import 'package:access/blocs/search_bloc/search_state.dart';
+import 'package:access/services/search_service.dart';
 
 /// Bloc that handles search functionality for querying locations or features
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
