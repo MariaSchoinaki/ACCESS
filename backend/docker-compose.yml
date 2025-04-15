@@ -1,30 +1,28 @@
-version: '3.8'
+version: "3.8"
 
 services:
   gateway:
-    build: ./backend/gateway
+    image: schoin/access_gateway:latest
     ports:
       - "9090:9090"
     networks:
-      - my_network
-    secrets:
-      - mapbox_token
+      - internal
     depends_on:
       - search_service
 
   search_service:
-    build: ./services/search_service
-    deploy:
-      replicas: 1
+    image: schoin/access_search_service:latest
     ports:
       - "8080:8080"
     networks:
-      - my_network
+      - internal
+    secrets:
+      - mapbox_token
 
 secrets:
   mapbox_token:
     external: true
 
 networks:
-  my_network:
+  internal:
     driver: overlay
