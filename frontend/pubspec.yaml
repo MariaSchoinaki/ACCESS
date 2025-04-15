@@ -8,9 +8,12 @@ environment:
   sdk: ^3.7.0
 
 dependencies:
-  dio: ^5.0.0
   flutter:
     sdk: flutter
+
+  flutter_bloc: ^9.1.0
+  bloc: ^9.0.0
+  dio: ^5.0.0
 
   # Maps & Geolocation
   mapbox_maps_flutter: ^2.7.0
@@ -26,8 +29,6 @@ dependencies:
   firebase_database: ^11.3.5
   firebase_messaging: ^15.2.5
   firebase_storage: ^12.4.5
-
-  flutter_bloc: ^9.1.0
 
   # Country flag icons
   country_icons: ^3.0.0
