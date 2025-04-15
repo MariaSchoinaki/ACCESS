@@ -32,6 +32,8 @@ Future<Response> handleSearchRequest(Request request) async {
         body: jsonEncode({'error': 'Failed to fetch data from Mapbox'}),
       );
     }
+    print('> Received query: $query');
+    print('> Geocoding response: ${response.data}');
 
     return Response.ok(
       jsonEncode({'results': response.data['features']}),
