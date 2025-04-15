@@ -1,14 +1,10 @@
-version: '3.8'
-
 services:
   gateway:
-    build: ./backend/gateway
+    build: ./gateway
     ports:
       - "9090:9090"
     networks:
-      - my_network
-    secrets:
-      - mapbox_token
+      - access
     depends_on:
       - search_service
 
@@ -17,14 +13,14 @@ services:
     deploy:
       replicas: 1
     ports:
-      - "8080:8080"
+      - "80:8080"
     networks:
-      - my_network
+      - access
 
 secrets:
   mapbox_token:
     external: true
 
 networks:
-  my_network:
-    driver: overlay
+  access:
+    driver: bridge

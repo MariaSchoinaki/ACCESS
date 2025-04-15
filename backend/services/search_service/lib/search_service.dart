@@ -31,12 +31,15 @@ Future<Response> handleSearchRequest(Request request) async {
       queryParameters: {'access_token': mapboxToken},
     );
 
+    print('> response status: ${response.statusCode}');
     // If Mapbox responds with an error status
     if (response.statusCode != 200) {
       return Response.internalServerError(
         body: jsonEncode({'error': 'Failed to fetch data from Mapbox'}),
       );
     }
+    print('> Received query: $query');
+    print('> Geocoding response: ${response.data}');
 
     // Return the geocoding results as JSON
     return Response.ok(
