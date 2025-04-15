@@ -9,11 +9,10 @@ COPY pubspec.* ./
 RUN dart pub get
 
 # Copy source files
-COPY bin/ bin/
-COPY lib/ lib/
+COPY bin bin/
 
 # Compile Dart app to native executable
-RUN dart compile exe bin/search_main.dart -o bin/server
+RUN dart compile exe bin/gateway_main.dart -o bin/gateway
 
 
 ### Runtime Stage
@@ -32,15 +31,15 @@ USER appuser
 WORKDIR /app
 
 # Copy the compiled binary and any tool metadata
-COPY --from=builder /app/bin/server /app/server
+COPY --from=builder /app/bin/gateway /app/gateway
 COPY --from=builder /app/.dart_tool /app/.dart_tool
 
 # Set environment variable for runtime port
-ENV PORT=8080
-EXPOSE 8080
+ENV PORT=9090
+EXPOSE 9090
 
 # Healthcheck for Docker
-HEALTHCHECK CMD curl --fail http://localhost:8080 || exit 1
+HEALTHCHECK CMD curl --fail http://localhost:9090 || exit 1
 
 # Run the binary
-CMD ["./server"]
+CMD ["./gateway"]
