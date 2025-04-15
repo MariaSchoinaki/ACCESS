@@ -1,15 +1,22 @@
 import 'dart:io';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf/shelf.dart';
-import 'package:search_service/search_service.dart';
+import 'package:search_service/search_service.dart'; // Custom handler from lib/
 
-void main() async {
+Future<void> main() async {
+  // Create a request pipeline:
+  // - Adds logging middleware for requests
+  // - Connects to the custom search request handler
   final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler((Request req) => handleSearchRequest(req)); // from lib
+      .addMiddleware(logRequests()) // Logs method, URI, status, duration
+      .addHandler(handleSearchRequest); // Defined in lib/search_service.dart
 
+  // Read the port from environment or use 8080 by default
   final port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
+
+  // Start the HTTP server
   final server = await shelf_io.serve(handler, InternetAddress.anyIPv4, port);
 
-  print('🔍 search_service listening on port $port');
+  // Logging output to terminal
+  print('\x1B[32m√ search_service is running on http://${server.address.host}:${server.port}\x1B[0m');
 }
