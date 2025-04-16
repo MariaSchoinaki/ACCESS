@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -14,14 +15,17 @@ final String searchServiceUrl = 'http://search_service:8080';
 void main() async {
   final router = Router();
 
+  // Health check
   router.get('/health', (shelf.Request request) {
     return shelf.Response.ok('OK');
   });
 
+  // Forward /search to search_service
   router.all('/search<ignored|.*>', (shelf.Request request) async {
     final uri = Uri.parse(
       '$searchServiceUrl${request.requestedUri.path}${request.requestedUri.hasQuery ? '?${request.requestedUri.query}' : ''}',
     );
+    
 
     try {
       final response = await dio.request(
@@ -36,7 +40,7 @@ void main() async {
 
       return shelf.Response(
         response.statusCode ?? 500,
-        body: response.data.toString(),
+        body: jsonEncode(response.data),
         headers: {'Content-Type': 'application/json'},
       );
     } on DioException catch (e) {
@@ -54,6 +58,7 @@ void main() async {
     }
   });
 
+  // Add logging middleware and start server
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
       .addHandler(router);
