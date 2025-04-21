@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/bottom_bar.dart';
+
 class MyAccountScreen extends StatelessWidget {
   const MyAccountScreen({super.key});
 
@@ -10,6 +12,7 @@ class MyAccountScreen extends StatelessWidget {
       body: const Center(
         child: Text("Εδώ είναι το προφίλ"),
       ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

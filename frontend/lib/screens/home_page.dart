@@ -1,3 +1,5 @@
+import 'package:access/screens/sign_up_page.dart';
+import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -10,6 +12,7 @@ import '../blocs/search_bloc/search_state.dart';
 import '../services/auth_servces/authservice.dart';
 import '../services/search_service.dart';
 import 'myaccount/myaccount_screen.dart';
+import '../widgets/bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -66,13 +69,13 @@ class _HomePageState extends State<HomePage> {
                 Column(
                   children: [
                     Container(
-                      color: const Color(0xFFF5F5F5),
+                      color: AppColors.background,
                       padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                          boxShadow: [BoxShadow(color: AppColors.black, blurRadius: 6)],
                         ),
                         child: BlocBuilder<SearchBloc, SearchState>(
                           builder: (context, state) {

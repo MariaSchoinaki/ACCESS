@@ -4,6 +4,7 @@ import '../../../blocs/login_bloc/login_bloc.dart';
 import '../../../blocs/login_bloc/login_event.dart';
 import '../../../blocs/login_bloc/login_state.dart';
 import '../../../utils/email_validator.dart';
+import '../../../widgets/bottom_bar.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -213,6 +214,7 @@ class __LoginViewState extends State<_LoginView> {
           ),
         ),
       ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }
