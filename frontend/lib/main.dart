@@ -1,11 +1,15 @@
-import 'package:access/screens/myaccount/log%20in/log_in_page.dart';
+import 'package:access/screens/myaccount/log%20in/login_page.dart';
 import 'package:access/screens/myaccount/myaccount_screen.dart';
+import 'package:access/screens/sign_up_page.dart';
+import 'package:access/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_page.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 /// Entry point of the Flutter application.
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Securely retrieves the Mapbox access token via --dart-define
@@ -17,6 +21,11 @@ void main() {
   }
 
   MapboxOptions.setAccessToken(ACCESS_TOKEN);
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Launch the Flutter application
   runApp(const MyApp());
@@ -31,14 +40,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mapbox Search App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.teal,
-        brightness: Brightness.light,
-      ),
+      theme: lightTheme,
       home: const HomePage(),
       routes: {
-        //'/signup': (context) => SignupScreen(),
+        '/signup': (context) => SignUpPage(),
         '/login': (context) => const LoginScreen(),
         '/myaccount': (context) => const MyAccountScreen(),
 
