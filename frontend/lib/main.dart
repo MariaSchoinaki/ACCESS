@@ -1,3 +1,5 @@
+import 'package:access/screens/myaccount/log%20in/log_in_page.dart';
+import 'package:access/screens/myaccount/myaccount_screen.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_page.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -35,6 +37,12 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
       ),
       home: const HomePage(),
+      routes: {
+        //'/signup': (context) => SignupScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/myaccount': (context) => const MyAccountScreen(),
+
+      },
     );
   }
 }

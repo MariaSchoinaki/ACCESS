@@ -7,7 +7,9 @@ import '../blocs/map_bloc/map_state.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 import '../blocs/search_bloc/search_event.dart';
 import '../blocs/search_bloc/search_state.dart';
+import '../services/auth_servces/authservice.dart';
 import '../services/search_service.dart';
+import 'myaccount/myaccount_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -270,9 +272,22 @@ class _HomePageState extends State<HomePage> {
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: const [
-                        Icon(Icons.home, color: Colors.black),
-                        Icon(Icons.person, color: Colors.black),
+                      children: [
+                        const Icon(Icons.home, color: Colors.black),
+                        GestureDetector(
+                          onTap: () {
+                            final loggedIn = AuthService.isLoggedIn();
+                            if (loggedIn) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MyAccountScreen()),
+                              );
+                            } else {
+                              Navigator.pushNamed(context, '/login'); // ή MaterialPageRoute αν δεν έχεις routes
+                            }
+                          },
+                          child: const Icon(Icons.person, color: Colors.black),
+                        ),
                       ],
                     ),
                   ),
@@ -285,3 +300,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
