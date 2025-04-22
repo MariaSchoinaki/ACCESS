@@ -43,3 +43,6 @@ frontend/app.*.map.json
 frontend/android/app/debug
 frontend/android/app/profile
 frontend/android/app/release
+frontend/android/app/google-services.json
+frontend/firebase.json
+frontend/lib/firebase_options.dart
