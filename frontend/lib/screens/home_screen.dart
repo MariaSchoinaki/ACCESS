@@ -1,10 +1,6 @@
-// home_page.dart
-
-import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/map_bloc/map_event.dart';
@@ -13,7 +9,6 @@ import '../blocs/search_bloc/search_bloc.dart';
 import '../blocs/search_bloc/search_event.dart';
 import '../blocs/search_bloc/search_state.dart';
 import '../services/search_service.dart';
-import 'myaccount_screen.dart';
 import '../widgets/bottom_bar.dart';
 
 class HomePage extends StatefulWidget {

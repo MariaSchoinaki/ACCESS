@@ -1,43 +1,43 @@
-import 'package:access/screens/home_screen.dart';
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
-import '../screens/sign_up_screen.dart';
+import '../screens/home_screen.dart';
 import '../utils/auth_gate.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key});
 
+  // Βοηθητική συνάρτηση για έλεγχο σελίδας
+  void _navigateToScreen(BuildContext context, Widget screen, String routeName) {
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    if (currentRoute != routeName) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => screen,
+          settings: RouteSettings(name: routeName),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration:  BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        boxShadow: [BoxShadow(color: theme.scaffoldBackgroundColor, blurRadius: 10)],
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
-            },
-            child: Icon(Icons.home),
+          IconButton(
+            onPressed: () => _navigateToScreen(context, const HomePage(), '/home'),
+            icon: const Icon(Icons.home, size: 30),
           ),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AuthGate()),
-              );
-            },
-            child: Icon(Icons.person),
+          IconButton(
+            onPressed: () => _navigateToScreen(context, const AuthGate(), '/profile'),
+            icon: const Icon(Icons.person, size: 30),
           ),
         ],
       ),

@@ -1,7 +1,6 @@
-import 'package:access/screens/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/login_screen.dart';
 import '../screens/myaccount_screen.dart';
 
 class AuthGate extends StatelessWidget {
@@ -14,11 +13,11 @@ class AuthGate extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasData) {
-          return const MyAccountScreen(); // Ο χρήστης είναι ήδη συνδεδεμένος
-        } else {
-          return LoginScreen(); // Ο χρήστης δεν είναι συνδεδεμένος
         }
+
+        return snapshot.hasData
+            ? const MyAccountScreen() // Συνδεδεμένος χρήστης
+            : LoginScreen();     // Μη συνδεδεμένος
       },
     );
   }
