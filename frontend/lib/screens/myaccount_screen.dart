@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../widgets/bottom_bar.dart';
 import '../../blocs/my_account_bloc/my_account_bloc.dart';
+import '../widgets/user_info_popup.dart';
 
 class MyAccountScreen extends StatelessWidget {
   const MyAccountScreen({super.key});
@@ -13,7 +14,7 @@ class MyAccountScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return BlocProvider(
-      create: (_) => MyAccountBloc()..add(LoadUserProfile()),
+      create: (_) => MyAccountBloc(myAccountRepository: RepositoryProvider.of<MyAccountRepository>(context))..add(LoadUserProfile()),
       child: BlocListener<MyAccountBloc, MyAccountState>(
         listener: (context, state) {
           if (state is MyAccountSignedOut) {
@@ -21,6 +22,10 @@ class MyAccountScreen extends StatelessWidget {
           } else if (state is MyAccountError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
+            );
+          } else if (state is MyAccountUpdated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Info updated successfully!")),
             );
           }
         },
@@ -38,9 +43,26 @@ class MyAccountScreen extends StatelessWidget {
               if (state is MyAccountLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is MyAccountLoaded) {
+                // Αν τα δεδομένα είναι κενά, δείξε το UserInfoPopup
+                if (state.dateOfBirth == null || state.disabilityType == null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => UserInfoPopup(
+                        onSubmit: (birthDate, disabilityType) {
+                          context.read<MyAccountBloc>().add(UpdateUserInfo(
+                            dateOfBirth: birthDate,
+                            disabilityType: disabilityType,
+                          ));
+                        },
+                      ),
+                    );
+                  });
+                }
+
                 return Column(
                   children: [
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 40),
                     CircleAvatar(
                       radius: 50,
                       backgroundImage: state.photoUrl != null
@@ -51,11 +73,45 @@ class MyAccountScreen extends StatelessWidget {
                           : null,
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      state.email,
-                      style: const TextStyle(fontSize: 18),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.primaryAccent.shade100,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      ),
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text("Edit Info", style: TextStyle(fontSize: 13)),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => UserInfoPopup(
+                            onSubmit: (birthDate, disabilityType) {
+                              context.read<MyAccountBloc>().add(UpdateUserInfo(
+                                dateOfBirth: birthDate,
+                                disabilityType: disabilityType,
+                              ));
+                            },
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 30),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          infoRow(Icons.email, "Email:", state.email),
+                          if (state.dateOfBirth != null)
+                            infoRow(Icons.calendar_today, "Date of birth:", state.dateOfBirth!),
+                          if (state.disabilityType != null)
+                            infoRow(Icons.accessibility_new, "Disability kind:", state.disabilityType!),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                     ListTile(
                       leading: const Icon(Icons.route),
                       title: const Text('Saved Routes'),
@@ -92,13 +148,38 @@ class MyAccountScreen extends StatelessWidget {
                 );
               } else if (state is MyAccountError) {
                 return Center(child: Text('Error: ${state.message}'));
-              } else {
-                return const Center(child: Text("No user data found"));
               }
+              return const Center(child: Text("No user data found"));
             },
           ),
           bottomNavigationBar: const BottomNavBar(),
         ),
+      ),
+    );
+  }
+
+  Widget infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(value),
+            ),
+          ),
+        ],
       ),
     );
   }

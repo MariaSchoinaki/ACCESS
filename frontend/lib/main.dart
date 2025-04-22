@@ -3,6 +3,8 @@ import 'package:access/screens/myaccount_screen.dart';
 import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/my_account_bloc/my_account_bloc.dart';
 import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -28,7 +30,12 @@ Future<void> main() async {
   );
 
   // Launch the Flutter application
-  runApp(const MyApp());
+  runApp(
+    BlocProvider(
+      create: (_) => MyAccountBloc()..add(LoadUserProfile()),
+      child: const MyApp(),
+    ),
+  );
 }
 
 /// Root widget of the app
