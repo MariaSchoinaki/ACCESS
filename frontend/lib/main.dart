@@ -1,9 +1,9 @@
-import 'package:access/screens/myaccount/log%20in/login_page.dart';
-import 'package:access/screens/myaccount/myaccount_screen.dart';
-import 'package:access/screens/sign_up_page.dart';
+import 'package:access/screens/login_screen.dart';
+import 'package:access/screens/myaccount_screen.dart';
+import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'screens/home_page.dart';
+import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';

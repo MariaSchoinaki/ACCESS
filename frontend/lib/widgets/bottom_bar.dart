@@ -1,7 +1,7 @@
-import 'package:access/screens/home_page.dart';
+import 'package:access/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../screens/sign_up_page.dart';
+import '../screens/sign_up_screen.dart';
 import '../utils/auth_gate.dart';
 
 class BottomNavBar extends StatelessWidget {

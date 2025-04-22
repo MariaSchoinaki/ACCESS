@@ -2,7 +2,7 @@ import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../widgets/bottom_bar.dart';
+import '../widgets/bottom_bar.dart';
 import '../../blocs/my_account_bloc/my_account_bloc.dart';
 
 class MyAccountScreen extends StatelessWidget {

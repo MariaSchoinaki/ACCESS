@@ -1,16 +1,27 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../blocs/login_bloc/login_bloc.dart';
-import '../../../blocs/login_bloc/login_event.dart';
-import '../../../blocs/login_bloc/login_state.dart';
-import '../../../utils/email_validator.dart';
-import '../../../widgets/bottom_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../blocs/login_bloc/login_bloc.dart';
+import '../widgets/bottom_bar.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
+  Future<void> _checkIfUserIsLoggedIn(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (isLoggedIn) {
+      // Αν είναι συνδεδεμένος, στέλνουμε τον χρήστη στο MyAccount χωρίς να περάσει από το login
+      Navigator.pushReplacementNamed(context, '/myaccount');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _checkIfUserIsLoggedIn(context);  // Κάνουμε έλεγχο όταν φορτώνει η οθόνη
+
     return BlocProvider(
       create: (context) => LoginBloc(),
       child: const _LoginView(),
@@ -46,10 +57,10 @@ class __LoginViewState extends State<_LoginView> {
       body: SafeArea(
         child: BlocListener<LoginBloc, LoginState>(
           listener: (context, state) {
-            if (state is LoginSuccess) {
-              Navigator.pushNamed(context, '/myaccount');
+            if (state.status == LoginStatus.success) {
+              Navigator.pushReplacementNamed(context, '/myaccount');
             }
-            if (state is LoginFailure) {
+            if (state.status == LoginStatus.failure) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.error)),
               );
@@ -100,7 +111,15 @@ class __LoginViewState extends State<_LoginView> {
                       fillColor: Colors.white,
                       filled: true,
                     ),
-                    validator: (value) => EmailValidator.validate(value),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!EmailValidator.validate(value)) {
+                        return 'Enter a valid email';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -128,19 +147,23 @@ class __LoginViewState extends State<_LoginView> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Enter your password to continue';
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
                       }
                       return null;
                     },
                   ),
+
                   const SizedBox(height: 16),
                   BlocBuilder<LoginBloc, LoginState>(
                     builder: (context, state) {
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: state is LoginLoading
-                              ? null
+                          onPressed: state.status == LoginStatus.loading // Ελέγχουμε αν η κατάσταση είναι 'loading'
+                              ? null // Αν είναι, αποτρέπουμε την αποστολή
                               : () {
                             if (_formKey.currentState!.validate()) {
                               context.read<LoginBloc>().add(
@@ -158,9 +181,8 @@ class __LoginViewState extends State<_LoginView> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: state is LoginLoading
-                              ? const CircularProgressIndicator(
-                              color: Colors.white)
+                          child: state.status == LoginStatus.loading // Ελέγχουμε αν η κατάσταση είναι 'loading'
+                              ? const CircularProgressIndicator(color: Colors.white)
                               : const Text(
                             'Continue',
                             style: TextStyle(color: Colors.white),

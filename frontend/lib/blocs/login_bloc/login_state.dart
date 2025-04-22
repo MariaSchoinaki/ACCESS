@@ -1,23 +1,38 @@
-import 'package:equatable/equatable.dart';
+part of 'login_bloc.dart';
 
-abstract class LoginState extends Equatable {
-  const LoginState();
+enum LoginStatus { initial, loading, success, failure }
 
-  @override
-  List<Object> get props => [];
-}
-
-class LoginInitial extends LoginState {}
-
-class LoginLoading extends LoginState {}
-
-class LoginSuccess extends LoginState {}
-
-class LoginFailure extends LoginState {
+class LoginState extends Equatable {
+  final String email;
+  final String password;
+  final LoginStatus status;
   final String error;
 
-  const LoginFailure(this.error);
+  const LoginState({
+    this.email = '',
+    this.password = '',
+    this.status = LoginStatus.initial,
+    this.error = '',
+  });
+
+  bool get isEmailValid => EmailValidator.validate(email);
+  bool get isPasswordValid => password.isNotEmpty;
+  bool get isFormValid => isEmailValid && isPasswordValid;
+
+  LoginState copyWith({
+    String? email,
+    String? password,
+    LoginStatus? status,
+    String? error,
+  }) {
+    return LoginState(
+      email: email ?? this.email,
+      password: password ?? this.password,
+      status: status ?? this.status,
+      error: error ?? this.error,
+    );
+  }
 
   @override
-  List<Object> get props => [error];
+  List<Object?> get props => [email, password, status, error];
 }
