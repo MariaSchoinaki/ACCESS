@@ -1,0 +1,6 @@
+service_name: map_service
+port: 8081
+features:
+  - map
+  - location_display
+  - navigation
