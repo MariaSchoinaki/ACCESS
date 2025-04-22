@@ -14,8 +14,7 @@ class MyAccountScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return BlocProvider(
-      create: (_) => MyAccountBloc(myAccountRepository: RepositoryProvider.of<MyAccountRepository>(context))..add(LoadUserProfile()),
-      child: BlocListener<MyAccountBloc, MyAccountState>(
+      create: (_) => MyAccountBloc()..add(LoadUserProfile()),      child: BlocListener<MyAccountBloc, MyAccountState>(
         listener: (context, state) {
           if (state is MyAccountSignedOut) {
             Navigator.pushReplacementNamed(context, '/login');

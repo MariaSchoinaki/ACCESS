@@ -1,6 +1,9 @@
+import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_colors.dart';
+//import 'package:access/theme/box_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/map_bloc/map_event.dart';
@@ -9,6 +12,7 @@ import '../blocs/search_bloc/search_bloc.dart';
 import '../blocs/search_bloc/search_event.dart';
 import '../blocs/search_bloc/search_state.dart';
 import '../services/search_service.dart';
+import 'myaccount_screen.dart';
 import '../widgets/bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
@@ -51,6 +55,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
     final theme = Theme.of(context);
 
     return MultiBlocProvider(
@@ -74,9 +79,7 @@ class _HomePageState extends State<HomePage> {
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(color: theme.hintColor, blurRadius: 6)
-                          ],
+                          boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
                         ),
                         child: BlocBuilder<SearchBloc, SearchState>(
                           builder: (context, state) {
@@ -87,12 +90,11 @@ class _HomePageState extends State<HomePage> {
                                   onSubmitted: (value) {
                                     context.read<SearchBloc>().add(SearchQueryChanged(value));
                                   },
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     hintText: 'Αναζήτηση...',
-                                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+                                    prefixIcon: Icon(Icons.search),
                                     border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.all(12),
-                                    hintStyle: theme.inputDecorationTheme.hintStyle,
+                                    contentPadding: EdgeInsets.all(12),
                                   ),
                                 ),
                                 if (state is SearchLoading)
@@ -108,7 +110,7 @@ class _HomePageState extends State<HomePage> {
                                     itemBuilder: (context, index) {
                                       final result = state.results[index];
                                       return ListTile(
-                                        title: Text(result.name, style: theme.textTheme.bodyMedium),
+                                        title: Text(result.name),
                                         onTap: () {
                                           _searchController.text = result.name;
                                           FocusScope.of(context).unfocus();
@@ -120,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                                     },
                                   ),
                                 if (state is SearchError)
-                                  Text('Error: ${state.message}', style: theme.textTheme.bodyMedium),
+                                  Text('Error: ${state.message}'),
                               ],
                             );
                           },
@@ -139,12 +141,12 @@ class _HomePageState extends State<HomePage> {
                           setState(() {
                             mapboxMap = controller;
                             mapboxMap?.location.updateSettings(
-                              mapbox.LocationComponentSettings(
-                                enabled: true,
-                                pulsingEnabled: false,
-                                showAccuracyRing: true,
-                                puckBearingEnabled: true,
-                              ),
+                                mapbox.LocationComponentSettings(
+                                    enabled: true,
+                                    pulsingEnabled: false,
+                                    showAccuracyRing: true,
+                                    puckBearingEnabled: true
+                                )
                             );
                           });
                         },
@@ -157,33 +159,78 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: -10,
+                    bottom: -15,
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
-                            style: theme.textTheme.bodyMedium,
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Lat: ${location.split(',')[0]}',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                TextSpan(
+                                  text: '   ',
+                                ),
+                                TextSpan(
+                                  text: 'Lon: ${location.split(',')[1]}',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.directions),
-                                label: const Text('Directions'),
+                              ElevatedButton(
+                                onPressed: () {
+                                  //TODO: Implement directions service
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  backgroundColor: theme.elevatedButtonTheme.style?.backgroundColor as Color?,
+                                  foregroundColor: AppColors.whiteAccent.shade100,
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.directions),
+                                    SizedBox(width: 8),
+                                    Text('Directions'),
+                                  ],
+                                ),
                               ),
                               const SizedBox(width: 10),
-                              ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Start'),
+                              ElevatedButton(
+                                onPressed: () {
+                                  //TODO: Implement start service
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  backgroundColor: AppColors.whiteAccent.shade900,
+                                  foregroundColor: AppColors.whiteAccent.shade100,
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.play_arrow),
+                                    SizedBox(width: 8),
+                                    Text('Start'),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -192,17 +239,16 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
+                //zoom
                 Positioned(
                   right: 16,
-                  bottom: location.isNotEmpty ? 120 : 80,
+                  bottom: 100,
                   child: Column(
                     children: [
                       FloatingActionButton(
                         heroTag: "location",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(GetCurrentLocation()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.my_location),
                       ),
                       const SizedBox(height: 10),
@@ -210,8 +256,6 @@ class _HomePageState extends State<HomePage> {
                         heroTag: "zoomIn",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(ZoomIn()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.add),
                       ),
                       const SizedBox(height: 10),
@@ -219,18 +263,50 @@ class _HomePageState extends State<HomePage> {
                         heroTag: "zoomOut",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(ZoomOut()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.remove),
                       ),
                     ],
+                  ),
+                ),
+
+                //bottom bar
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        const Icon(Icons.home, color: Colors.black),
+                        GestureDetector(
+                          onTap: () {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MyAccountScreen()),
+                              );
+                            } else {
+                              Navigator.pushNamed(context, '/login');
+                            }
+                          },
+                          child: const Icon(Icons.person, color: Colors.black),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             );
           },
         ),
-        bottomNavigationBar: const BottomNavBar(),
       ),
     );
   }
