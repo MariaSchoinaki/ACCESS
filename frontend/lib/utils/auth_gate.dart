@@ -17,7 +17,7 @@ class AuthGate extends StatelessWidget {
         } else if (snapshot.hasData) {
           return const MyAccountScreen(); // Ο χρήστης είναι ήδη συνδεδεμένος
         } else {
-          return const LoginScreen(); // Ο χρήστης δεν είναι συνδεδεμένος
+          return LoginScreen(); // Ο χρήστης δεν είναι συνδεδεμένος
         }
       },
     );

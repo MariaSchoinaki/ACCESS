@@ -1,22 +1,23 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../blocs/login_bloc/login_bloc.dart';
 import '../widgets/bottom_bar.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
 
+  LoginScreen({super.key});
+
+  final storage = FlutterSecureStorage();
   Future<void> _checkIfUserIsLoggedIn(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final String? isLoggedIn = await storage.read(key: 'isLoggedIn');
 
-    if (isLoggedIn) {
-      // Αν είναι συνδεδεμένος, στέλνουμε τον χρήστη στο MyAccount χωρίς να περάσει από το login
+    if (isLoggedIn == 'true') {
       Navigator.pushReplacementNamed(context, '/myaccount');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

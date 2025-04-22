@@ -1,8 +1,9 @@
 import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_colors.dart';
-import 'package:access/theme/box_decoration.dart';
+//import 'package:access/theme/box_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/map_bloc/map_event.dart';
@@ -10,7 +11,6 @@ import '../blocs/map_bloc/map_state.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 import '../blocs/search_bloc/search_event.dart';
 import '../blocs/search_bloc/search_state.dart';
-import '../services/auth_servces/authservice.dart';
 import '../services/search_service.dart';
 import 'myaccount_screen.dart';
 import '../widgets/bottom_bar.dart';
@@ -268,11 +268,45 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+
+                //bottom bar
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        const Icon(Icons.home, color: Colors.black),
+                        GestureDetector(
+                          onTap: () {
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const MyAccountScreen()),
+                              );
+                            } else {
+                              Navigator.pushNamed(context, '/login');
+                            }
+                          },
+                          child: const Icon(Icons.person, color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             );
           },
         ),
-        bottomNavigationBar: const BottomNavBar(),
       ),
     );
   }
