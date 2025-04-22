@@ -2,6 +2,7 @@ import 'package:access/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../screens/sign_up_page.dart';
+import '../utils/auth_gate.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key});
@@ -31,7 +32,7 @@ class BottomNavBar extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SignUpPage()),
+                MaterialPageRoute(builder: (context) => const AuthGate()),
               );
             },
             child: const Icon(Icons.person, color: AppColors.black),
