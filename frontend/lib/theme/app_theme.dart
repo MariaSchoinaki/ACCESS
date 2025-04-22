@@ -3,47 +3,94 @@ import 'package:flutter/material.dart';
 
 ThemeData lightTheme = ThemeData(
   brightness: Brightness.light, // Indicates this is a light theme
-  primarySwatch: Colors.blue, // Primary color of your app (can be customized)
-  primaryColor: Colors.blue.shade500, // Specific primary color
-  hintColor: Colors.grey.shade600, // Color for hint text in input fields
+  primarySwatch: AppColors.primaryAccent, // Primary color of your app (can be customized)
+  primaryColor: AppColors.primaryAccent.shade200, // Specific primary color
+  hintColor: AppColors.grey, // Color for hint text in input fields
   scaffoldBackgroundColor: AppColors.background,
   appBarTheme: AppBarTheme(
-    backgroundColor: Colors.blue.shade500, // Background color of AppBar
-    foregroundColor: Colors.white, // Text color of AppBar title and actions
+    backgroundColor: AppColors.background, // Background color of AppBar
+    foregroundColor: AppColors.secondary, // Text color of AppBar title and actions
   ),
   textTheme: const TextTheme(
-    displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: Colors.black87),
-    titleLarge: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.black87),
-    bodyMedium: TextStyle(fontSize: 16.0, color: Colors.black87),
+    displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: AppColors.black),
+    titleLarge: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: AppColors.black),
+    bodyMedium: TextStyle(fontSize: 16.0, color: AppColors.black),
   ),
+  iconTheme: const IconThemeData(color: AppColors.black),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.black),
+      borderSide: const BorderSide(color: AppColors.grey),
       borderRadius: BorderRadius.circular(8.0),
     ),
     focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Colors.blue.shade500),
+      borderSide: BorderSide(color: AppColors.black),
       borderRadius: BorderRadius.circular(8.0),
     ),
     errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.purple),
+      borderSide: BorderSide(color: AppColors.errorAccent.shade400),
       borderRadius: BorderRadius.circular(8.0),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Colors.green),
+      borderSide: BorderSide(color: AppColors.errorAccent.shade700),
       borderRadius: BorderRadius.circular(8.0),
     ),
-    labelStyle: const TextStyle(color: Colors.black87),
-    hintStyle: TextStyle(color: Colors.grey.shade600),
+    labelStyle: const TextStyle(color: AppColors.grey),
+    hintStyle: TextStyle(color: AppColors.grey),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.blue.shade500,
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      foregroundColor: AppColors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
       ),
     ),
   ),
+  hoverColor: AppColors.primary,
   // You can customize other visual aspects here, like cardColor, iconTheme, etc.
+);
+
+ThemeData darkTheme = ThemeData(
+  brightness: Brightness.dark,
+  primarySwatch: AppColors.primaryAccent,
+  primaryColor: AppColors.primaryAccent.shade200,
+  hintColor: AppColors.white,
+  scaffoldBackgroundColor: AppColors.backgroundDark,
+  appBarTheme: const AppBarTheme(
+    backgroundColor: AppColors.black,
+    foregroundColor: AppColors.white,
+  ),
+  textTheme: const TextTheme(
+    displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: AppColors.white),
+    titleLarge: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: AppColors.white),
+    bodyMedium: TextStyle(fontSize: 16.0, color: AppColors.white),
+  ),
+  iconTheme: const IconThemeData(color: AppColors.white),
+  inputDecorationTheme: InputDecorationTheme(
+    border: OutlineInputBorder(
+      borderSide: const BorderSide(color: AppColors.white),
+      borderRadius: BorderRadius.circular(8.0),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppColors.errorAccent.shade400),
+      borderRadius: BorderRadius.circular(8.0),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppColors.errorAccent.shade700),
+      borderRadius: BorderRadius.circular(8.0),
+    ),
+    labelStyle: const TextStyle(color: AppColors.white),
+    hintStyle: TextStyle(color: AppColors.whiteAccent.shade700),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.primary,
+      foregroundColor: AppColors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+    ),
+  ),
+  hoverColor: Colors.red,
+  cardColor: Colors.green,
 );

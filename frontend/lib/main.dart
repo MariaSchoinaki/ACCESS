@@ -40,7 +40,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mapbox Search App',
       debugShowCheckedModeBanner: false,
-      theme: lightTheme,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.light,
       home: const HomePage(),
       routes: {
         '/signup': (context) => SignUpPage(),

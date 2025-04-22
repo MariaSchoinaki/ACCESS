@@ -1,5 +1,6 @@
 import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_colors.dart';
+import 'package:access/theme/box_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -55,6 +56,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
 
+    final theme = Theme.of(context);
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
@@ -62,6 +65,7 @@ class _HomePageState extends State<HomePage> {
       ],
       child: Scaffold(
         resizeToAvoidBottomInset: false,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: BlocBuilder<MapBloc, MapState>(
           builder: (context, state) {
             return Stack(
@@ -69,13 +73,13 @@ class _HomePageState extends State<HomePage> {
                 Column(
                   children: [
                     Container(
-                      color: AppColors.background,
+                      color: theme.scaffoldBackgroundColor,
                       padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: AppColors.black, blurRadius: 6)],
+                          boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
                         ),
                         child: BlocBuilder<SearchBloc, SearchState>(
                           builder: (context, state) {
@@ -155,11 +159,11 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: 40,
+                    bottom: -15,
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
                         child: Column(
@@ -173,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                                     style: TextStyle(fontSize: 14),
                                   ),
                                   TextSpan(
-                                    text: '   ', // Προσθήκη κενών μεταξύ των δύο
+                                    text: '   ',
                                   ),
                                   TextSpan(
                                     text: 'Lon: ${location.split(',')[1]}',
@@ -196,6 +200,8 @@ class _HomePageState extends State<HomePage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    backgroundColor: theme.elevatedButtonTheme.style?.backgroundColor as Color?,
+                                    foregroundColor: AppColors.whiteAccent.shade100,
                                   ),
                                   child: Row(
                                     children: const [
@@ -215,6 +221,8 @@ class _HomePageState extends State<HomePage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    backgroundColor: AppColors.whiteAccent.shade900,
+                                    foregroundColor: AppColors.whiteAccent.shade100,
                                   ),
                                   child: Row(
                                     children: const [
@@ -260,45 +268,11 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-
-                //bottom bar
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        const Icon(Icons.home, color: Colors.black),
-                        GestureDetector(
-                          onTap: () {
-                            final loggedIn = AuthService.isLoggedIn();
-                            if (loggedIn) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const MyAccountScreen()),
-                              );
-                            } else {
-                              Navigator.pushNamed(context, '/login'); // ή MaterialPageRoute αν δεν έχεις routes
-                            }
-                          },
-                          child: const Icon(Icons.person, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             );
           },
         ),
+        bottomNavigationBar: const BottomNavBar(),
       ),
     );
   }

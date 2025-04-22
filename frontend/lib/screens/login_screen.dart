@@ -51,9 +51,11 @@ class __LoginViewState extends State<_LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFFFF6F0),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: BlocListener<LoginBloc, LoginState>(
           listener: (context, state) {
@@ -96,7 +98,6 @@ class __LoginViewState extends State<_LoginView> {
                     'Enter your email and password to continue',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 24),

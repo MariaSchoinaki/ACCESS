@@ -10,14 +10,17 @@ class MyAccountScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocProvider(
       create: (_) => MyAccountBloc()..add(LoadUserProfile()),
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text("My Account"),
           centerTitle: true,
-          backgroundColor: Colors.orange.shade100,
+          backgroundColor: theme.appBarTheme.backgroundColor,
+          foregroundColor: theme.appBarTheme.foregroundColor,
           elevation: 0,
         ),
         body: BlocBuilder<MyAccountBloc, MyAccountState>(
@@ -69,8 +72,8 @@ class MyAccountScreen extends StatelessWidget {
                         context.read<MyAccountBloc>().add(SignOutRequested());
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primaryAccent.shade200,
+                        foregroundColor: AppColors.whiteAccent.shade100,
                         minimumSize: const Size(double.infinity, 50),
                       ),
                     ),

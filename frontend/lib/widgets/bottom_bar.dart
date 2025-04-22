@@ -9,12 +9,14 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        boxShadow: [BoxShadow(color: AppColors.black, blurRadius: 10)],
+      decoration:  BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 10)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -26,7 +28,7 @@ class BottomNavBar extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const HomePage()),
               );
             },
-            child: const Icon(Icons.home, color: AppColors.black),
+            child: Icon(Icons.home),
           ),
           InkWell(
             onTap: () {
@@ -35,7 +37,7 @@ class BottomNavBar extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const AuthGate()),
               );
             },
-            child: const Icon(Icons.person, color: AppColors.black),
+            child: Icon(Icons.person),
           ),
         ],
       ),

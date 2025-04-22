@@ -65,10 +65,10 @@ class _SignUpViewState extends State<SignUpView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).inputDecorationTheme;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(48.0),
@@ -88,7 +88,7 @@ class _SignUpViewState extends State<SignUpView> {
               const Text(
                 'Enter your details to sign up',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16.0, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 16.0),
               ),
               const SizedBox(height: 16.0),
               BlocBuilder<SignUpBloc, SignUpState>(
@@ -99,9 +99,9 @@ class _SignUpViewState extends State<SignUpView> {
                     decoration: InputDecoration(
                       labelText: 'Email',
                       errorText: _emailTouched && !state.isEmailValid ? 'Please enter a valid email' : null,
-                      border: theme.border,
-                      errorBorder: theme.errorBorder,
-                      focusedErrorBorder: theme.focusedErrorBorder,
+                      border: theme.inputDecorationTheme.border,
+                      errorBorder: theme.inputDecorationTheme.errorBorder,
+                      focusedErrorBorder: theme.inputDecorationTheme.focusedErrorBorder,
                       fillColor: AppColors.white,
                       filled: true,
                     ),
@@ -132,9 +132,9 @@ class _SignUpViewState extends State<SignUpView> {
                           });
                         },
                       ),
-                      border: theme.border,
-                      errorBorder: theme.errorBorder,
-                      focusedErrorBorder: theme.focusedErrorBorder,
+                      border: theme.inputDecorationTheme.border,
+                      errorBorder: theme.inputDecorationTheme.errorBorder,
+                      focusedErrorBorder: theme.inputDecorationTheme.focusedErrorBorder,
                       fillColor: AppColors.white,
                       filled: true,
                     ),
@@ -164,9 +164,9 @@ class _SignUpViewState extends State<SignUpView> {
                           });
                         },
                       ),
-                      border: theme.border,
-                      errorBorder: theme.errorBorder,
-                      focusedErrorBorder: theme.focusedErrorBorder,
+                      border: theme.inputDecorationTheme.border,
+                      errorBorder: theme.inputDecorationTheme.errorBorder,
+                      focusedErrorBorder: theme.inputDecorationTheme.focusedErrorBorder,
                       fillColor: AppColors.white,
                       filled: true,
                     ),
