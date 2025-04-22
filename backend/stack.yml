@@ -1,6 +1,15 @@
 version: "3.8"
 
 services:
+  gateway:
+    image: gateway
+    ports:
+      - "9090:9090"
+    networks:
+      - internal
+    depends_on:
+      - search_service
+
   search_service:
     image: search_service
     deploy:
@@ -13,18 +22,25 @@ services:
           memory: 256M
           cpus: '0.2'
     ports:
-      - "80:8080"
+      - "8080:8080"
     networks:
       - internal
 
-  gateway:
-    image: gateway
+  map_service:
+    image: map_service
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.2'
     ports:
-      - "9090:9090"
+      - "8081:8081"
     networks:
       - internal
-    depends_on:
-      - search_service
 
 networks:
   internal:

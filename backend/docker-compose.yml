@@ -9,11 +9,21 @@ services:
       - internal
     depends_on:
       - search_service
+      - map_service
+
+  map_service:
+    image: schoin/access_map_service:latest
+    ports:
+      - "8081:8081"
+    networks:
+      - internal
+    secrets:
+      - mapbox_token
 
   search_service:
     image: schoin/access_search_service:latest
     ports:
-      - "80:8080"
+      - "8080:8080"
     networks:
       - internal
     secrets:
