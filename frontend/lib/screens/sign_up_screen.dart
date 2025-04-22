@@ -260,7 +260,7 @@ class _SignUpViewState extends State<SignUpView> {
                   const Text('Already have an account? '),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.pushReplacementNamed(context, '/login');
                     },
                     child: const Text(
                       'Log in',

@@ -2,6 +2,7 @@ import 'package:access/screens/login_screen.dart';
 import 'package:access/screens/myaccount_screen.dart';
 import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
+import 'package:access/utils/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blocs/my_account_bloc/my_account_bloc.dart';
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
       home: const HomePage(),
       routes: {
         '/signup': (context) => SignUpPage(),
+        '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
         '/myaccount': (context) => const MyAccountScreen(),
 

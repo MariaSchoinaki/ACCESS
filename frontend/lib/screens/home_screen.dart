@@ -157,7 +157,7 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: -12,
+                    bottom: -10,
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> {
 
                 Positioned(
                   right: 16,
-                  bottom: 100,
+                  bottom: location.isNotEmpty ? 120 : 80,
                   child: Column(
                     children: [
                       FloatingActionButton(
