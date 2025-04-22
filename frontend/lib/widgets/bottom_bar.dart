@@ -16,7 +16,7 @@ class BottomNavBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration:  BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 10)],
+        boxShadow: [BoxShadow(color: theme.scaffoldBackgroundColor, blurRadius: 10)],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

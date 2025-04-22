@@ -1,6 +1,7 @@
+// home_page.dart
+
 import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/theme/app_colors.dart';
-//import 'package:access/theme/box_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -55,7 +56,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
 
     return MultiBlocProvider(
@@ -79,7 +79,9 @@ class _HomePageState extends State<HomePage> {
                         decoration: BoxDecoration(
                           color: theme.cardColor,
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
+                          boxShadow: [
+                            BoxShadow(color: theme.hintColor, blurRadius: 6)
+                          ],
                         ),
                         child: BlocBuilder<SearchBloc, SearchState>(
                           builder: (context, state) {
@@ -90,11 +92,12 @@ class _HomePageState extends State<HomePage> {
                                   onSubmitted: (value) {
                                     context.read<SearchBloc>().add(SearchQueryChanged(value));
                                   },
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     hintText: 'Αναζήτηση...',
-                                    prefixIcon: Icon(Icons.search),
+                                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
                                     border: InputBorder.none,
-                                    contentPadding: EdgeInsets.all(12),
+                                    contentPadding: const EdgeInsets.all(12),
+                                    hintStyle: theme.inputDecorationTheme.hintStyle,
                                   ),
                                 ),
                                 if (state is SearchLoading)
@@ -110,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                                     itemBuilder: (context, index) {
                                       final result = state.results[index];
                                       return ListTile(
-                                        title: Text(result.name),
+                                        title: Text(result.name, style: theme.textTheme.bodyMedium),
                                         onTap: () {
                                           _searchController.text = result.name;
                                           FocusScope.of(context).unfocus();
@@ -122,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                                     },
                                   ),
                                 if (state is SearchError)
-                                  Text('Error: ${state.message}'),
+                                  Text('Error: ${state.message}', style: theme.textTheme.bodyMedium),
                               ],
                             );
                           },
@@ -142,11 +145,11 @@ class _HomePageState extends State<HomePage> {
                             mapboxMap = controller;
                             mapboxMap?.location.updateSettings(
                               mapbox.LocationComponentSettings(
-                                  enabled: true,
-                                  pulsingEnabled: false,
-                                  showAccuracyRing: true,
-                                  puckBearingEnabled: true
-                              )
+                                enabled: true,
+                                pulsingEnabled: false,
+                                showAccuracyRing: true,
+                                puckBearingEnabled: true,
+                              ),
                             );
                           });
                         },
@@ -159,87 +162,41 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     left: 0,
                     right: 0,
-                    bottom: -15,
+                    bottom: -12,
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(18),
                       ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Lat: ${location.split(',')[0]}',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                  TextSpan(
-                                    text: '   ',
-                                  ),
-                                  TextSpan(
-                                    text: 'Lon: ${location.split(',')[1]}',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () {},
+                                icon: const Icon(Icons.directions),
+                                label: const Text('Directions'),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    //TODO: Implement directions service
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    backgroundColor: theme.elevatedButtonTheme.style?.backgroundColor as Color?,
-                                    foregroundColor: AppColors.whiteAccent.shade100,
-                                  ),
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.directions),
-                                      SizedBox(width: 8),
-                                      Text('Directions'),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    //TODO: Implement start service
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    backgroundColor: AppColors.whiteAccent.shade900,
-                                    foregroundColor: AppColors.whiteAccent.shade100,
-                                  ),
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.play_arrow),
-                                      SizedBox(width: 8),
-                                      Text('Start'),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 10),
+                              ElevatedButton.icon(
+                                onPressed: () {},
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Start'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                //zoom
                 Positioned(
                   right: 16,
                   bottom: 100,
@@ -249,6 +206,8 @@ class _HomePageState extends State<HomePage> {
                         heroTag: "location",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(GetCurrentLocation()),
+                        backgroundColor: theme.hoverColor,
+                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.my_location),
                       ),
                       const SizedBox(height: 10),
@@ -256,6 +215,8 @@ class _HomePageState extends State<HomePage> {
                         heroTag: "zoomIn",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(ZoomIn()),
+                        backgroundColor: theme.hoverColor,
+                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.add),
                       ),
                       const SizedBox(height: 10),
@@ -263,52 +224,19 @@ class _HomePageState extends State<HomePage> {
                         heroTag: "zoomOut",
                         mini: true,
                         onPressed: () => context.read<MapBloc>().add(ZoomOut()),
+                        backgroundColor: theme.hoverColor,
+                        foregroundColor: AppColors.white,
                         child: const Icon(Icons.remove),
                       ),
                     ],
-                  ),
-                ),
-
-                //bottom bar
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        const Icon(Icons.home, color: Colors.black),
-                        GestureDetector(
-                          onTap: () {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user != null) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const MyAccountScreen()),
-                              );
-                            } else {
-                              Navigator.pushNamed(context, '/login');
-                            }
-                          },
-                          child: const Icon(Icons.person, color: Colors.black),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],
             );
           },
         ),
+        bottomNavigationBar: const BottomNavBar(),
       ),
     );
   }
 }
-

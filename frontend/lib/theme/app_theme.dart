@@ -9,7 +9,7 @@ ThemeData lightTheme = ThemeData(
   scaffoldBackgroundColor: AppColors.background,
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.background, // Background color of AppBar
-    foregroundColor: AppColors.secondary, // Text color of AppBar title and actions
+    foregroundColor: AppColors.textPrimary, // Text color of AppBar title and actions
   ),
   textTheme: const TextTheme(
     displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: AppColors.black),
@@ -39,14 +39,15 @@ ThemeData lightTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.primaryAccent.shade300,
       foregroundColor: AppColors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
       ),
     ),
   ),
-  hoverColor: AppColors.primary,
+  hoverColor: AppColors.primaryAccent.shade100, /// for the 3 little buttons
+  cardColor: AppColors.whiteAccent.shade200, ///for search bar background
   // You can customize other visual aspects here, like cardColor, iconTheme, etc.
 );
 
@@ -84,13 +85,13 @@ ThemeData darkTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.primary,
+      backgroundColor: AppColors.primaryAccent.shade600,
+      foregroundColor: AppColors.whiteAccent.shade100,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8.0),
       ),
     ),
   ),
-  hoverColor: Colors.red,
-  cardColor: Colors.green,
+  hoverColor: AppColors.blackAccent.shade600,/// for the 3 little buttons
+  cardColor: AppColors.blackAccent.shade600, ///for search bar background
 );

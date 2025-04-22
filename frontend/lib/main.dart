@@ -1,7 +1,7 @@
 import 'package:access/screens/login_screen.dart';
 import 'package:access/screens/myaccount_screen.dart';
 import 'package:access/screens/sign_up_screen.dart';
-import 'package:access/theme/app_theme.dart';
+import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -40,8 +40,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mapbox Search App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
       home: const HomePage(),
       routes: {

@@ -65,6 +65,20 @@ class AppColors {
     900: Color(0xFF757575),
   });
 
+  static const MaterialColor blackAccent = MaterialColor(0xFF000000, {
+    50: Color(0xFFFAFAFA),
+    100: Color(0xFFF0F0F0),
+    200: Color(0xFFD6D6D6),
+    300: Color(0xFFAAAAAA),
+    400: Color(0xFF7E7E7E),
+    500: Color(0xFF4F4F4F),
+    600: Color(0xFF2C2C2C),
+    700: Color(0xFF1A1A1A),
+    800: Color(0xFF0D0D0D),
+    900: Color(0xFF000000),
+  });
+
+
   static const Color white = Colors.white;
   static const Color black = Colors.black87;
   static const Color grey = Color(0xFF4E5153);
