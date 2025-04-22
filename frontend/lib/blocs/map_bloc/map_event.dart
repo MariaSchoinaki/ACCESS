@@ -42,3 +42,6 @@ class AddMarker extends MapEvent {
 class DeleteMarker extends MapEvent {
   DeleteMarker();
 }
+
+/// Fetches route overlays or geometries from the map microservice
+class FetchMapRoutes extends MapEvent {}
