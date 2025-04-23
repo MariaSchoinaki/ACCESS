@@ -13,8 +13,7 @@ class MyAccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocProvider(
-      create: (_) => MyAccountBloc()..add(LoadUserProfile()),      child: BlocListener<MyAccountBloc, MyAccountState>(
+    return BlocListener<MyAccountBloc, MyAccountState>(
         listener: (context, state) {
           if (state is MyAccountSignedOut) {
             Navigator.pushReplacementNamed(context, '/login');
@@ -24,14 +23,15 @@ class MyAccountScreen extends StatelessWidget {
             );
           } else if (state is MyAccountUpdated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Info updated successfully!")),
+              SnackBar(content: Text("Τα στοιχεία ενημερώθηκαν!")),
             );
+            Navigator.pushReplacementNamed(context, '/profile');
           }
         },
         child: Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
           appBar: AppBar(
-            title: const Text("My Account"),
+            title: const Text("Ο λογαριασμός μου"),
             centerTitle: true,
             backgroundColor: theme.appBarTheme.backgroundColor,
             foregroundColor: theme.appBarTheme.foregroundColor,
@@ -42,7 +42,6 @@ class MyAccountScreen extends StatelessWidget {
               if (state is MyAccountLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (state is MyAccountLoaded) {
-                // Αν τα δεδομένα είναι κενά, δείξε το UserInfoPopup
                 if (state.dateOfBirth == null || state.disabilityType == null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     showDialog(
@@ -82,7 +81,7 @@ class MyAccountScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       ),
                       icon: const Icon(Icons.edit, size: 16),
-                      label: const Text("Edit Info", style: TextStyle(fontSize: 13)),
+                      label: const Text("Τροποποίηση στοιχείων", style: TextStyle(fontSize: 13)),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -104,16 +103,16 @@ class MyAccountScreen extends StatelessWidget {
                         children: [
                           infoRow(Icons.email, "Email:", state.email),
                           if (state.dateOfBirth != null)
-                            infoRow(Icons.calendar_today, "Date of birth:", state.dateOfBirth!),
+                            infoRow(Icons.calendar_today, "Ημερομηνία Γέννησης:", state.dateOfBirth!),
                           if (state.disabilityType != null)
-                            infoRow(Icons.accessibility_new, "Disability kind:", state.disabilityType!),
+                            infoRow(Icons.accessibility_new, "Είδος αναπηρίας:", state.disabilityType!),
                         ],
                       ),
                     ),
                     const SizedBox(height: 30),
                     ListTile(
                       leading: const Icon(Icons.route),
-                      title: const Text('Saved Routes'),
+                      title: const Text('Αποθηκευμένες Διαδρομές'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // TODO: Navigate to Saved Routes
@@ -121,7 +120,7 @@ class MyAccountScreen extends StatelessWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.palette),
-                      title: const Text('Customizable UI'),
+                      title: const Text('Προσαρμογή Εφαρμογής'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
                         // TODO: Navigate to Customizable UI settings
@@ -132,7 +131,7 @@ class MyAccountScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(16.0),
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.logout),
-                        label: const Text('Sign Out'),
+                        label: const Text('Αποσύνδεση'),
                         onPressed: () {
                           context.read<MyAccountBloc>().add(SignOutRequested());
                         },
@@ -146,14 +145,13 @@ class MyAccountScreen extends StatelessWidget {
                   ],
                 );
               } else if (state is MyAccountError) {
-                return Center(child: Text('Error: ${state.message}'));
+                return Center(child: Text('Κάτι πήγε λάθος. ${state.message}'));
               }
-              return const Center(child: Text("No user data found"));
+              return const Center(child: Text(" Ο λογαριασμός δεν βρέθηκε."));
             },
           ),
           bottomNavigationBar: const BottomNavBar(),
         ),
-      ),
     );
   }
 
