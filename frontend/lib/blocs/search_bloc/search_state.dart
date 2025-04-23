@@ -1,4 +1,4 @@
-import 'package:access/models/mapbox_feature.dart';
+part of 'search_bloc.dart';
 
 /// Base class for all states related to the search feature
 abstract class SearchState {}

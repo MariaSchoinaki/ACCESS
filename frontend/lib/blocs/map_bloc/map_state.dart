@@ -1,4 +1,4 @@
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+part of 'map_bloc.dart';
 
 /// Holds the current state of the map including controller and zoom
 class MapState {

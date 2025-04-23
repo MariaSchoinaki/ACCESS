@@ -1,3 +1,5 @@
+part of 'search_bloc.dart';
+
 /// Base class for all search-related events
 abstract class SearchEvent {}
 

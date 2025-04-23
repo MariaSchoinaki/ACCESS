@@ -1,4 +1,4 @@
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+part of 'map_bloc.dart';
 
 /// Base class for all map-related events
 abstract class MapEvent {}

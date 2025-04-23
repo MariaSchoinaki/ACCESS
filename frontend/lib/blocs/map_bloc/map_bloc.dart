@@ -4,10 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:permission_handler/permission_handler.dart';
-import '../../services/map_service.dart';
 
-import 'map_event.dart';
-import 'map_state.dart';
+part 'map_event.dart';
+part 'map_state.dart';
 
 /// Bloc that manages all map-related events and state using Mapbox
 class MapBloc extends Bloc<MapEvent, MapState> {
@@ -54,20 +53,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           }),
         ),
       );
-
-      // Optional: Add circle layer to show user visually (can be uncommented)
-      /*
-      await state.mapController?.style.addLayer(
-        mapbox.CircleLayer(
-          id: 'user-location-layer',
-          sourceId: 'user-location-source',
-          circleColor: 4281558371,
-          circleRadius: 8,
-          circleStrokeColor: 0,
-          circleStrokeWidth: 2,
-        ),
-      );
-      */
     });
 
     // Increase map zoom level
