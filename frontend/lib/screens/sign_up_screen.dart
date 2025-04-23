@@ -71,7 +71,7 @@ class _SignUpViewState extends State<SignUpView> {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(48.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
@@ -81,14 +81,14 @@ class _SignUpViewState extends State<SignUpView> {
               ),
               const SizedBox(height: 12.0),
               const Text(
-                'Create an account',
+                'Δημιούργηστε τον λογαριασμό σας',
                 style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8.0),
               const Text(
-                'Enter your details to sign up',
+                'Συμπλήρωστε τα στοιχεία σας για να εγγραφείτε',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16.0),
+                style: TextStyle(fontSize: 12.0),
               ),
               const SizedBox(height: 16.0),
               BlocBuilder<SignUpBloc, SignUpState>(
@@ -98,7 +98,7 @@ class _SignUpViewState extends State<SignUpView> {
                     key: const Key('signUpForm_emailInput_textField'),
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      errorText: _emailTouched && !state.isEmailValid ? 'Please enter a valid email' : null,
+                      errorText: _emailTouched && !state.isEmailValid ? 'Πληκτρολογήστε ένα έγκυρο email' : null,
                       border: theme.inputDecorationTheme.border,
                       errorBorder: theme.inputDecorationTheme.errorBorder,
                       focusedErrorBorder: theme.inputDecorationTheme.focusedErrorBorder,
@@ -118,9 +118,9 @@ class _SignUpViewState extends State<SignUpView> {
                     key: const Key('signUpForm_passwordInput_textField'),
                     obscureText: _passwordObscured,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: 'Κωδικός Πρόσβασης',
                       errorText: _passwordTouched && !state.isPasswordValid
-                          ? 'Password must be at least 6 characters'
+                          ? 'Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες'
                           : null,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -150,9 +150,9 @@ class _SignUpViewState extends State<SignUpView> {
                     obscureText: _confirmPasswordObscured,
                     key: const Key('signUpForm_confirmPasswordInput_textField'),
                     decoration: InputDecoration(
-                      labelText: 'Confirm Password',
+                      labelText: 'Επιβεβαιώση κωδικού',
                       errorText: _confirmPasswordTouched && !state.isConfirmPasswordValid
-                          ? 'Passwords do not match'
+                          ? 'Οι κωδικοί πρόσβασης δεν ταιριάζουν'
                           : null,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -199,25 +199,44 @@ class _SignUpViewState extends State<SignUpView> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           )
                               : const Text(
-                            'Sign Up',
+                            'Σύνδεση',
                           ),
                         ),
                       ),
                       Column(
                         children: [
-                          const SizedBox(height: 12.0),
-                          const Text(
-                            'or',
-                            style: TextStyle(fontSize: 14.0, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: const [
+                              Expanded(child: Divider()),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text('ή'),
+                              ),
+                              Expanded(child: Divider()),
+                            ],
                           ),
-                          const SizedBox(height: 12.0),
-                          GestureDetector(
-                            onTap: () {
-                              context.read<SignUpBloc>().add(SignUpWithGoogleRequested());
-                            },
-                            child: Image.asset(
-                              'assets/images/android_signup.png',
-                              height: 55.0,
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                context.read<SignUpBloc>().add(SignUpWithGoogleRequested());
+                              },
+                              icon: Image.asset(
+                                'assets/images/google_logo.png',
+                                height: 25,
+                              ),
+                              label: const Text('Εγγραφή με Google'),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: AppColors.white,
+                                foregroundColor: AppColors.textPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: BorderSide(color: AppColors.grey),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -227,10 +246,23 @@ class _SignUpViewState extends State<SignUpView> {
                 },
               ),
               const SizedBox(height: 16.0),
-              const Text(
-                'By signing up, you agree to our Terms of Service and Privacy Policy',
+              const Text.rich(
+                TextSpan(
+                  text: 'Πατώντας συνέχεια, αποδέχεστε τους ',
+                  children: [
+                    TextSpan(
+                      text: 'Όρους Χρήσης',
+                      style: TextStyle(decoration: TextDecoration.underline),
+                    ),
+                    TextSpan(text: ' και την '),
+                    TextSpan(
+                      text: 'Πολιτική Απορρήτου',
+                      style: TextStyle(decoration: TextDecoration.underline),
+                    ),
+                  ],
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12.0, color: Colors.grey),
+                style: TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 8.0),
               BlocListener<SignUpBloc, SignUpState>(
@@ -239,7 +271,7 @@ class _SignUpViewState extends State<SignUpView> {
                     ScaffoldMessenger.of(context)
                       ..hideCurrentSnackBar()
                       ..showSnackBar(
-                        const SnackBar(content: Text('Sign Up Successful!')),
+                        const SnackBar(content: Text('Επιτυχής Σύνδεση!')),
                       );
                     Navigator.of(context).pushReplacementNamed('/myaccount');
                   }  else if (state.status == SignUpStatus.failure) {
@@ -257,13 +289,13 @@ class _SignUpViewState extends State<SignUpView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Already have an account? '),
+                  const Text('Έχετε ήδη λογαριασμό; '),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushReplacementNamed(context, '/login');
                     },
                     child: const Text(
-                      'Log in',
+                      'Συνδεθείτε',
                       style: TextStyle(
                         decoration: TextDecoration.underline,
                         fontWeight: FontWeight.bold,

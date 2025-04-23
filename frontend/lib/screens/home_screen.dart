@@ -1,18 +1,18 @@
-import 'package:access/screens/sign_up_screen.dart';
-import 'package:access/theme/app_colors.dart';
-//import 'package:access/theme/box_decoration.dart';
+
+///General Imports
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
+
+///Bloc Imports
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/map_bloc/map_bloc.dart';
-import '../blocs/map_bloc/map_event.dart';
-import '../blocs/map_bloc/map_state.dart';
 import '../blocs/search_bloc/search_bloc.dart';
-import '../blocs/search_bloc/search_event.dart';
-import '../blocs/search_bloc/search_state.dart';
+
+///Services Imports
 import '../services/search_service.dart';
-import 'myaccount_screen.dart';
+
+///Widget and Theme Imports
+import 'package:access/theme/app_colors.dart';
 import '../widgets/bottom_bar.dart';
 
 class HomePage extends StatefulWidget {
@@ -123,7 +123,7 @@ class _HomePageState extends State<HomePage> {
                                     },
                                   ),
                                 if (state is SearchError)
-                                  Text('Error: ${state.message}', style: theme.textTheme.bodyMedium),
+                                  Text('Κάτι πήγε λάθος! Ξαναπροσπάθησε αργότερα. ${state.message}', style: theme.textTheme.bodyMedium),
                               ],
                             );
                           },
@@ -181,7 +181,7 @@ class _HomePageState extends State<HomePage> {
                               ElevatedButton.icon(
                                 onPressed: () {},
                                 icon: const Icon(Icons.play_arrow),
-                                label: const Text('Start'),
+                                label: const Text('Έναρξη'),
                               ),
                             ],
                           ),

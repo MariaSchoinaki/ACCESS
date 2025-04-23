@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/login_bloc/login_bloc.dart';
+import '../theme/app_colors.dart';
 import '../widgets/bottom_bar.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -77,18 +78,9 @@ class __LoginViewState extends State<_LoginView> {
                 children: [
                   const SizedBox(height: 48),
                   Image.asset('assets/images/logo.png', height: 120),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'ACCESS',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Log in to your account',
+                    'Συνδεθείτε στον λογαριασμό σας',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -96,9 +88,10 @@ class __LoginViewState extends State<_LoginView> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Enter your email and password to continue',
+                    textAlign: TextAlign.center,
+                    'Εισάγετε το email και τον κωδικό σας για να συνεχίσετε',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -115,10 +108,10 @@ class __LoginViewState extends State<_LoginView> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return 'Πληκρολόγηστε το email σας';
                       }
                       if (!EmailValidator.validate(value)) {
-                        return 'Enter a valid email';
+                        return 'Πληκτρολογήστε ένα έγκυρο email';
                       }
                       return null;
                     },
@@ -128,7 +121,7 @@ class __LoginViewState extends State<_LoginView> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      hintText: 'Password',
+                      hintText: 'Κωδικός Πρόσβασης',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -149,10 +142,10 @@ class __LoginViewState extends State<_LoginView> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return 'Πληκτρολόγηστε τον κωδικό σας';
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return 'Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες';
                       }
                       return null;
                     },
@@ -161,50 +154,92 @@ class __LoginViewState extends State<_LoginView> {
                   const SizedBox(height: 16),
                   BlocBuilder<LoginBloc, LoginState>(
                     builder: (context, state) {
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: state.status == LoginStatus.loading // Ελέγχουμε αν η κατάσταση είναι 'loading'
-                              ? null // Αν είναι, αποτρέπουμε την αποστολή
-                              : () {
-                            if (_formKey.currentState!.validate()) {
-                              context.read<LoginBloc>().add(
-                                LoginSubmitted(
-                                  email: _emailController.text,
-                                  password: _passwordController.text,
+                      return Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: state.status == LoginStatus.loading
+                                  ? null
+                                  : () {
+                                if (_formKey.currentState!.validate()) {
+                                  context.read<LoginBloc>().add(
+                                    LoginSubmitted(
+                                      email: _emailController.text,
+                                      password: _passwordController.text,
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: state.status == LoginStatus.loading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text(
+                                'Συνέχεια',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                          child: state.status == LoginStatus.loading // Ελέγχουμε αν η κατάσταση είναι 'loading'
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text(
-                            'Continue',
-                            style: TextStyle(color: Colors.white),
+                          const SizedBox(height: 16),
+
+                          /// or text
+                          Row(
+                            children: const [
+                              Expanded(child: Divider()),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text('ή'),
+                              ),
+                              Expanded(child: Divider()),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 16),
+
+                          /// Google Log In Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                context.read<LoginBloc>().add(LoginWithGoogleSubmitted());
+                              },
+                              icon: Image.asset(
+                                'assets/images/google_logo.png',
+                                height: 25,
+                              ),
+                              label: const Text('Σύνδεση με Google'),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: AppColors.white,
+                                foregroundColor: AppColors.textPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: BorderSide(color: AppColors.grey),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
                   const SizedBox(height: 16),
                   const Text.rich(
                     TextSpan(
-                      text: 'By clicking continue, you agree to our ',
+                      text: 'Πατώντας συνέχεια, αποδέχεστε τους ',
                       children: [
                         TextSpan(
-                          text: 'Terms of Service',
+                          text: 'Όρους Χρήσης',
                           style: TextStyle(decoration: TextDecoration.underline),
                         ),
-                        TextSpan(text: ' and '),
+                        TextSpan(text: ' και την '),
                         TextSpan(
-                          text: 'Privacy Policy',
+                          text: 'Πολιτική Απορρήτου',
                           style: TextStyle(decoration: TextDecoration.underline),
                         ),
                       ],
@@ -216,13 +251,13 @@ class __LoginViewState extends State<_LoginView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Don’t have an account? '),
+                      const Text('Δεν έχετε λογαριασμό; '),
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacementNamed(context, '/signup');
                         },
                         child: const Text(
-                          'Sign Up',
+                          'Εγγραφείτε',
                           style: TextStyle(
                             decoration: TextDecoration.underline,
                             fontWeight: FontWeight.bold,
