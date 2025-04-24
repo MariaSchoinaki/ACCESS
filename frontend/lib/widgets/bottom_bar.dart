@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/home_screen.dart';
 import '../utils/auth_gate.dart';
 
@@ -19,10 +21,23 @@ class BottomNavBar extends StatelessWidget {
     }
   }
 
+  Future<void> _openCamera(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      print('Image path: ${pickedFile.path}');
+    } else {
+      print('No image selected.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
     return Container(
-      height: 55, // Σταθερό ύψος
+      height: 55,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
@@ -39,25 +54,29 @@ class BottomNavBar extends StatelessWidget {
           ),
         ),
       ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          IconButton(
+            onPressed: () => _navigateToScreen(context, const HomePage(), '/home'),
+            icon: const Icon(Icons.home, size: 30),
+          ),
+          if (user != null) // Εμφανίζεται μόνο αν είναι συνδεδεμένος
             IconButton(
-              onPressed: () => _navigateToScreen(context, const HomePage(), '/home'),
-              icon: const Icon(Icons.home, size: 30),
+              onPressed: () => _openCamera(context),
+              icon: const Icon(Icons.camera_alt, size: 30),
             ),
-            IconButton(
-              onPressed: () {
-                // Ειδικός έλεγχος για signup/login
-                final currentRoute = ModalRoute.of(context)?.settings.name;
-                if (currentRoute != '/signup' && currentRoute != '/login') {
-                  _navigateToScreen(context, const AuthGate(), '/profile');
-                }
-              },
-              icon: const Icon(Icons.person, size: 30),
-            ),
-          ],
-        ),
+          IconButton(
+            onPressed: () {
+              final currentRoute = ModalRoute.of(context)?.settings.name;
+              if (currentRoute != '/signup' && currentRoute != '/login') {
+                _navigateToScreen(context, const AuthGate(), '/profile');
+              }
+            },
+            icon: const Icon(Icons.person, size: 30),
+          ),
+        ],
+      ),
     );
   }
 }

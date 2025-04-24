@@ -17,6 +17,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
   bool _dialogShown = false;
 
   @override
+  void initState() {
+    super.initState();
+    context.read<MyAccountBloc>().add(LoadUserProfile());
+  }
+
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -115,7 +122,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         if (state.dateOfBirth != null)
                           infoRow(Icons.calendar_today, "Ημερομηνία Γέννησης:", state.dateOfBirth!),
                         if (state.disabilityType != null)
-                          infoRow(Icons.accessibility_new, "Είδος αναπηρίας:", state.disabilityType!),
+                          infoRow(Icons.accessibility_new, "Είδος κινητικής δυσκολίας:", state.disabilityType!),
                         const SizedBox(height: 30),
                         ListTile(
                           leading: const Icon(Icons.route),
