@@ -117,15 +117,31 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                         if (state.disabilityType != null)
                           infoRow(Icons.accessibility_new, "Είδος αναπηρίας:", state.disabilityType!),
                         const SizedBox(height: 30),
-                        const ListTile(
-                          leading: Icon(Icons.route),
-                          title: Text('Αποθηκευμένες Διαδρομές'),
-                          trailing: Icon(Icons.chevron_right),
+                        ListTile(
+                          leading: const Icon(Icons.route),
+                          title: const Text('Αποθηκευμένες Διαδρομές'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            // TODO: Να υλοποιηθεί πλοήγηση σε σελίδα αποθηκευμένων διαδρομών
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Η λειτουργία "Αποθηκευμένες Διαδρομές" θα υλοποιηθεί σύντομα!'),
+                              ),
+                            );
+                          },
                         ),
-                        const ListTile(
-                          leading: Icon(Icons.palette),
-                          title: Text('Προσαρμογή Εφαρμογής'),
-                          trailing: Icon(Icons.chevron_right),
+                        ListTile(
+                          leading: const Icon(Icons.palette),
+                          title: const Text('Προσαρμογή Εφαρμογής'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            // TODO: Να υλοποιηθεί πλοήγηση σε σελίδα προσαρμογής θέματος/εμφάνισης
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Η λειτουργία "Προσαρμογή Εφαρμογής" θα υλοποιηθεί σύντομα!'),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
