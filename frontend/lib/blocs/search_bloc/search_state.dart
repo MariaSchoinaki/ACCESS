@@ -70,3 +70,19 @@ class CoordinatesError extends SearchState {
 
   CoordinatesError(this.message);
 }
+
+class NameLoading extends SearchState {}
+
+/// State when coordinates are successfully retrieved
+class NameLoaded extends SearchState {
+  final MapboxFeature feature;
+
+  NameLoaded(this.feature);
+}
+
+/// State when an error occurs during coordinates retrieval
+class NameError extends SearchState {
+  final String message;
+
+  NameError(this.message);
+}

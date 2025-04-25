@@ -109,4 +109,32 @@ class SearchService {
       throw SearchException(e.message ?? 'Dio error: ${e.error}');
     }
   }
+
+  Future<MapboxFeature> retrieveNameFromCoordinates(double latitude, double longitude) async {
+    try {
+      final response = await _dio.get(
+        '/getname',
+        queryParameters: {
+          'lat': latitude,
+          'lng': longitude,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw SearchException('Unexpected status code: ${response.statusCode}');
+      }
+      print(response.data);
+      final featureData = response.data['result'];
+      print(featureData);
+      return MapboxFeature.fromJson(featureData);
+
+    } on DioException catch (e) {
+      print('[SearchService] DioException');
+      print('    • type: ${e.type}');
+      print('    • error: ${e.error}');
+      print('    • response: ${e.response}');
+      print('    • message: ${e.message}');
+      throw SearchException(e.message ?? 'Dio error: ${e.error}');
+    }
+  }
 }

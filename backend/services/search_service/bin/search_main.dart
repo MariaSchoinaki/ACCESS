@@ -12,6 +12,8 @@ Future<void> main() async {
       .addHandler((Request request) async {
     if (request.url.path == 'retrieve') {
       return await handleCoordinatesRequest(request);
+    }else if (request.url.path == 'getname'){
+      return await getLocationNameFromMapbox(request);
     }
     return await handleSearchRequest(request);  // Υπάρχων handler για search
   }); // Defined in lib/search_service.dart

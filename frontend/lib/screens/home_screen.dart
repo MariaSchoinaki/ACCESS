@@ -23,6 +23,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String location = '';
+  String addressName = 'gloy';
   final TextEditingController _searchController = TextEditingController();
   mapbox.MapboxMap? mapboxMap;
 
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
     });
     _searchController.text = location;
     widgetContext.read<MapBloc>().add(AddMarker(lat, lng));
+    widgetContext.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
   }
 
   _onTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
@@ -73,10 +75,13 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: BlocListener<SearchBloc, SearchState>(
           listener: (context, state) {
+
+            ///for search
             if (state is CoordinatesLoaded) {
               final feature = state.feature;
               final latitude = feature.latitude;
               final longitude = feature.longitude;
+              addressName = feature.fullAddress;
 
               _onSearchResultReceived(latitude, longitude);
               context.read<MapBloc>().add(FlyTo(latitude, longitude));
@@ -84,6 +89,15 @@ class _HomePageState extends State<HomePage> {
             } else if (state is CoordinatesError) {
               print("Error: ${state.message}");
             }
+            if (state is NameLoaded) {
+              print('Name Loaded: ${state.feature.fullAddress}');
+              setState(() {
+                addressName = state.feature.fullAddress;
+              });
+            } else if (state is NameError) {
+              print('Error: ${state.message}');
+            }
+
           },
           child: BlocBuilder<MapBloc, MapState>(
             builder: (context, mapState) {
@@ -188,10 +202,19 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              addressName,
+                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.black87),
+                            ),
+                            const SizedBox(height: 4),
+
+                            // Coordinates
+                            Text(
                               'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
-                              style: theme.textTheme.bodyMedium,
+                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
                             ),
                             const SizedBox(height: 10),
+
+                            // Button
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [

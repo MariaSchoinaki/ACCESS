@@ -14,6 +14,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     // Register event handler for query changes
     on<SearchQueryChanged>(_onSearchQueryChanged);
     on<RetrieveCoordinatesEvent>(_onRetrieveCoordinates);
+    on<RetrieveNameFromCoordinatesEvent>(_onRetrieveNameFromCoordinates);
   }
 
   /// Handles the search query update
@@ -52,6 +53,21 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       emit(CoordinatesLoaded(feature)); // Emit loaded state with the coordinates
     } catch (e) {
       emit(CoordinatesError('Failed to retrieve coordinates: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onRetrieveNameFromCoordinates(
+      RetrieveNameFromCoordinatesEvent event,
+      Emitter<SearchState> emit,
+      ) async {
+    emit(NameLoading()); // Set loading state for coordinates
+
+    try {
+      final feature = await searchService.retrieveNameFromCoordinates(event.latitude, event.longitude);
+      print("hehe " + feature.toString());
+      emit(NameLoaded(feature)); // Emit loaded state with the coordinates
+    } catch (e) {
+      emit(NameError('Failed to retrieve coordinates: ${e.toString()}'));
     }
   }
 }

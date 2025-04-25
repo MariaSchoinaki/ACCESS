@@ -30,3 +30,10 @@ class RetrieveCoordinatesEvent extends SearchEvent {
 
   RetrieveCoordinatesEvent(this.mapboxId);
 }
+
+class RetrieveNameFromCoordinatesEvent extends SearchEvent {
+  final double latitude;
+  final double longitude;
+
+  RetrieveNameFromCoordinatesEvent(this.latitude, this.longitude);
+}
