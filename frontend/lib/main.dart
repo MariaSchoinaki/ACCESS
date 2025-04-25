@@ -51,13 +51,13 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: const HomePage(),
+      initialRoute: '/home',
       routes: {
+        '/home': (context) => const HomePage(),
         '/signup': (context) => SignUpPage(),
         '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
         '/myaccount': (context) => const MyAccountScreen(),
-
       },
     );
   }
