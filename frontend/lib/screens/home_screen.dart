@@ -13,6 +13,9 @@ import '../services/search_service.dart';
 ///Widget and Theme Imports
 import 'package:access/theme/app_colors.dart';
 import '../widgets/bottom_bar.dart';
+import '../widgets/location_card.dart';
+import '../widgets/zoom_controls.dart';
+import '../widgets/search_bar.dart' as SB;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,7 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String location = '';
-  String addressName = 'gloy';
+  String addressName = '';
   final TextEditingController _searchController = TextEditingController();
   mapbox.MapboxMap? mapboxMap;
 
@@ -89,6 +92,7 @@ class _HomePageState extends State<HomePage> {
             } else if (state is CoordinatesError) {
               print("Error: ${state.message}");
             }
+            ///for geocoding
             if (state is NameLoaded) {
               print('Name Loaded: ${state.feature.fullAddress}');
               setState(() {
@@ -105,63 +109,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Column(
                     children: [
-                      Container(
-                        color: theme.scaffoldBackgroundColor,
-                        padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
-                          ),
-                          child: BlocBuilder<SearchBloc, SearchState>(
-                            builder: (context, state) {
-                              return Column(
-                                children: [
-                                  TextField(
-                                    controller: _searchController,
-                                    onSubmitted: (value) {
-                                      context.read<SearchBloc>().add(SearchQueryChanged(value));
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Αναζήτηση...',
-                                      prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.all(12),
-                                      hintStyle: theme.inputDecorationTheme.hintStyle,
-                                    ),
-                                  ),
-                                  if (state is SearchLoading)
-                                    const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  if (state is SearchLoaded)
-                                    ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      itemCount: state.results.length,
-                                      itemBuilder: (context, index) {
-                                        final result = state.results[index];
-                                        return ListTile(
-                                          title: Text(result.name, style: theme.textTheme.bodyMedium),
-                                          onTap: () {
-                                            _searchController.text = result.name;
-                                            FocusScope.of(context).unfocus();
-                                            context.read<SearchBloc>().add(SearchQueryChanged(""));
-                                            context.read<SearchBloc>().add(RetrieveCoordinatesEvent(result.id));
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  if (state is SearchError)
-                                    Text('Κάτι πήγε λάθος! Ξαναπροσπάθησε αργότερα. ${state.message}', style: theme.textTheme.bodyMedium),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+                      SB.SearchBar(searchController: _searchController),
                       Expanded(
                         child: mapbox.MapWidget(
                           key: const ValueKey("mapWidget"),
@@ -192,41 +140,9 @@ class _HomePageState extends State<HomePage> {
                       left: 0,
                       right: 0,
                       bottom: -10,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: theme.scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addressName,
-                              style: theme.textTheme.titleMedium?.copyWith(color: Colors.black87),
-                            ),
-                            const SizedBox(height: 4),
-
-                            // Coordinates
-                            Text(
-                              'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
-                              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 10),
-
-                            // Button
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () {},
-                                  icon: const Icon(Icons.play_arrow),
-                                  label: const Text('Έναρξη'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      child: LocationInfoCard(
+                        addressName: addressName,
+                        location: location,
                       ),
                     ),
 
@@ -234,36 +150,7 @@ class _HomePageState extends State<HomePage> {
                   Positioned(
                     right: 16,
                     bottom: (location.isNotEmpty) ? 120 : 80,
-                    child: Column(
-                      children: [
-                        FloatingActionButton(
-                          heroTag: "location",
-                          mini: true,
-                          onPressed: () => context.read<MapBloc>().add(GetCurrentLocation()),
-                          backgroundColor: theme.hoverColor,
-                          foregroundColor: AppColors.white,
-                          child: const Icon(Icons.my_location),
-                        ),
-                        const SizedBox(height: 10),
-                        FloatingActionButton(
-                          heroTag: "zoomIn",
-                          mini: true,
-                          onPressed: () => context.read<MapBloc>().add(ZoomIn()),
-                          backgroundColor: theme.hoverColor,
-                          foregroundColor: AppColors.white,
-                          child: const Icon(Icons.add),
-                        ),
-                        const SizedBox(height: 10),
-                        FloatingActionButton(
-                          heroTag: "zoomOut",
-                          mini: true,
-                          onPressed: () => context.read<MapBloc>().add(ZoomOut()),
-                          backgroundColor: theme.hoverColor,
-                          foregroundColor: AppColors.white,
-                          child: const Icon(Icons.remove),
-                        ),
-                      ],
-                    ),
+                    child: ZoomControls(),
                   ),
                 ],
               );
