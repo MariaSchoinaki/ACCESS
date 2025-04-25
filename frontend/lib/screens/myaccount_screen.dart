@@ -61,13 +61,13 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   showDialog(
                     context: context,
-                    builder: (context) => UserInfoPopup(
+                    builder: (dialogContext) => UserInfoPopup(
                       onSubmit: (birthDate, disabilityType) {
                         context.read<MyAccountBloc>().add(UpdateUserInfo(
                           dateOfBirth: birthDate,
                           disabilityType: disabilityType,
                         ));
-                        Navigator.pop(context); // Κλείσιμο διαλόγου
+                         // Κλείσιμο διαλόγου
                       },
                     ),
                   );
@@ -101,13 +101,12 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (context) => UserInfoPopup(
+                        builder: (dialogContext) => UserInfoPopup(
                           onSubmit: (birthDate, disabilityType) {
                             context.read<MyAccountBloc>().add(UpdateUserInfo(
                               dateOfBirth: birthDate,
                               disabilityType: disabilityType,
                             ));
-                            Navigator.pop(context); // Κλείσιμο διαλόγου
                           },
                         ),
                       );
