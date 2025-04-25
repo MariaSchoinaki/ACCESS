@@ -149,7 +149,6 @@ Future<Response> handleCoordinatesRequest(Request request) async {
       'poi_category': featureData['properties']['poi_category'],
     };
 
-    // Επιστρέφουμε τις συντεταγμένες με σαφήνεια
     return Response.ok(
       jsonEncode({'result': result}),
       headers: {'Content-Type': 'application/json'},
@@ -241,11 +240,10 @@ Future<Response> getLocationNameFromMapbox(Request request) async {
       'geometry': featureData['geometry'],
       'address': featureData['properties']['name_preferred'],
       'full_address': featureData['properties']['full_address'],
-      'metadata': '',
+      'metadata': {},
       'poi_category': [featureData['properties']['feature_type']],
     };
 
-    // Επιστρέφουμε τις συντεταγμένες με σαφήνεια
     return Response.ok(
       jsonEncode({'result': result}),
       headers: {'Content-Type': 'application/json'},

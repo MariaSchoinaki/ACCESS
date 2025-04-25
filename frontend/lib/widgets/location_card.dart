@@ -1,14 +1,13 @@
-// location_info_card.dart
 import 'package:flutter/material.dart';
 
+import '../models/mapbox_feature.dart';
+
 class LocationInfoCard extends StatelessWidget {
-  final String addressName;
-  final String location;
+  final MapboxFeature? feature;
 
   const LocationInfoCard({
     Key? key,
-    required this.addressName,
-    required this.location,
+    required this.feature,
   }) : super(key: key);
 
   @override
@@ -25,12 +24,32 @@ class LocationInfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            addressName,
-            style: theme.textTheme.titleMedium?.copyWith(color: Colors.black87),
+            feature!.name,
+            style: theme.textTheme.titleLarge,
+          ),
+          Text(
+            feature!.fullAddress,
+            style: theme.textTheme.titleSmall,
+          ),
+          if (feature!.poiCategory.contains('address') == false)
+            Text(
+              feature!.poiCategory.join(', '),
+              style: theme.textTheme.titleSmall,
+            ),
+          if (feature!.poiCategory.contains('address') == true)
+            SizedBox(),
+          Row(
+            children: [
+              Text('Προσβασιμότητα: '),
+              Icon(
+                feature!.accessibleFriendly ? Icons.accessible : Icons.not_accessible,
+                color: feature!.accessibleFriendly ? Colors.green : Colors.red,
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
+            'Lat: ${feature?.latitude}   Lon: ${feature?.longitude}',
             style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
           ),
           const SizedBox(height: 10),
@@ -38,9 +57,19 @@ class LocationInfoCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  ///TODO: navigate to mapbox directions
+                },
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Έναρξη'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ///TODO: navigate to mapbox directions
+                },
+                icon: const Icon(Icons.directions),
+                label: const Text('Οδηγίες'),
               ),
             ],
           ),

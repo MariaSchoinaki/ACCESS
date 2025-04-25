@@ -5,6 +5,8 @@ class MapboxFeature {
   final double longitude;
   final String fullAddress;
   final List<String> poiCategory;
+  final List<String> metadata;
+  final bool accessibleFriendly;
 
   MapboxFeature({
     required this.id,
@@ -13,20 +15,22 @@ class MapboxFeature {
     required this.longitude,
     required this.fullAddress,
     required this.poiCategory,
+    required this.metadata,
+    required this.accessibleFriendly,
   });
 
-  // Factory constructor για να δημιουργήσουμε το MapboxFeature από το JSON
+  // Factory constructor to create a MapboxFeature from JSON
   factory MapboxFeature.fromJson(Map<String, dynamic> json) {
-    // Εξαγωγή συντεταγμένων
-    print(json);
-    final coords = json['geometry']?['coordinates'] ?? [0.0, 0.0];
 
-    print((coords[1] as num).toDouble());
-    // Εξαγωγή άλλων πληροφοριών
+    ///coords comes in a list
+    final coords = json['geometry']?['coordinates'] ?? [0.0, 0.0];
     final name = json['name'] ?? 'Unnamed Location';
-    print(name);
     final fullAddress = json['full_address'] ?? '';
     final poiCategory = List<String>.from(json['poi_category'] ?? []);
+
+    ///metadata is either {something} or {}
+    final  metadata = json['metadata'] as Map<String, dynamic>? ?? {};
+    final accessible = metadata.containsKey('wheelchair_accessible') && metadata['wheelchair_accessible'] == true;
 
     return MapboxFeature(
       id: json['mapbox_id'] ?? 'unknown_id',
@@ -35,6 +39,8 @@ class MapboxFeature {
       longitude: (coords[0] as num).toDouble(),
       fullAddress: fullAddress,
       poiCategory: poiCategory,
+      metadata: metadata.entries.map((e) => '${e.key}: ${e.value}').toList(),
+      accessibleFriendly: accessible,
     );
   }
 

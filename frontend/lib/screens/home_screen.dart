@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 
+import '../models/mapbox_feature.dart';
 ///Services Imports
 import '../services/search_service.dart';
 
@@ -26,7 +27,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String location = '';
-  String addressName = '';
+  MapboxFeature? selectedFeature;
+
   final TextEditingController _searchController = TextEditingController();
   mapbox.MapboxMap? mapboxMap;
 
@@ -44,7 +46,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       location = '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}';
     });
-    _searchController.text = location;
     widgetContext.read<MapBloc>().add(AddMarker(lat, lng));
     widgetContext.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
   }
@@ -81,12 +82,11 @@ class _HomePageState extends State<HomePage> {
 
             ///for search
             if (state is CoordinatesLoaded) {
-              final feature = state.feature;
-              final latitude = feature.latitude;
-              final longitude = feature.longitude;
-              addressName = feature.fullAddress;
+              selectedFeature = state.feature;
+              final latitude = selectedFeature?.latitude;
+              final longitude = selectedFeature?.longitude;
 
-              _onSearchResultReceived(latitude, longitude);
+              _onSearchResultReceived(latitude!, longitude!);
               context.read<MapBloc>().add(FlyTo(latitude, longitude));
               context.read<MapBloc>().add(AddMarker(latitude, longitude));
             } else if (state is CoordinatesError) {
@@ -96,8 +96,9 @@ class _HomePageState extends State<HomePage> {
             if (state is NameLoaded) {
               print('Name Loaded: ${state.feature.fullAddress}');
               setState(() {
-                addressName = state.feature.fullAddress;
+                selectedFeature = state.feature;
               });
+              _searchController.text = selectedFeature!.fullAddress;
             } else if (state is NameError) {
               print('Error: ${state.message}');
             }
@@ -135,21 +136,20 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  if (location.isNotEmpty)
+                  if (location.isNotEmpty )
                     Positioned(
                       left: 0,
                       right: 0,
                       bottom: -10,
                       child: LocationInfoCard(
-                        addressName: addressName,
-                        location: location,
+                        feature: selectedFeature,
                       ),
                     ),
 
                   //zoom
                   Positioned(
                     right: 16,
-                    bottom: (location.isNotEmpty) ? 120 : 80,
+                    bottom: (location.isNotEmpty) ? 200 : 80,
                     child: ZoomControls(),
                   ),
                 ],

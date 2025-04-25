@@ -13,8 +13,13 @@ ThemeData lightTheme = ThemeData(
   ),
   textTheme: const TextTheme(
     displayLarge: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold, color: AppColors.black),
-    titleLarge: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: AppColors.black),
-    bodyMedium: TextStyle(fontSize: 16.0, color: AppColors.black),
+    titleLarge: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold, color: AppColors.black),
+    bodyMedium: TextStyle(fontSize: 12.0, color: AppColors.black),
+    bodySmall: TextStyle(fontSize: 10.0, color: AppColors.grey),
+    titleSmall: TextStyle(fontSize: 12.0, color: AppColors.grey),
+    labelSmall: TextStyle(fontSize: 10.0, color: AppColors.grey),
+    labelMedium: TextStyle(fontSize: 12.0, color: AppColors.grey),
+    labelLarge: TextStyle(fontSize: 14.0, color: AppColors.black),
   ),
   iconTheme: const IconThemeData(color: AppColors.black),
   inputDecorationTheme: InputDecorationTheme(

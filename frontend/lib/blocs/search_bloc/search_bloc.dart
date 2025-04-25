@@ -64,7 +64,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
     try {
       final feature = await searchService.retrieveNameFromCoordinates(event.latitude, event.longitude);
-      print("hehe " + feature.toString());
       emit(NameLoaded(feature)); // Emit loaded state with the coordinates
     } catch (e) {
       emit(NameError('Failed to retrieve coordinates: ${e.toString()}'));
