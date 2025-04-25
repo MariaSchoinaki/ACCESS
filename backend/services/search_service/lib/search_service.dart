@@ -130,7 +130,8 @@ Future<Response> handleCoordinatesRequest(Request request) async {
      * address: {id: , name: Trias 2, address_number: 2, street_name: trias},
      * street: {id: , name: trias}},
      * coordinates: {latitude: 37.99577261, longitude: 23.7361499, routable_points: [{name: POI, latitude: 37.99575024846219, longitude: 23.736146442322415}]},
-     * language: en, maki: marker, poi_category: [education, university],
+     * language: en, maki: marker,
+     * poi_category: [education, university],
      * poi_category_ids: [education, university], external_ids: {},
      * metadata: {wheelchair_accessible: true},
      * operational_status: active}}
@@ -241,7 +242,7 @@ Future<Response> getLocationNameFromMapbox(Request request) async {
       'address': featureData['properties']['name_preferred'],
       'full_address': featureData['properties']['full_address'],
       'metadata': '',
-      'poi_category': featureData['properties']['feature_type'],
+      'poi_category': [featureData['properties']['feature_type']],
     };
 
     // Επιστρέφουμε τις συντεταγμένες με σαφήνεια
