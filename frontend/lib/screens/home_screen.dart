@@ -1,4 +1,3 @@
-
 ///General Imports
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -53,9 +52,15 @@ class _HomePageState extends State<HomePage> {
     widgetContext.read<MapBloc>().add(DeleteMarker());
   }
 
+  void _onSearchResultReceived(double latitude, double longitude) {
+    setState(() {
+      location = '${latitude.toStringAsFixed(6)},${longitude.toStringAsFixed(6)}';
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
-
     final theme = Theme.of(context);
 
     return MultiBlocProvider(
@@ -66,168 +71,181 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: BlocBuilder<MapBloc, MapState>(
-          builder: (context, state) {
-            return Stack(
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      color: theme.scaffoldBackgroundColor,
-                      padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
-                        ),
-                        child: BlocBuilder<SearchBloc, SearchState>(
-                          builder: (context, state) {
-                            return Column(
-                              children: [
-                                TextField(
-                                  controller: _searchController,
-                                  onSubmitted: (value) {
-                                    context.read<SearchBloc>().add(SearchQueryChanged(value));
-                                  },
-                                  decoration: InputDecoration(
-                                    hintText: 'Αναζήτηση...',
-                                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.all(12),
-                                    hintStyle: theme.inputDecorationTheme.hintStyle,
-                                  ),
-                                ),
-                                if (state is SearchLoading)
-                                  const Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                if (state is SearchLoaded)
-                                  ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    itemCount: state.results.length,
-                                    itemBuilder: (context, index) {
-                                      final result = state.results[index];
-                                      return ListTile(
-                                        title: Text(result.name, style: theme.textTheme.bodyMedium),
-                                        onTap: () {
-                                          _searchController.text = result.name;
-                                          FocusScope.of(context).unfocus();
-                                          context.read<SearchBloc>().add(SearchQueryChanged(""));
-                                          context.read<MapBloc>().add(FlyTo(result.latitude, result.longitude));
-                                          context.read<MapBloc>().add(AddMarker(result.latitude, result.longitude));
-                                        },
-                                      );
+        body: BlocListener<SearchBloc, SearchState>(
+          listener: (context, state) {
+            if (state is CoordinatesLoaded) {
+              final feature = state.feature;
+              final latitude = feature.latitude;
+              final longitude = feature.longitude;
+
+              _onSearchResultReceived(latitude, longitude);
+              context.read<MapBloc>().add(FlyTo(latitude, longitude));
+              context.read<MapBloc>().add(AddMarker(latitude, longitude));
+            } else if (state is CoordinatesError) {
+              print("Error: ${state.message}");
+            }
+          },
+          child: BlocBuilder<MapBloc, MapState>(
+            builder: (context, mapState) {
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      Container(
+                        color: theme.scaffoldBackgroundColor,
+                        padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: theme.hintColor, blurRadius: 6)],
+                          ),
+                          child: BlocBuilder<SearchBloc, SearchState>(
+                            builder: (context, state) {
+                              return Column(
+                                children: [
+                                  TextField(
+                                    controller: _searchController,
+                                    onSubmitted: (value) {
+                                      context.read<SearchBloc>().add(SearchQueryChanged(value));
                                     },
+                                    decoration: InputDecoration(
+                                      hintText: 'Αναζήτηση...',
+                                      prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.all(12),
+                                      hintStyle: theme.inputDecorationTheme.hintStyle,
+                                    ),
                                   ),
-                                if (state is SearchError)
-                                  Text('Κάτι πήγε λάθος! Ξαναπροσπάθησε αργότερα. ${state.message}', style: theme.textTheme.bodyMedium),
-                              ],
-                            );
+                                  if (state is SearchLoading)
+                                    const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  if (state is SearchLoaded)
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: state.results.length,
+                                      itemBuilder: (context, index) {
+                                        final result = state.results[index];
+                                        return ListTile(
+                                          title: Text(result.name, style: theme.textTheme.bodyMedium),
+                                          onTap: () {
+                                            _searchController.text = result.name;
+                                            FocusScope.of(context).unfocus();
+                                            context.read<SearchBloc>().add(SearchQueryChanged(""));
+                                            context.read<SearchBloc>().add(RetrieveCoordinatesEvent(result.id));
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  if (state is SearchError)
+                                    Text('Κάτι πήγε λάθος! Ξαναπροσπάθησε αργότερα. ${state.message}', style: theme.textTheme.bodyMedium),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: mapbox.MapWidget(
+                          key: const ValueKey("mapWidget"),
+                          cameraOptions: initialCameraOptions,
+                          styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+                          onTapListener: (gestureContext) => _onTap(gestureContext, context),
+                          onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
+                          onMapCreated: (controller) {
+                            context.read<MapBloc>().add(InitializeMap(controller));
+                            setState(() {
+                              mapboxMap = controller;
+                              mapboxMap?.location.updateSettings(
+                                  mapbox.LocationComponentSettings(
+                                      enabled: true,
+                                      pulsingEnabled: false,
+                                      showAccuracyRing: true,
+                                      puckBearingEnabled: true
+                                  )
+                              );
+                            });
                           },
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: mapbox.MapWidget(
-                        key: const ValueKey("mapWidget"),
-                        cameraOptions: initialCameraOptions,
-                        styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
-                        onTapListener: (gestureContext) => _onTap(gestureContext, context),
-                        onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
-                        onMapCreated: (controller) {
-                          context.read<MapBloc>().add(InitializeMap(controller));
-                          setState(() {
-                            mapboxMap = controller;
-                            mapboxMap?.location.updateSettings(
-                                mapbox.LocationComponentSettings(
-                                    enabled: true,
-                                    pulsingEnabled: false,
-                                    showAccuracyRing: true,
-                                    puckBearingEnabled: true
-                                )
-                            );
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                if (location.isNotEmpty)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: -10,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: () {},
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Έναρξη'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                //zoom
-                Positioned(
-                  right: 16,
-                  bottom: location.isNotEmpty ? 120 : 80,
-                  child: Column(
-                    children: [
-                      FloatingActionButton(
-                        heroTag: "location",
-                        mini: true,
-                        onPressed: () => context.read<MapBloc>().add(GetCurrentLocation()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
-                        child: const Icon(Icons.my_location),
-                      ),
-                      const SizedBox(height: 10),
-                      FloatingActionButton(
-                        heroTag: "zoomIn",
-                        mini: true,
-                        onPressed: () => context.read<MapBloc>().add(ZoomIn()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
-                        child: const Icon(Icons.add),
-                      ),
-                      const SizedBox(height: 10),
-                      FloatingActionButton(
-                        heroTag: "zoomOut",
-                        mini: true,
-                        onPressed: () => context.read<MapBloc>().add(ZoomOut()),
-                        backgroundColor: theme.hoverColor,
-                        foregroundColor: AppColors.white,
-                        child: const Icon(Icons.remove),
-                      ),
                     ],
                   ),
-                ),
-              ],
-            );
-          },
+                  if (location.isNotEmpty)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: -10,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: theme.scaffoldBackgroundColor,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Lat: ${location.split(',')[0]}   Lon: ${location.split(',')[1]}',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {},
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Έναρξη'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  //zoom
+                  Positioned(
+                    right: 16,
+                    bottom: (location.isNotEmpty) ? 120 : 80,
+                    child: Column(
+                      children: [
+                        FloatingActionButton(
+                          heroTag: "location",
+                          mini: true,
+                          onPressed: () => context.read<MapBloc>().add(GetCurrentLocation()),
+                          backgroundColor: theme.hoverColor,
+                          foregroundColor: AppColors.white,
+                          child: const Icon(Icons.my_location),
+                        ),
+                        const SizedBox(height: 10),
+                        FloatingActionButton(
+                          heroTag: "zoomIn",
+                          mini: true,
+                          onPressed: () => context.read<MapBloc>().add(ZoomIn()),
+                          backgroundColor: theme.hoverColor,
+                          foregroundColor: AppColors.white,
+                          child: const Icon(Icons.add),
+                        ),
+                        const SizedBox(height: 10),
+                        FloatingActionButton(
+                          heroTag: "zoomOut",
+                          mini: true,
+                          onPressed: () => context.read<MapBloc>().add(ZoomOut()),
+                          backgroundColor: theme.hoverColor,
+                          foregroundColor: AppColors.white,
+                          child: const Icon(Icons.remove),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
         bottomNavigationBar: const BottomNavBar(),
       ),
