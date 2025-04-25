@@ -8,16 +8,23 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<User?>(
-      future: FirebaseAuth.instance.authStateChanges().first,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // Εμφάνιση φόρτωσης όσο περιμένουμε τα πρώτα δεδομένα
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
-        return snapshot.hasData
-            ? const MyAccountScreen() // Συνδεδεμένος χρήστης
-            : LoginScreen();     // Μη συνδεδεμένος
+        // Αν ο χρήστης είναι συνδεδεμένος
+        if (snapshot.hasData) {
+          return const MyAccountScreen();
+        }
+
+        // Αν δεν υπάρχει ενεργός χρήστης
+        return LoginScreen();
       },
     );
   }
