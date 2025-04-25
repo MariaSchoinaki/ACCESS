@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
-
 import '../models/mapbox_feature.dart';
 
 class LocationInfoCard extends StatelessWidget {
-  final MapboxFeature? feature;
+  final MapboxFeature? feature; // Μπορεί να είναι null
 
   const LocationInfoCard({
     Key? key,
-    required this.feature,
+    required this.feature, // Προσοχή: Το 'required' με nullable τιμή
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Περίπτωση 1: Αν το feature είναι null, μην εμφανίσεις τίποτα
+    if (feature == null) {
+      return const SizedBox.shrink(); // ή Container()
+    }
+
     final theme = Theme.of(context);
 
     return Container(
@@ -23,33 +27,39 @@ class LocationInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Περίπτωση 2: Χρήση null-safe operator (?.)
           Text(
-            feature!.name,
+            feature?.name ?? 'Άγνωστη τοποθεσία', // Προεπιλογή αν είναι null
             style: theme.textTheme.titleLarge,
           ),
           Text(
-            feature!.fullAddress,
+            feature?.fullAddress ?? 'Δεν υπάρχει διεύθυνση',
             style: theme.textTheme.titleSmall,
           ),
-          if (feature!.poiCategory.contains('address') == false)
+          // Περίπτωση 3: Έλεγχος για null πριν την πρόσβαση σε λίστα
+          if (feature?.poiCategory?.contains('address') == false)
             Text(
-              feature!.poiCategory.join(', '),
+              feature!.poiCategory.join(', '), // Εδώ είμαστε σίγουροι ότι δεν είναι null
               style: theme.textTheme.titleSmall,
             ),
-          if (feature!.poiCategory.contains('address') == true)
-            SizedBox(),
+          // Απλοποιημένο κενό Widget
+          const SizedBox(),
           Row(
             children: [
-              Text('Προσβασιμότητα: '),
+              const Text('Προσβασιμότητα: '),
               Icon(
-                feature!.accessibleFriendly ? Icons.accessible : Icons.not_accessible,
-                color: feature!.accessibleFriendly ? Colors.green : Colors.red,
+                feature?.accessibleFriendly ?? false // Προεπιλογή false
+                    ? Icons.accessible
+                    : Icons.not_accessible,
+                color: feature?.accessibleFriendly ?? false
+                    ? Colors.green
+                    : Colors.red,
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Lat: ${feature?.latitude}   Lon: ${feature?.longitude}',
+            'Lat: ${feature?.latitude ?? 'N/A'}   Lon: ${feature?.longitude ?? 'N/A'}',
             style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
           ),
           const SizedBox(height: 10),
@@ -57,17 +67,13 @@ class LocationInfoCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ElevatedButton.icon(
-                onPressed: () {
-                  ///TODO: navigate to mapbox directions
-                },
+                onPressed: () => _navigateToDirections(context),
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Έναρξη'),
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
-                onPressed: () {
-                  ///TODO: navigate to mapbox directions
-                },
+                onPressed: () => _navigateToDirections(context),
                 icon: const Icon(Icons.directions),
                 label: const Text('Οδηγίες'),
               ),
@@ -76,5 +82,10 @@ class LocationInfoCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _navigateToDirections(BuildContext context) {
+    if (feature == null) return;
+    // TODO: Χρήση feature!.latitude και feature!.longitude εδώ
   }
 }

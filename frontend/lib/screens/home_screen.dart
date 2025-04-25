@@ -51,11 +51,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   _onTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
+    try{
     setState(() {
       location = '';
     });
     _searchController.clear();
     widgetContext.read<MapBloc>().add(DeleteMarker());
+    } catch (e) {
+      ScaffoldMessenger.of(widgetContext).showSnackBar(
+          SnackBar(content: Text('Σφάλμα: ${e.toString()}')));
+    }
   }
 
   void _onSearchResultReceived(double latitude, double longitude) {
