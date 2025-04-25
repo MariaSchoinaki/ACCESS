@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   gateway:
-    image: schoin/access_gateway:latest
+    image: eleni/access_gateway:latest
     ports:
       - "9090:9090"
     networks:
@@ -21,7 +21,7 @@ services:
       - mapbox_token
 
   search_service:
-    image: schoin/access_search_service:latest
+    image: eleni/access_search_service:latest
     ports:
       - "8080:8080"
     networks:

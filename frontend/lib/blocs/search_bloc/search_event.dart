@@ -24,3 +24,9 @@ class SearchQueryChanged extends SearchEvent {
   @override
   int get hashCode => query.hashCode;
 }
+
+class RetrieveCoordinatesEvent extends SearchEvent {
+  final String mapboxId;
+
+  RetrieveCoordinatesEvent(this.mapboxId);
+}

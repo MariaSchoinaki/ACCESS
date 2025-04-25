@@ -54,3 +54,19 @@ class SearchError extends SearchState {
   @override
   int get hashCode => message.hashCode;
 }
+
+class CoordinatesLoading extends SearchState {}
+
+/// State when coordinates are successfully retrieved
+class CoordinatesLoaded extends SearchState {
+  final MapboxFeature feature;
+
+  CoordinatesLoaded(this.feature);
+}
+
+/// State when an error occurs during coordinates retrieval
+class CoordinatesError extends SearchState {
+  final String message;
+
+  CoordinatesError(this.message);
+}

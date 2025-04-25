@@ -13,6 +13,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   SearchBloc({required this.searchService}) : super(SearchInitial()) {
     // Register event handler for query changes
     on<SearchQueryChanged>(_onSearchQueryChanged);
+    on<RetrieveCoordinatesEvent>(_onRetrieveCoordinates);
   }
 
   /// Handles the search query update
@@ -37,6 +38,20 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     } catch (e) {
       // Emit error state if something goes wrong
       emit(SearchError('An error occurred while searching: \${e.toString()}'));
+    }
+  }
+
+  Future<void> _onRetrieveCoordinates(
+      RetrieveCoordinatesEvent event,
+      Emitter<SearchState> emit,
+      ) async {
+    emit(CoordinatesLoading()); // Set loading state for coordinates
+
+    try {
+      final feature = await searchService.retrieveCoordinates(event.mapboxId);
+      emit(CoordinatesLoaded(feature)); // Emit loaded state with the coordinates
+    } catch (e) {
+      emit(CoordinatesError('Failed to retrieve coordinates: ${e.toString()}'));
     }
   }
 }

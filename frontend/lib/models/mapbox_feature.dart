@@ -1,45 +1,58 @@
-/// A model representing a geographic feature returned from Mapbox Geocoding API
 class MapboxFeature {
-  final String id;           // Unique identifier for the feature
-  final String name;         // Display name of the location
-  final double latitude;     // Latitude coordinate
-  final double longitude;    // Longitude coordinate
+  final String id;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final String fullAddress;
+  final List<String> poiCategory;
 
   MapboxFeature({
     required this.id,
     required this.name,
     required this.latitude,
     required this.longitude,
+    required this.fullAddress,
+    required this.poiCategory,
   });
 
-  /// Factory constructor to create a MapboxFeature from a JSON map
+  // Factory constructor για να δημιουργήσουμε το MapboxFeature από το JSON
   factory MapboxFeature.fromJson(Map<String, dynamic> json) {
-    // Type-safe extraction of coordinates
-    final List<dynamic> coords = json['geometry']['coordinates'];
+    // Εξαγωγή συντεταγμένων
+    print(json);
+    final coords = json['geometry']?['coordinates'] ?? [0.0, 0.0];
 
-    // Return constructed feature with fallback defaults
+    print((coords[1] as num).toDouble());
+    // Εξαγωγή άλλων πληροφοριών
+    final name = json['name'] ?? 'Unnamed Location';
+    print(name);
+    final fullAddress = json['full_address'] ?? '';
+    final poiCategory = List<String>.from(json['poi_category'] ?? []);
+
     return MapboxFeature(
-      id: json['id'] ?? 'unknown_id',
-      name: json['place_name'] ?? 'Unnamed Location',
+      id: json['mapbox_id'] ?? 'unknown_id',
+      name: name,
       latitude: (coords[1] as num).toDouble(),
       longitude: (coords[0] as num).toDouble(),
+      fullAddress: fullAddress,
+      poiCategory: poiCategory,
     );
   }
 
-  /// Converts the feature back to JSON (optional for caching or debugging)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'place_name': name,
+      'name': name,
       'geometry': {
         'type': 'Point',
         'coordinates': [longitude, latitude],
       },
+      'full_address': fullAddress,
+      'poi_category': poiCategory,
     };
   }
 
   @override
-  String toString() => 'MapboxFeature(name: \$name, lat: \$latitude, lng: \$longitude)';
+  String toString() => 'MapboxFeature(name: $name, lat: $latitude, lng: $longitude)';
 
   @override
   bool operator ==(Object other) =>
@@ -49,8 +62,10 @@ class MapboxFeature {
               id == other.id &&
               name == other.name &&
               latitude == other.latitude &&
-              longitude == other.longitude;
+              longitude == other.longitude &&
+              fullAddress == other.fullAddress &&
+              poiCategory == other.poiCategory;
 
   @override
-  int get hashCode => id.hashCode ^ name.hashCode ^ latitude.hashCode ^ longitude.hashCode;
+  int get hashCode => id.hashCode ^ name.hashCode ^ latitude.hashCode ^ longitude.hashCode ^ fullAddress.hashCode ^ poiCategory.hashCode;
 }

@@ -9,7 +9,12 @@ Future<void> main() async {
   // - Connects to the custom search request handler
   final handler = Pipeline()
       .addMiddleware(logRequests()) // Logs method, URI, status, duration
-      .addHandler(handleSearchRequest); // Defined in lib/search_service.dart
+      .addHandler((Request request) async {
+    if (request.url.path == 'retrieve') {
+      return await handleCoordinatesRequest(request);
+    }
+    return await handleSearchRequest(request);  // Υπάρχων handler για search
+  }); // Defined in lib/search_service.dart
 
   // Read the port from environment or use 8080 by default
   final port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
