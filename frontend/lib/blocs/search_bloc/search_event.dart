@@ -37,3 +37,30 @@ class RetrieveNameFromCoordinatesEvent extends SearchEvent {
 
   RetrieveNameFromCoordinatesEvent(this.latitude, this.longitude);
 }
+
+/// Event triggered when a category filter button is pressed
+class FilterByCategoryPressed extends SearchEvent {
+  final String category;
+
+  FilterByCategoryPressed(this.category);
+
+  @override
+  String toString() => 'FilterByCategoryPressed(category: $category)';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is FilterByCategoryPressed &&
+              runtimeType == other.runtimeType &&
+              category == other.category;
+
+  @override
+  int get hashCode => category.hashCode;
+}
+
+/// Event dispatched when category search results are loaded
+class CategoryResultsLoaded extends SearchState {
+  final List<MapboxFeature> features;
+
+  CategoryResultsLoaded(this.features);
+}

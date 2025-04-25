@@ -28,6 +28,7 @@ Future<void> main() async {
   router.all('/search<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
   router.all('/retrieve<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
   router.all('/getname<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
+  router.all('/category<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
 
   // Proxy /map to map service
   router.all('/map<ignored|.*>', (req) =>

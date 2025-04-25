@@ -61,6 +61,7 @@ class _HomePageState extends State<HomePage> {
       ScaffoldMessenger.of(widgetContext).showSnackBar(
           SnackBar(content: Text('Σφάλμα: ${e.toString()}')));
     }
+    widgetContext.read<MapBloc>().add(ClearCategoryMarkers());
   }
 
   void _onSearchResultReceived(double latitude, double longitude) {
@@ -107,7 +108,9 @@ class _HomePageState extends State<HomePage> {
             } else if (state is NameError) {
               print('Error: ${state.message}');
             }
-
+            if (state is CategoryResultsLoaded) {
+              context.read<MapBloc>().add(AddCategoryMarkers(state.features, shouldZoomToBounds: true));
+            }
           },
           child: BlocBuilder<MapBloc, MapState>(
             builder: (context, mapState) {

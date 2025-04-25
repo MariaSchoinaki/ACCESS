@@ -259,3 +259,80 @@ Future<Response> getLocationNameFromMapbox(Request request) async {
     );
   }
 }
+
+Future<Response> handleSearchByCategoryRequest(Request request) async {
+  final category = request.url.queryParameters['category'];
+  final sessionToken = request.url.queryParameters['session_token'];
+
+  if (category == null || category.isEmpty) {
+    return Response.badRequest(
+      body: jsonEncode({'error': 'Missing category parameter'}),
+    );
+  }
+
+  if (sessionToken == null || sessionToken.isEmpty) {
+    return Response.badRequest(
+      body: jsonEncode({'error': 'Missing session token "session_token"'}),
+    );
+  }
+
+  final dioBackend = dio.Dio();
+  final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
+
+  final encodedCategory = Uri.encodeComponent(category);
+  final url = 'https://api.mapbox.com/search/searchbox/v1/category/$encodedCategory';
+
+  print('Received category: $category');
+  print('Received session_token: $sessionToken');
+  print('URL to Mapbox for category: $url');
+
+  try {
+    final response = await dioBackend.get(
+      url,
+      queryParameters: {
+        'access_token': mapboxToken,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      print('> Error fetching data from Mapbox for category');
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Failed to fetch data from Mapbox for category'}),
+      );
+    }
+
+    print('> Geocoding response for category: ${response.data}');
+
+    final suggestions = (response.data['features'] as List?) ?? [];
+    final List<Map<String, dynamic>> formattedResults = [];
+
+    for (final suggestion in suggestions) {
+      final properties = suggestion['properties'] as Map<String, dynamic>?;
+      final geometry = suggestion['geometry'] as Map<String, dynamic>?;
+
+      if (properties != null && geometry != null) {
+        formattedResults.add({
+          'name': properties['name'],
+          'mapbox_id': properties['mapbox_id'],
+          'geometry': geometry,
+          'address': properties['address'],
+          'full_address': properties['full_address'],
+          'metadata': properties['metadata'] ?? {},
+          'poi_category': (properties['poi_category'] as List?)?.cast<String>() ?? [],
+        });
+      }
+    }
+    return Response.ok(
+      jsonEncode({'results': formattedResults}),
+      headers: {'Content-Type': 'application/json'},
+    );
+  } on dio.DioException catch (e) {
+    print('> Error fetching data from Mapbox for category, 47');
+    return Response.internalServerError(
+      body: jsonEncode({
+        'error': 'Internal server error while contacting Mapbox for category',
+        'details': e.response?.data ?? e.message,
+      }),
+    );
+  }
+}

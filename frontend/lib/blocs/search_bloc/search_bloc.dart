@@ -15,6 +15,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<SearchQueryChanged>(_onSearchQueryChanged);
     on<RetrieveCoordinatesEvent>(_onRetrieveCoordinates);
     on<RetrieveNameFromCoordinatesEvent>(_onRetrieveNameFromCoordinates);
+    on<FilterByCategoryPressed>(_onFilterByCategoryPressed);
   }
 
   /// Handles the search query update
@@ -67,6 +68,23 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       emit(NameLoaded(feature)); // Emit loaded state with the coordinates
     } catch (e) {
       emit(NameError('Failed to retrieve coordinates: ${e.toString()}'));
+    }
+  }
+
+  /// Handles the filter by category event
+  Future<void> _onFilterByCategoryPressed(
+      FilterByCategoryPressed event,
+      Emitter<SearchState> emit,
+      ) async {
+    emit(SearchLoading()); // Set loading state while fetching
+
+    try {
+      // Perform the search using the service with the category filter
+      final results = await searchService.searchByCategory(event.category);
+      emit(CategoryResultsLoaded(results)); // Emit CategoryResultsLoaded state
+    } catch (e) {
+      // Emit error state if something goes wrong
+      emit(SearchError('An error occurred while filtering by category: ${e.toString()}'));
     }
   }
 }

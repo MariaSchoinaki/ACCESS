@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';  // Εισάγουμε το uuid package
+import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/mapbox_feature.dart';
@@ -47,7 +47,7 @@ class SearchService {
     _sessionToken = prefs.getString('session_token');
 
     if (_sessionToken == null) {
-      _sessionToken = Uuid().v4();  // Create new UUID for session
+      _sessionToken = Uuid().v4();
       await prefs.setString('session_token', _sessionToken!);
     }
   }
@@ -59,7 +59,37 @@ class SearchService {
         '/search',
         queryParameters: {
           'q': query,
-          'session_token': _sessionToken,  // Send session token as query parameter
+          'session_token': _sessionToken,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw SearchException('Unexpected status code: ${response.statusCode}');
+      }
+
+      final features = List<Map<String, dynamic>>.from(
+          response.data['results'] ?? []);
+
+      print(response);
+      return features.map((json) => MapboxFeature.fromJson(json)).toList();
+    } on DioException catch (e) {
+      print('[SearchService] DioException');
+      print('    • type: ${e.type}');
+      print('    • error: ${e.error}');
+      print('    • response: ${e.response}');
+      print('    • message: ${e.message}');
+      throw SearchException(e.message ?? 'Dio error: ${e.error}');
+    }
+  }
+
+  /// Executes a search request by category and returns a list of Mapbox features
+  Future<List<MapboxFeature>> searchByCategory(String category) async {
+    try {
+      final response = await _dio.get(
+        '/category', // Assuming this is your category search endpoint
+        queryParameters: {
+          'category': category,
+          'session_token': _sessionToken,
         },
       );
 
@@ -85,10 +115,10 @@ class SearchService {
   Future<MapboxFeature> retrieveCoordinates(String mapboxId) async {
     try {
       final response = await _dio.get(
-        '/retrieve',  // Διεύθυνση του endpoint για retrieve
+        '/retrieve',
         queryParameters: {
-          'mapbox_id': mapboxId,  // Το mapbox_id της επιλεγμένης τοποθεσίας
-          'session_token': _sessionToken,  // Αν απαιτείται το session_token
+          'mapbox_id': mapboxId,
+          'session_token': _sessionToken,
         },
       );
 
@@ -97,7 +127,7 @@ class SearchService {
       }
 
       final featureData = response.data['result'];
-      print(featureData);// Παίρνουμε τα δεδομένα του πρώτου αποτελέσματος
+      print(featureData);
       return MapboxFeature.fromJson(featureData);
 
     } on DioException catch (e) {
