@@ -1,5 +1,6 @@
 ///General Imports
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 ///Bloc Imports
@@ -123,7 +124,7 @@ class _HomePageState extends State<HomePage> {
                         child: mapbox.MapWidget(
                           key: const ValueKey("mapWidget"),
                           cameraOptions: initialCameraOptions,
-                          styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
+                          styleUri: "mapbox://styles/el03/cm9vbhxcb005901si1bp370nc",
                           onTapListener: (gestureContext) => _onTap(gestureContext, context),
                           onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
                           onMapCreated: (controller) {

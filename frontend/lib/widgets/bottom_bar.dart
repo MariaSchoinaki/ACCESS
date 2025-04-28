@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../blocs/report_obstacle_bloc/report_obstacle_bloc.dart';
 import '../screens/home_screen.dart';
+import '../screens/report_obstacle_screen.dart';
 import '../utils/auth_gate.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -22,14 +25,34 @@ class BottomNavBar extends StatelessWidget {
   }
 
   Future<void> _openCamera(BuildContext context) async {
-    final picker = ImagePicker();
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: SizedBox(
+            height: MediaQuery.of(dialogContext).size.height * 0.9, // 90% pf screen
+            child: BlocProvider(
+              create: (context) => ReportObstacleBloc(),
+              child: const ReportObstacleScreen(),
+            ),
+          ),
+        );
+      },
+    );
+    /**final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
       print('Image path: ${pickedFile.path}');
     } else {
       print('No image selected.');
-    }
+    }*/
   }
 
   @override
