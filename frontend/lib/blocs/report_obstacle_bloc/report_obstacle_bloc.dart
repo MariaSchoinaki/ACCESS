@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -121,50 +122,63 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
 
   Future<void> _onPickImageRequested(
       PickImageRequested event, Emitter<ReportObstacleState> emit) async {
-    // Check and request permission depending on source
-    Permission? permission;
+    print("--- _onPickImageRequested started for source: ${event.source} ---"); // DEBUG
+
+    PermissionStatus permissionStatus;
     if (event.source == ImageSource.camera) {
-      permission = Permission.camera;
+      // Request camera permission
+      permissionStatus = await Permission.camera.request();
     } else {
-      permission = Permission.photos; // For iOS / Android 13+
+      // Gallery permission depends on Android version
       if (Platform.isAndroid) {
-        // You may also need to check storage permission for old Androids (< API 33)
+        int sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+        if (sdkInt >= 33) {
+          permissionStatus = await Permission.photos.request();
+        } else {
+          permissionStatus = await Permission.storage.request();
+        }
+      } else {
+        // Assume iOS - use photos permission
+        permissionStatus = await Permission.photos.request();
       }
     }
 
-    PermissionStatus status = await permission.request();
-    print("--- _onPickImageRequested started for source: ${event.source} ---"); // DEBUG
-    if (status.isGranted || status.isLimited) {
+    if (permissionStatus.isGranted || permissionStatus.isLimited) {
       print("Permission granted. Trying to pick image..."); // DEBUG
       try {
-        print("Trying to pick image..."); // DEBUG
         final pickedFile = await _imagePicker.pickImage(
-            source: event.source
+          source: event.source,
         );
         if (pickedFile != null) {
-          print("In != null"); // DEBUG
-          print("Image path: ${pickedFile.path}"); // DEBUG
+          print("Image picked: ${pickedFile.path}");
           emit(state.copyWith(
-              pickedImageGetter: () => File(pickedFile.path),
-              errorMessageGetter: () => null // Clear any previous image error
+            pickedImageGetter: () => File(pickedFile.path),
+            errorMessageGetter: () => null,
           ));
         } else {
-          print("User canceled image picking");
-          emit(state.copyWith(errorMessageGetter: () => null)); // Clear error if existed
+          print("User cancelled picking image");
+          emit(state.copyWith(
+            errorMessageGetter: () => null,
+          ));
         }
       } catch (e) {
         print("Error picking image: $e");
         emit(state.copyWith(
-            errorMessageGetter: () => 'Error picking image: ${e.toString()}'));
+          errorMessageGetter: () => 'Error picking image: ${e.toString()}',
+        ));
       }
     } else {
       print("Permission denied");
+      if (permissionStatus.isPermanentlyDenied) {
+        // Open settings if user permanently denied
+        await openAppSettings();
+      }
       emit(state.copyWith(
-          errorMessageGetter: () => 'Permission required for ${event.source == ImageSource.camera ? "camera" : "gallery"}.'));
-      // Optionally: open app settings
-      // openAppSettings();
+        errorMessageGetter: () => 'Permission required for ${event.source == ImageSource.camera ? "camera" : "gallery"}.',
+      ));
     }
   }
+
 
   void _onRemoveImageRequested(
       RemoveImageRequested event, Emitter<ReportObstacleState> emit) {
