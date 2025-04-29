@@ -1,5 +1,6 @@
 part of 'login_bloc.dart';
 
+/// The base abstract class for all login-related events
 abstract class LoginEvent extends Equatable {
   const LoginEvent();
 
@@ -7,6 +8,7 @@ abstract class LoginEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Event triggered when the email input changes
 class LoginEmailChanged extends LoginEvent {
   final String email;
 
@@ -16,6 +18,7 @@ class LoginEmailChanged extends LoginEvent {
   List<Object?> get props => [email];
 }
 
+/// Event triggered when the password input changes
 class LoginPasswordChanged extends LoginEvent {
   final String password;
 
@@ -25,6 +28,7 @@ class LoginPasswordChanged extends LoginEvent {
   List<Object?> get props => [password];
 }
 
+/// Event triggered when the user submits the login form with email and password
 class LoginSubmitted extends LoginEvent {
   final String email;
   final String password;
@@ -35,4 +39,5 @@ class LoginSubmitted extends LoginEvent {
   List<Object?> get props => [email, password];
 }
 
+/// Event triggered when the user attempts to log in using Google authentication
 class LoginWithGoogleSubmitted extends LoginEvent {}

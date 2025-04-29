@@ -4,11 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:access/blocs/sign_up_bloc/sign_up_bloc.dart';
 import '../widgets/bottom_bar.dart';
 
+/// Main widget for the Sign Up route. Provides the [SignUpBloc].
 class SignUpPage extends StatelessWidget {
   const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    /// Provides [SignUpBloc] to [SignUpView].
     return BlocProvider(
       create: (_) => SignUpBloc(),
       child: const SignUpView(),
@@ -16,6 +18,7 @@ class SignUpPage extends StatelessWidget {
   }
 }
 
+/// StatefulWidget containing the sign-up form UI.
 class SignUpView extends StatefulWidget {
   const SignUpView({Key? key}) : super(key: key);
 
@@ -23,21 +26,27 @@ class SignUpView extends StatefulWidget {
   State<SignUpView> createState() => _SignUpViewState();
 }
 
+/// Manages the state for the [SignUpView] form, including focus and visibility.
 class _SignUpViewState extends State<SignUpView> {
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
   final FocusNode _confirmPasswordFocusNode = FocusNode();
 
+  // Local flags to track if fields have been touched (for showing errors).
   bool _emailTouched = false;
   bool _passwordTouched = false;
   bool _confirmPasswordTouched = false;
+
+  // Local state for password visibility toggles.
   bool _passwordObscured = true;
   bool _confirmPasswordObscured = true;
 
 
   @override
+  /// Sets up focus listeners to track field interaction.
   void initState() {
     super.initState();
+    // Update touched state when focus changes (e.g., on focus loss or gain)
     _emailFocusNode.addListener(() {
       if (_emailFocusNode.hasFocus) {
         setState(() => _emailTouched = true);
@@ -56,6 +65,7 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   @override
+  /// Disposes focus nodes.
   void dispose() {
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
@@ -64,6 +74,7 @@ class _SignUpViewState extends State<SignUpView> {
   }
 
   @override
+  /// Builds the sign-up form UI.
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -75,22 +86,27 @@ class _SignUpViewState extends State<SignUpView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              /// App logo
               Image.asset(
                 'assets/images/logo.png',
                 height: 120,
               ),
               const SizedBox(height: 12.0),
+              /// Screen title
               const Text(
                 'Δημιούργηστε τον λογαριασμό σας',
                 style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8.0),
+              /// Screen subtitle
               const Text(
                 'Συμπλήρωστε τα στοιχεία σας για να εγγραφείτε',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12.0),
               ),
               const SizedBox(height: 16.0),
+
+              /// Email field. Error state driven by BLoC and touched flag.
               BlocBuilder<SignUpBloc, SignUpState>(
                 builder: (context, state) {
                   return TextFormField(
@@ -111,6 +127,8 @@ class _SignUpViewState extends State<SignUpView> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              /// Password field. Error state driven by BLoC and touched flag.
               BlocBuilder<SignUpBloc, SignUpState>(
                 builder: (context, state) {
                   return TextFormField(
@@ -143,6 +161,8 @@ class _SignUpViewState extends State<SignUpView> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              /// Confirm Password field. Error state driven by BLoC and touched flag.
               BlocBuilder<SignUpBloc, SignUpState>(
                 builder: (context, state) {
                   return TextFormField(
@@ -175,10 +195,13 @@ class _SignUpViewState extends State<SignUpView> {
                 },
               ),
               const SizedBox(height: 24.0),
+
+              /// Submission buttons and status.
               BlocBuilder<SignUpBloc, SignUpState>(
                 builder: (context, state) {
                   return Column(
                     children: [
+                      /// Email/Password Sign Up Button.
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -191,6 +214,7 @@ class _SignUpViewState extends State<SignUpView> {
                               borderRadius: BorderRadius.circular(8.0),
                             ),
                           ),
+                          // Enable only if form is valid and not submitting.
                           onPressed: state.isFormValid
                               ? () => context.read<SignUpBloc>().add(SignUpSubmitted())
                               : null,
@@ -206,6 +230,8 @@ class _SignUpViewState extends State<SignUpView> {
                       Column(
                         children: [
                           const SizedBox(height: 16),
+
+                          /// "or" Divider and Google Button (hide if submitting email/pass).
                           Row(
                             children: const [
                               Expanded(child: Divider()),
@@ -217,6 +243,8 @@ class _SignUpViewState extends State<SignUpView> {
                             ],
                           ),
                           const SizedBox(height: 16),
+
+                          /// Google Sign Up Button.
                           SizedBox(
                             width: double.infinity,
                             child: OutlinedButton.icon(
@@ -246,6 +274,8 @@ class _SignUpViewState extends State<SignUpView> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              /// Terms and Privacy text.
               const Text.rich(
                 TextSpan(
                   text: 'Πατώντας συνέχεια, αποδέχεστε τους ',
@@ -308,6 +338,8 @@ class _SignUpViewState extends State<SignUpView> {
           ),
         ),
       ),
+
+      /// Bottom navigation bar.
       bottomNavigationBar: const BottomNavBar(),
     );
   }

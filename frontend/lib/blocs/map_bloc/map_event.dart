@@ -17,6 +17,7 @@ class ZoomOut extends MapEvent {}
 
 /// Initializes the map with the provided controller
 class InitializeMap extends MapEvent {
+  // The Mapbox map controller that will be initialized
   final mapbox.MapboxMap mapController;
 
   InitializeMap(this.mapController);
@@ -24,29 +25,35 @@ class InitializeMap extends MapEvent {
 
 /// Moves the camera to a specific latitude and longitude
 class FlyTo extends MapEvent {
+  // Latitude of the location to fly to
   final double latitude;
+  // Longitude of the location to fly to
   final double longitude;
 
   FlyTo(this.latitude, this.longitude);
 }
 
-/// Adds a marker to a specified location (e.g., long tap)
+/// Adds a marker to a specified location (e.g., after a long tap)
 class AddMarker extends MapEvent {
+  // Latitude of the location where the marker will be added
   final double latitude;
+  // Longitude of the location where the marker will be added
   final double longitude;
 
   AddMarker(this.latitude, this.longitude);
 }
 
-/// Deletes all existing markers on the map (long tap markers)
+/// Deletes all existing markers on the map (e.g., after long tap markers)
 class DeleteMarker extends MapEvent {
   DeleteMarker();
 }
 
 /// Adds multiple markers for category search results
 class AddCategoryMarkers extends MapEvent {
+  // List of Mapbox features to represent as markers
   final List<MapboxFeature> features;
-  final bool shouldZoomToBounds; // New parameter
+  // Flag to determine whether to zoom to the bounds of the added markers
+  final bool shouldZoomToBounds;
 
   AddCategoryMarkers(this.features, {this.shouldZoomToBounds = false});
 }
@@ -57,12 +64,16 @@ class ClearCategoryMarkers extends MapEvent {}
 /// Fetches route overlays or geometries from the map microservice
 class FetchMapRoutes extends MapEvent {}
 
+/// Event to start tracking the user's location
 class StartTrackingRequested extends MapEvent {}
 
+/// Event to stop tracking the user's location
 class StopTrackingRequested extends MapEvent {}
 
-
+/// Event when the location of the user is updated
 class _LocationUpdated extends MapEvent {
+  // New location of the user
   final geolocator.Position newPosition;
+
   _LocationUpdated(this.newPosition);
 }
