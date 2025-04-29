@@ -53,7 +53,7 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
   /// - "Προβλήματα όρασης" : Visual impairment
   /// - "Προσωρινή κινητική δυσκολία" : Temporary mobility limitation
   /// - "Καμία" : No accessibility needs
-  static const List<String> disabilityOptions = [
+  static const List<String> _disabilityOptions = [
     "Χρήση αμαξιδίου",
     "Χρήση βοηθητικού εξοπλισμού",
     "Γονείς με μωρό σε καρότσι",
@@ -62,6 +62,16 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
     "Καμία"
   ];
 
+  /// Initializes the state for the user information form
+  ///
+  /// Responsibilities:
+  /// - Sets up [TextEditingController] with initial birth date value
+  /// - Selects initial disability type from provided value or defaults to last option
+  /// - Inherits parent widget initialization through [super.initState]
+  ///
+  /// Behavior:
+  /// - Uses [widget.initialBirthDate] if available (can be null)
+  /// - Falls back to [_disabilityOptions.last] ("Καμία" - "None") if no initial disability provided
   @override
   void initState() {
     super.initState();
@@ -69,7 +79,7 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
     _birthDateController = TextEditingController(
         text: widget.initialBirthDate ?? ''
     );
-    _selectedDisability = widget.initialDisability ?? disabilityOptions.last;
+    _selectedDisability = widget.initialDisability ?? _disabilityOptions.last;
   }
 
   /// Builds dialog components with validation-aware UI
@@ -83,7 +93,7 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Παρακαλώ συμπλήρωσε τα παρακάτω"),
+      title: const Text("Πληροφορίες Χρήστη"),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -93,7 +103,6 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
               labelText: 'Ημερομηνία Γέννησης (DD/MM/YYYY)',
               errorText: _errorMessage,
             ),
-            keyboardType: TextInputType.text,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^[0-9/]*$')),
             ],
@@ -102,21 +111,11 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
           DropdownButtonFormField<String>(
             isExpanded: true,
             value: _selectedDisability,
-            items: disabilityOptions.map((type) {
-              return DropdownMenuItem(
-                value: type,
-                child: Text(
-                  type,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _selectedDisability = value);
-              }
-            },
+            items: _disabilityOptions.map((type) => DropdownMenuItem(
+              value: type,
+              child: Text(type, overflow: TextOverflow.ellipsis),
+            )).toList(),
+            onChanged: (value) => setState(() => _selectedDisability = value ?? _disabilityOptions.last),
             decoration: const InputDecoration(
               labelText: "Είδος Αναπηρίας",
               border: OutlineInputBorder(),
@@ -126,26 +125,32 @@ class _UserInfoPopupState extends State<UserInfoPopup> {
       ),
       actions: [
         TextButton(
-          onPressed: _handleSubmission,
+          onPressed: _validateAndSubmit,
           child: const Text("Αποθήκευση"),
         ),
       ],
     );
   }
 
-  /// Validates and submits form data
+  /// Validates and submits the user information form
   ///
   /// Workflow:
-  /// 1. Checks date format validity
-  /// 2. Verifies age range (10-100 years)
-  /// 3. Updates error state or submits valid data
-  void _handleSubmission() {
+  /// 1. Validates date format using [_isValidDate]
+  /// 2. On valid date:
+  ///    - Clears any existing error messages
+  ///    - Calls parent [onSubmit] callback with form data
+  ///    - Closes the dialog using [Navigator.pop]
+  /// 3. On invalid date:
+  ///    - Sets error message to Greek "Μη έγκυρη ημερομηνία" ("Invalid date")
+  ///    - Triggers UI rebuild to display error
+  ///
+  /// Note: Validation includes both format checks and age range verification (10-100 years)
+  void _validateAndSubmit() {
     if (_isValidDate(_birthDateController.text)) {
-      setState(() => _errorMessage = null);
       widget.onSubmit(_birthDateController.text, _selectedDisability);
-      Navigator.of(context).pop();
+      Navigator.pop(context);
     } else {
-      setState(() => _errorMessage = 'Η ημερομηνία δεν είναι έγκυρη');
+      setState(() => _errorMessage = 'Μη έγκυρη ημερομηνία');
     }
   }
 

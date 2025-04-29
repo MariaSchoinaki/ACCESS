@@ -28,7 +28,6 @@ class StartStopTrackingButton extends StatelessWidget {
               previous.isTracking != current.isTracking ||
               previous.trackingStatus != current.trackingStatus,
       builder: (context, mapState) {
-        final theme = Theme.of(context);
 
         return FloatingActionButton(
           // Use different heroTags based on state to avoid Flutter errors
@@ -38,14 +37,13 @@ class StartStopTrackingButton extends StatelessWidget {
           tooltip:
               mapState.isTracking
                   ? 'Παύση Καταγραφής'
-                  : 'Έναρξη Καταγραφής', // Tooltip
+                  : 'Έναρξη Καταγραφής',
           onPressed: () async {
-            // --- PRINT ΣΤΗΝ ΑΡΧΗ ΑΡΧΗ ---
-            // Διάβασε την πιο πρόσφατη κατάσταση απευθείας
+            // Read the most recent state
             final currentState = context.read<MapBloc>().state;
 
             if (currentState.trackingStatus == MapTrackingStatus.loading) {
-              return; // Έξοδος αν φορτώνει
+              return; // Exit if it's loading
             }
 
             if (currentState.isTracking) {
@@ -170,12 +168,11 @@ class StartStopTrackingButton extends StatelessWidget {
         child: const SizedBox.shrink(),
         onPressed: () {
           Future.delayed(Duration.zero, () {
-            // Έλεγχος αν το context είναι ακόμα έγκυρο (καλή πρακτική)
             if (Navigator.of(dialogContext).canPop()) {
               Navigator.pop(
                 dialogContext,
                 ratingValue,
-              ); // Επιστρέφει την τιμή 'green', 'yellow', ή 'red'
+              ); 
             }
           });
         },
