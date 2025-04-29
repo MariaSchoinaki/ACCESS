@@ -1,6 +1,7 @@
 import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+/// A [ThemeData] object representing the light theme of the app.
 ThemeData lightTheme = ThemeData(
   brightness: Brightness.light, // Indicates this is a light theme
   primarySwatch: AppColors.primaryAccent, // Primary color of your app (can be customized)
@@ -56,6 +57,7 @@ ThemeData lightTheme = ThemeData(
   // You can customize other visual aspects here, like cardColor, iconTheme, etc.
 );
 
+/// A [ThemeData] object representing the dark theme of the app.
 ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   primarySwatch: AppColors.primaryAccent,

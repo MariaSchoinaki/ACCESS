@@ -1,10 +1,5 @@
-///General Imports
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:geolocator/geolocator.dart' as geolocator;
 
 ///Bloc Imports
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,16 +7,22 @@ import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 
 import '../models/mapbox_feature.dart';
+
 ///Services Imports
-import '../services/search_service.dart';
 
 ///Widget and Theme Imports
-import 'package:access/theme/app_colors.dart';
 import '../widgets/bottom_bar.dart';
 import '../widgets/location_card.dart';
 import '../widgets/zoom_controls.dart';
-import '../widgets/search_bar.dart' as SB;
+import '../widgets/start_stop_tracking_button.dart';
+import '../widgets/main_map_area.dart';
 
+/// The main "home" display of the app.
+///
+/// Displays the main interface map, the search bar (via [Mainmaparea]),
+/// the location information card, map control details and mode
+/// Route Log. Interacts with [Mapbloc] and [Searchbloc] for
+/// Managing the status of the map, searches and recording.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -29,322 +30,185 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+/// the state for [homepage] widget.
+///
+/// manages the condition associated with user's interactions, such as
+/// the location option through search or prolonged press
+/// controls the search field ([_searchcontroller] and handles callbacks from
+/// Interacts with the map. She also monitors her life cycle changes
+/// application through [Widgetsbindingobserver].
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+
+  /// Saves the representation of a string (Lat, lon) of the current selected
+  /// Location, mainly used to control the location/visibility of Overlay Widgets.
   String location = '';
+  /// Holds detailed location information selected either through search
+  /// either by reverse geo categorization from prolonged tap. Used by [locationinfocard].
   MapboxFeature? selectedFeature;
 
-  bool _routeLayerAndSourceAdded = false;
-  static const String ROUTE_SOURCE_ID = 'user-tracked-route-source';
-  static const String ROUTE_LAYER_ID = 'user-tracked-route-layer';
-
+  /// Controller for the search text of the search text, passes on [Mainmaparea].
   final TextEditingController _searchController = TextEditingController();
-  mapbox.MapboxMap? mapboxMap;
 
+  /// Home camera settings for the map during first loading.
   final mapbox.CameraOptions initialCameraOptions = mapbox.CameraOptions(
     center: mapbox.Point(coordinates: mapbox.Position(23.7325, 37.9908)),
     zoom: 14.0,
   );
 
-  /// Map Interaction Callbacks
-  void _onLongTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
-    final lat = context.point.coordinates.lat.toDouble();
-    final lng = context.point.coordinates.lng.toDouble();
-
-    // Ενημέρωσε το τοπικό state για το info card
-    setState(() {
-      location = '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}';
-    });
-    // Στείλε events στον MapBloc και SearchBloc
-    widgetContext.read<MapBloc>().add(AddMarker(lat, lng));
-    widgetContext.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
+  /// It handles the gesture of long tap to the map provided by [Mainmaparea].
+  ///
+  /// updates local status [location] with coordinates, activates [Mapbloc]
+  /// to add index (marker) and activates [Searchbloc] to find
+  /// of the address corresponding to the coordinates (reverse geo -geotoryisation).
+  ///
+  /// - [GestureContext]: Provides details of the gesture, including coordinates.
+  /// - [BuildContext]: Buildcontext from the Widget tree where blocs can be accessed.
+  void _onLongTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) {
+    final lat = gestureContext.point.coordinates.lat.toDouble();
+    final lng = gestureContext.point.coordinates.lng.toDouble();
+    // Check if widget still exists before calling Setstate
+    if (!mounted) return;
+    setState(() { location = '${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}'; });
+    // Use Homepage's context to access blocs
+    context.read<MapBloc>().add(AddMarker(lat, lng));
+    context.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
   }
-
-  void _onTap(mapbox.MapContentGestureContext context, BuildContext widgetContext) {
+  /// It handles the tap gesture (tap) to the map provided by [Mainmaparea].
+  ///
+  /// cleans the currently selected location ([Location], [SelectedFeature]),
+  /// cleans the text on the search bar and activates [Mapbloc]
+  /// to remove any indicators (simple TAP index and class indicators).
+  ///
+  /// - [GestureContext]: Provides details of the gesture.
+  /// - [BuildContext]: Buildcontext from the Widget tree where blocs can be accessed.
+  void _onTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) {
     try {
-      // Καθάρισε τοπικό state και search bar
-      setState(() {
-        location = '';
-        selectedFeature = null; // Καθάρισε και το feature
-      });
+      if (!mounted) return;
+      setState(() { location = ''; selectedFeature = null; });
       _searchController.clear();
-      // Στείλε events για καθαρισμό markers
-      widgetContext.read<MapBloc>().add(DeleteMarker()); // Καθαρίζει το απλό marker
-      widgetContext.read<MapBloc>().add(ClearCategoryMarkers()); // Καθαρίζει τα category markers
+      // Use Homepage's context to access blocs
+      context.read<MapBloc>().add(DeleteMarker());
+      context.read<MapBloc>().add(ClearCategoryMarkers());
     } catch (e) {
       print("Error on tap: $e");
-      ScaffoldMessenger.of(widgetContext).showSnackBar(
-          SnackBar(content: Text('Σφάλμα κατά το πάτημα: ${e.toString()}')));
     }
   }
 
-  /// Callback for when the map style is loaded
-  Future<void> _onStyleLoaded(mapbox.StyleLoadedEventData data) async {
-    // Έλεγχοι mounted και flag παραμένουν
-    if (!mounted) { print("[_onStyleLoaded] Not mounted, skipping."); return; }
-    if (_routeLayerAndSourceAdded) { print("[_onStyleLoaded] Already added, skipping."); return; }
-
-    print("[_onStyleLoaded] Style loaded. Flag is false. Getting controller from BLoC state...");
-
-    // *** ΠΑΡΕ ΤΟΝ CONTROLLER ΑΠΟ ΤΟ STATE ΤΟΥ BLOC ***
-    final controllerFromState = context.read<MapBloc>().state.mapController;
-
-    if (controllerFromState != null) {
-      print("[_onStyleLoaded] Controller from state is NOT null. Checking if source exists...");
-      try {
-        final sourceExists = await controllerFromState.style.styleSourceExists(ROUTE_SOURCE_ID);
-        print("[_onStyleLoaded] Source exists check returned: $sourceExists");
-
-        if (sourceExists == false) {
-          print("[_onStyleLoaded] Source does NOT exist. Trying to add source...");
-          // *** ΧΡΗΣΙΜΟΠΟΙΗΣΕ ΤΟΝ controllerFromState ***
-          await controllerFromState.style.addSource(mapbox.GeoJsonSource(
-            id: ROUTE_SOURCE_ID,
-            data: '{"type": "FeatureCollection", "features": []}',
-          ));
-          print("[_onStyleLoaded] Route source ADDED successfully.");
-
-          print("[_onStyleLoaded] Trying to add layer...");
-          // *** ΧΡΗΣΙΜΟΠΟΙΗΣΕ ΤΟΝ controllerFromState ***
-          await controllerFromState.style.addLayer(mapbox.LineLayer(
-            id: ROUTE_LAYER_ID, sourceId: ROUTE_SOURCE_ID,
-            lineColor: Colors.red.value, lineWidth: 6.0, lineOpacity: 1.0, // Έντονο στυλ για test
-            lineJoin: mapbox.LineJoin.ROUND, lineCap: mapbox.LineCap.ROUND,
-          ));
-          print("[_onStyleLoaded] Route layer ADDED successfully.");
-
-          if (mounted) {
-            print("[_onStyleLoaded] Setting _routeLayerAndSourceAdded = true");
-            setState(() { _routeLayerAndSourceAdded = true; });
-          }
-        } else {
-          print("[_onStyleLoaded] Source already exists. Setting flag true.");
-          if (mounted && !_routeLayerAndSourceAdded) {
-            setState(() { _routeLayerAndSourceAdded = true; });
-          }
-        }
-      } catch (e) {
-        print("[_onStyleLoaded] !!! CAUGHT ERROR adding source/layer: $e");
-        if (mounted) { setState(() { _routeLayerAndSourceAdded = false; }); } // Reset flag on error
-      }
-    } else {
-      // Αυτό είναι λιγότερο πιθανό τώρα, αλλά το αφήνουμε
-      print("[_onStyleLoaded] Controller from BLoC state IS NULL at this point.");
-    }
-  }
-
-  /// Callback to inform coordinates by search result
+  /// Updates the local status [location] (string) when taken coordinates,
+  /// usually from search result through [Searchbloc].
+  ///
+  /// - [Latitude]: The latitude of the location.
+  /// - [Longitude]: The longitudinal length of the location.
   void _onSearchResultReceived(double latitude, double longitude) {
+    if (!mounted) return;
     setState(() {
       location = '${latitude.toStringAsFixed(6)},${longitude.toStringAsFixed(6)}';
     });
   }
 
+
   @override
+  /// Builds HomePage's main UI structure.
+  ///
+  /// regulates [Bloclistener] for [Searchbloc] and [Mapbloc] to handle status changes
+  /// and side effects (such as snackbars display or local status update based on bloc events).
+  /// places the main elements UI ([Mainmaparea], [LocationInfocard], [Zoomcontrolswidget],
+  /// [Startstoptrackingbutton]) within a [stack].
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: BlocListener<SearchBloc, SearchState>(
-          listener: (context, state) {
-            /// --- Logic for Search Bloc ---
-            if (state is CoordinatesLoaded) {
-              selectedFeature = state.feature;
-              final latitude = selectedFeature?.latitude;
-              final longitude = selectedFeature?.longitude;
-              if (latitude != null && longitude != null) {
-                _onSearchResultReceived(latitude, longitude);
-                context.read<MapBloc>().add(FlyTo(latitude, longitude));
-                context.read<MapBloc>().add(AddMarker(latitude, longitude));
-              }
-            } else if (state is CoordinatesError) {
-              print("Search Error: ${state.message}");
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: BlocListener<SearchBloc, SearchState>(
+        listener: (context, state) {
+          // Handles status changes from Searchbloc, informing UI accordingly
+          /// for search box
+          if (state is CoordinatesLoaded) {
+            selectedFeature = state.feature;
+            final latitude = selectedFeature?.latitude;
+            final longitude = selectedFeature?.longitude;
+            if (latitude != null && longitude != null) {
+              _onSearchResultReceived(latitude, longitude);
+              context.read<MapBloc>().add(FlyTo(latitude, longitude));
+              context.read<MapBloc>().add(AddMarker(latitude, longitude));
+            }
+          } else if (state is CoordinatesError) {
+            print("Search Error: ${state.message}");
+          }
+          /// for geodecoding
+          if (state is NameLoaded) {
+            if (!mounted) return;
+            setState(() { selectedFeature = state.feature; });
+            _searchController.text = selectedFeature!.fullAddress;
+          } else if (state is NameError) {
+            print('Geocoding Error: ${state.message}');
+          }
+          if (state is CategoryResultsLoaded) {
+            context.read<MapBloc>().add(AddCategoryMarkers(state.features, shouldZoomToBounds: true));
+          }
+        },
+        // Listener for Mapbloc bugs that do not handle children Widgets
+        child: BlocListener<MapBloc, MapState>(
+          listener: (context, mapState){
+            if (mapState.trackingStatus == MapTrackingStatus.error && mapState.errorMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Σφάλμα αναζήτησης: ${state.message}'), backgroundColor: Colors.orange));
-            }
-            if (state is NameLoaded) {
-              print('Name Loaded: ${state.feature.fullAddress}');
-              setState(() {
-                selectedFeature = state.feature;
-              });
-              _searchController.text = selectedFeature!.fullAddress;
-            } else if (state is NameError) {
-              print('Geocoding Error: ${state.message}');
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Σφάλμα εύρεσης ονόματος: ${state.message}'), backgroundColor: Colors.orange));
-            }
-            if (state is CategoryResultsLoaded) {
-              context.read<MapBloc>().add(AddCategoryMarkers(state.features, shouldZoomToBounds: true));
-            }
-            /// --- /Logic for Search Bloc ---
-          },
-          child: BlocConsumer<MapBloc, MapState>(
-            listenWhen: (previous, current) {
-              return previous.trackedRoute != current.trackedRoute ||
-                  previous.isTracking != current.isTracking ||
-                  previous.trackingStatus != current.trackingStatus ||
-                  previous.errorMessage != current.errorMessage;
-            },
-            listener: (context, mapState) async {
-              final currentMapController = mapState.mapController;
-              final bool layerAdded = _routeLayerAndSourceAdded; // Διάβασε το τοπικό flag
-
-              // DEBUG PRINT:
-              print("[Listener] Check: mapState.controller is ${currentMapController == null ? 'NULL' : 'NOT NULL'}, _routeLayerAndSourceAdded is $layerAdded");
-
-              /// --- Update map source when route changes ---
-              if (currentMapController != null && _routeLayerAndSourceAdded) {
-                print("Listener triggered for route update. Points: ${mapState.trackedRoute.length}");
-                final List<List<double>> coordinates = mapState.trackedRoute
-                    .map((pos) => [pos.longitude, pos.latitude])
-                    .toList();
-
-                String geoJsonData;
-                // Designed a line only if there is a tracking and there are at least 2 points
-                if (mapState.isTracking && coordinates.length >= 2) {
-                  geoJsonData = jsonEncode({
-                    "type": "FeatureCollection",
-                    "features": [{
-                      "type": "Feature",
-                      "geometry": {"type": "LineString", "coordinates": coordinates,}
-                    }]
-                  });
-                } else {
-                  // Empty Geojson to clear the line
-                  geoJsonData = '{"type": "FeatureCollection", "features": []}';
-                }
-                try {
-                  print("Attempting to update route source using setStyleSourceProperty...");
-                  await currentMapController.style.setStyleSourceProperty(
-                      ROUTE_SOURCE_ID,
-                      'data',
-                      geoJsonData
-                  );
-                  print("Route source updated successfully using setStyleSourceProperty.");
-                } catch (e) {
-                  print("Error updating route source with setStyleSourceProperty: $e");
-                }
-              } else {
-                if(currentMapController == null) print("[Listener] Skipping source update (controller from state is NULL).");
-                if(!layerAdded) print("[Listener] Skipping source update (layer not added yet).");
-                print("[Listener] Skipping source update (map controller null or layer not added yet)."); // DEBUG
-              }
-            },
-            builder: (context, mapState) {
-              return Stack(
-                children: [
-                  // --- Map and Search Bar ---
-                  Column(
-                    children: [
-                      SB.SearchBar(searchController: _searchController),
-                      Expanded(
-                        child: mapbox.MapWidget(
-                          key: const ValueKey("mapWidget"),
-                          cameraOptions: initialCameraOptions,
-                          styleUri: "mapbox://styles/el03/cm9vbhxcb005901si1bp370nc",
-                          textureView: true, // Important for rendering annotations over the map
-                          onTapListener: (gestureContext) => _onTap(gestureContext, context),
-                          onLongTapListener: (gestureContext) => _onLongTap(gestureContext, context),
-                          onStyleLoadedListener: _onStyleLoaded,
-                          onMapCreated: (controller) {
-                            // We send the controller to Mapbloc Only one time
-                            //to avoid problems if widget is rebuilt
-                            if (context.read<MapBloc>().state.mapController == null) {
-                              context.read<MapBloc>().add(InitializeMap(controller));
-                            }
-                            controller.location.updateSettings(
-                                mapbox.LocationComponentSettings(
-                                    enabled: true,
-                                    pulsingEnabled: false,
-                                    showAccuracyRing: true,
-                                    puckBearingEnabled: true
-                                )
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  /// --- /Map and Search Bar ---
-
-                  /// --- Location Info Card (Όπως πριν) ---
-                  if (location.isNotEmpty && selectedFeature != null)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 10, // Ίσως λίγο πιο πάνω από τον πάτο
-                      child: LocationInfoCard(
-                        feature: selectedFeature,
-                      ),
-                    ),
-                  /// --- /Location Info Card ---
-
-                  /// Zoom Controls
-                  Positioned(
-                    right: 16,
-                    bottom: (location.isNotEmpty) ? 200 : 80,
-                    child: ZoomControls(),
-                  ),
-                  /// Zoom Controls
-
-
-                  /// BUTTON START/STOP
-                  Positioned(
-                    right: 16,
-                    bottom: (location.isNotEmpty) ? 150 : 35,
-                    child: FloatingActionButton(
-                      // Different Herotag depending on the condition to avoid errors
-                      heroTag: mapState.isTracking ? "stop_tracking_fab" : "start_tracking_fab",
-                      mini: true, // Μικρό μέγεθος
-                      tooltip: mapState.isTracking ? 'Παύση Καταγραφής' : 'Έναρξη Καταγραφής', // Tooltip
-                      onPressed: () {
-                        // Do not do anything if it loads to start tracking
-                        if (mapState.trackingStatus == MapTrackingStatus.loading) return;
-                        if (mapState.isTracking) {
-                          context.read<MapBloc>().add(StopTrackingRequested());
-                        } else {
-                          context.read<MapBloc>().add(StartTrackingRequested());
-                        }
-                      },
-                      // Changed color based on status
-                      backgroundColor: mapState.isTracking
-                          ? Colors.red.shade700 // red when it records
-                          : theme.colorScheme.secondary,
-                      foregroundColor: Colors.white,
-                      child: mapState.trackingStatus == MapTrackingStatus.loading
-                          ? const SizedBox( // Loading indicator
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                          : Icon(mapState.isTracking
-                          ? Icons.stop
-                          : Icons.play_arrow
-                      ),
-                    ),
-                  )
-                ],
+                  SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
               );
-            },
+            }
+          },
+          // Stack main layout contains the map and overlay widgets
+          child: Stack(
+            children: [
+              MainMapArea(
+                searchController: _searchController,
+                initialCameraOptions: initialCameraOptions,
+                styleUri: "mapbox://styles/el03/cm9vbhxcb005901si1bp370nc",
+                onMapTap: (gestureContext) => _onTap(gestureContext, context),
+                onMapLongTap: (gestureContext) => _onLongTap(gestureContext, context),
+              ),
+
+              /// Widgets
+              /// Location Info Card
+              if (location.isNotEmpty && selectedFeature != null)
+                Positioned(
+                  left: 0, right: 0, bottom: 10,
+                  child: LocationInfoCard(feature: selectedFeature),
+                ),
+              /// Zoom Controls
+              Positioned(
+                right: 16, bottom: (location.isNotEmpty) ? 200 : 80,
+                child: const ZoomControls(),
+              ),
+              /// Start/Stop Tracking Button
+              Positioned(
+                right: 16, bottom: (location.isNotEmpty) ? 150 : 30,
+                child: const StartStopTrackingButton(),
+              )
+            ],
           ),
         ),
-        bottomNavigationBar: const BottomNavBar(),
-      );
+      ),
+      /// Bottom Navigation Bar
+      bottomNavigationBar: const BottomNavBar(),
+    );
   }
 
   // --- Lifecycle Methods ---
   @override
+  /// Initialize the situation and registes this object as an observer
+  /// of application life cycle events.
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
+  /// Cleans resources when the widget is removed from the widgets tree.
+  /// Writing the Life Circle Observer and release of Text Editing Controller.
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     super.dispose();
   }
-// --- Lifecycle Methods ---
+// --- /Lifecycle Methods ---
 
 }

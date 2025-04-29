@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// A collection of color constants used in the app.
 class AppColors {
 
   static const Color background = Color(0xFFFFF9F3);

@@ -6,11 +6,14 @@ import '../theme/app_colors.dart';
 import '../widgets/bottom_bar.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+/// Main widget for the Login route.
+/// Handles auto-login check & provides [LoginBloc].
 class LoginScreen extends StatelessWidget {
 
   LoginScreen({super.key});
 
   final storage = FlutterSecureStorage();
+  /// Checks storage & navigates if logged in.
   Future<void> _checkIfUserIsLoggedIn(BuildContext context) async {
     final String? isLoggedIn = await storage.read(key: 'isLoggedIn');
 
@@ -22,8 +25,9 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _checkIfUserIsLoggedIn(context);  // Κάνουμε έλεγχο όταν φορτώνει η οθόνη
+    _checkIfUserIsLoggedIn(context);
 
+    /// Provides [LoginBloc] to [_LoginView].
     return BlocProvider(
       create: (context) => LoginBloc(),
       child: const _LoginView(),
@@ -31,6 +35,7 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+/// Login form UI.
 class _LoginView extends StatefulWidget {
   const _LoginView();
 
@@ -38,6 +43,7 @@ class _LoginView extends StatefulWidget {
   State<_LoginView> createState() => __LoginViewState();
 }
 
+/// Manages login form state.
 class __LoginViewState extends State<_LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -52,6 +58,7 @@ class __LoginViewState extends State<_LoginView> {
   }
 
   @override
+  /// Builds the login form UI.
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -59,6 +66,7 @@ class __LoginViewState extends State<_LoginView> {
       resizeToAvoidBottomInset: true,
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
+        /// Listens to [LoginState] for navigation/errors.
         child: BlocListener<LoginBloc, LoginState>(
           listener: (context, state) {
             if (state.status == LoginStatus.success) {
@@ -77,8 +85,10 @@ class __LoginViewState extends State<_LoginView> {
               child: Column(
                 children: [
                   const SizedBox(height: 48),
+                  /// App logo
                   Image.asset('assets/images/logo.png', height: 120),
                   const SizedBox(height: 24),
+                  /// Title
                   const Text(
                     'Συνδεθείτε στον λογαριασμό σας',
                     style: TextStyle(
@@ -87,6 +97,7 @@ class __LoginViewState extends State<_LoginView> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  /// Subtitle
                   const Text(
                     textAlign: TextAlign.center,
                     'Εισάγετε το email και τον κωδικό σας για να συνεχίσετε',
@@ -95,6 +106,7 @@ class __LoginViewState extends State<_LoginView> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  /// Email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -117,6 +129,7 @@ class __LoginViewState extends State<_LoginView> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  /// Password
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -152,14 +165,16 @@ class __LoginViewState extends State<_LoginView> {
                   ),
 
                   const SizedBox(height: 16),
+                  /// Login buttons & status.
                   BlocBuilder<LoginBloc, LoginState>(
                     builder: (context, state) {
                       return Column(
                         children: [
+                          /// Email/Password Button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: state.status == LoginStatus.loading
+                              onPressed: state.status == LoginStatus.loading // Disable while loading
                                   ? null
                                   : () {
                                 if (_formKey.currentState!.validate()) {
@@ -273,6 +288,7 @@ class __LoginViewState extends State<_LoginView> {
           ),
         ),
       ),
+      /// Bottom navigation bar.
       bottomNavigationBar: const BottomNavBar(),
     );
   }
