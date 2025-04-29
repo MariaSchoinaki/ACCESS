@@ -70,6 +70,17 @@ class StartTrackingRequested extends MapEvent {}
 /// Event to stop tracking the user's location
 class StopTrackingRequested extends MapEvent {}
 
+/// Event to rate and save the completed route.
+class RateAndSaveRouteRequested extends MapEvent {
+  final String rating;
+  final List<geolocator.Position> route; // The tracked points
+
+  RateAndSaveRouteRequested({required this.rating, required this.route});
+
+  @override
+  List<Object?> get props => [rating, route];
+}
+
 /// Event when the location of the user is updated
 class _LocationUpdated extends MapEvent {
   // New location of the user

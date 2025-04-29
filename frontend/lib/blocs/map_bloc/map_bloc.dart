@@ -10,6 +10,8 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:permission_handler/permission_handler.dart';
 import '../../models/mapbox_feature.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'map_event.dart';
 part 'map_state.dart';
@@ -29,6 +31,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   /// Platform interface for accessing geolocation services.
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   /// Initializes the MapBloc with the initial state and registers event handlers.
   MapBloc() : super(MapState.initial()) {
     on<RequestLocationPermission>(_onRequestLocationPermission);
@@ -46,6 +51,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<StartTrackingRequested>(_onStartTrackingRequested);
     on<StopTrackingRequested>(_onStopTrackingRequested);
     on<_LocationUpdated>(_onLocationUpdated); // Internal event for location updates
+    on<RateAndSaveRouteRequested>(_onRateAndSaveRouteRequested);
   }
 
   /// Handles the [RequestLocationPermission] event.
@@ -281,73 +287,49 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   /// Requests location permission if needed, sets up a location stream subscription
   /// using `geolocator`, and updates the state to indicate tracking has started.
   /// Emits error states if permission is denied or the stream fails to start.
-  Future<void> _onStartTrackingRequested(
-      StartTrackingRequested event, Emitter<MapState> emit) async {
-    // 1. Check for permission
+  Future<void> _onStartTrackingRequested( StartTrackingRequested event, Emitter<MapState> emit) async {
+    // ... (existing _onStartTrackingRequested logic remains the same) ...
     final permissionStatus = await Permission.locationWhenInUse.request();
-
     if (permissionStatus.isGranted || permissionStatus.isLimited) {
-      // Permission granted, proceed with tracking setup.
-      // 2. Preparation & Start Stream
       emit(state.copyWith(
-        trackingStatus: MapTrackingStatus.loading, // Indicate loading state
-        trackedRoute: [], // Clear any previous route data
-        currentTrackedPositionGetter: () => null, // Reset current position
-        isTracking: false, // Ensure tracking flag is reset before starting
-        errorMessageGetter: () => null, // Clear previous errors
+        trackingStatus: MapTrackingStatus.loading,
+        trackedRoute: [], // Always clear route on new start
+        currentTrackedPositionGetter: () => null,
+        isTracking: false,
+        errorMessageGetter: () => null,
       ));
+      await _stopTrackingLogic(); // Ensure any previous tracking is stopped
 
-      // Stop any existing tracking subscription before starting a new one.
-      await _stopTrackingLogic();
-
-      // Configure location stream settings (high accuracy, update every 5 meters).
       const locationSettings = geolocator.LocationSettings(
-        accuracy: geolocator.LocationAccuracy.high,
-        distanceFilter: 5, // meters
-      );
-
+        accuracy: geolocator.LocationAccuracy.high, distanceFilter: 5,);
       try {
-        // Start listening to the position stream.
         _positionSubscription = _geolocator
             .getPositionStream(locationSettings: locationSettings)
-        // Handle potential errors within the stream.
             .handleError((error) {
           print("Error in location stream: $error");
-          // If stream errors, stop tracking and emit error state.
-          add(StopTrackingRequested()); // Trigger stop logic internally
+          add(StopTrackingRequested());
           emit(state.copyWith(
               trackingStatus: MapTrackingStatus.error,
-              isTracking: false, // Ensure tracking is marked as stopped
-              errorMessageGetter: () => 'Σφάλμα ροής τοποθεσίας: $error')); // 'Location stream error: $error'
+              isTracking: false,
+              errorMessageGetter: () => 'Σφάλμα ροής τοποθεσίας: $error'));
         })
-        // Listen for new position updates.
             .listen((geolocator.Position position) {
-          // Add an internal event to handle the location update.
           add(_LocationUpdated(position));
         });
-
-        // Update state to indicate tracking is active.
-        emit(state.copyWith(
-          isTracking: true,
-          trackingStatus: MapTrackingStatus.tracking,
-        ));
+        emit(state.copyWith(isTracking: true, trackingStatus: MapTrackingStatus.tracking,));
         print("Tracking started...");
       } catch (e) {
-        // Handle errors during stream setup.
         print("Error starting location stream: $e");
-        await _stopTrackingLogic(); // Ensure cleanup if start fails
+        await _stopTrackingLogic();
         emit(state.copyWith(
-            trackingStatus: MapTrackingStatus.error,
-            isTracking: false,
-            errorMessageGetter: () => 'Αδυναμία έναρξης παρακολούθησης: $e')); // 'Failed to start tracking: $e'
+            trackingStatus: MapTrackingStatus.error, isTracking: false,
+            errorMessageGetter: () => 'Αδυναμία έναρξης παρακολούθησης: $e'));
       }
-
     } else {
-      // Permission was not granted.
       print("Location permission denied for tracking.");
       emit(state.copyWith(
           trackingStatus: MapTrackingStatus.error,
-          errorMessageGetter: () => 'Απαιτείται άδεια τοποθεσίας για την έναρξη καταγραφής.')); // 'Location permission required to start recording.'
+          errorMessageGetter: () => 'Απαιτείται άδεια τοποθεσίας για την έναρξη καταγραφής.'));
     }
   }
 
@@ -356,21 +338,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   /// This is triggered by the location stream when tracking is active.
   /// It adds the new [event.newPosition] to the tracked route in the state.
   void _onLocationUpdated(_LocationUpdated event, Emitter<MapState> emit) {
-    // Ignore updates if tracking is not currently active.
     if (!state.isTracking) return;
-
-    // Create an updated list of positions for the tracked route.
     final updatedRoute = List<geolocator.Position>.from(state.trackedRoute)
-      ..add(event.newPosition); // Add the new position
-
-    // Update the state with the new position and the extended route.
+      ..add(event.newPosition);
     emit(state.copyWith(
-      currentTrackedPositionGetter: () => event.newPosition, // Update the latest known position
-      trackedRoute: updatedRoute, // Update the list of tracked points
-      // trackingStatus remains MapTrackingStatus.tracking
+      currentTrackedPositionGetter: () => event.newPosition,
+      trackedRoute: updatedRoute,
     ));
-    // Optional debug print:
-    // print("Tracked route points: ${updatedRoute.length}");
   }
 
   /// Handles the [StopTrackingRequested] event.
@@ -379,14 +353,88 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   /// subscription and updates the state to indicate tracking has stopped.
   Future<void> _onStopTrackingRequested(
       StopTrackingRequested event, Emitter<MapState> emit) async {
-    await _stopTrackingLogic(); // Perform the actual subscription cancellation.
+    await _stopTrackingLogic(); // Cancel the stream subscription.
     // Update the state to reflect that tracking is no longer active.
     emit(state.copyWith(
       isTracking: false,
       trackingStatus: MapTrackingStatus.stopped,
+      // trackedRoute: [], // <-- ΑΛΛΑΓΗ: Αφαιρέθηκε ή έγινε σχόλιο για να μην καθαρίζει η διαδρομή
     ));
-    print("Tracking stopped. Final points: ${state.trackedRoute.length}");
-    /// TODO: Implement logic to send/save the recorded state.trackedRoute data.
+    print("Tracking stopped (without rating). Final points: ${state.trackedRoute.length}");
+    // NOTE: No data is saved here.
+  }
+
+  // --- NEW Handler for Rating and Saving --- // <-- ΝΕΟ
+  /// Handles the [RateAndSaveRouteRequested] event.
+  /// Saves the rated route to Firestore and updates the state to stop tracking.
+  Future<void> _onRateAndSaveRouteRequested(
+      RateAndSaveRouteRequested event, Emitter<MapState> emit) async {
+
+    // It's implied tracking was active. Stop the location updates first.
+    await _stopTrackingLogic();
+
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      print("User not logged in, cannot save rated route.");
+      emit(state.copyWith(
+        isTracking: false,
+        trackingStatus: MapTrackingStatus.error, // Indicate error
+        errorMessageGetter: () => 'User not logged in to save route.',
+        // Keep the route data in state if needed for display
+      ));
+      return;
+    }
+
+    // Optionally emit a 'saving' status if you want UI feedback
+    // emit(state.copyWith(trackingStatus: MapTrackingStatus.saving));
+
+    try {
+      print("Saving rated route to Firestore for user ${currentUser.uid}...");
+
+      // Convert List<Position> to List<Map<String, dynamic>> for Firestore
+      final List<Map<String, dynamic>> routeForFirestore = event.route.map((pos) => {
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+        'altitude': pos.altitude,
+        'accuracy': pos.accuracy,
+        'speed': pos.speed,
+        'timestamp': pos.timestamp..toIso8601String(), // Convert DateTime to ISO 8601 String
+      }).toList();
+
+      // Prepare the data document
+      final Map<String, dynamic> ratedRouteData = {
+        'userId': currentUser.uid,
+        'userEmail': currentUser.email, 
+        'rating': event.rating, // 'green', 'yellow', or 'red'
+        'routePoints': routeForFirestore,
+        'pointCount': event.route.length,
+        'createdAt': FieldValue.serverTimestamp(), // Use server timestamp
+        // You could add start/end timestamps if you track them
+      };
+
+      // Save to Firestore collection 'rated_routes'
+      await _firestore.collection('rated_routes').add(ratedRouteData);
+
+      print("Rated route saved successfully!");
+
+      // Update state: stop tracking, set status, clear errors
+      emit(state.copyWith(
+        isTracking: false, // Tracking is now stopped
+        trackingStatus: MapTrackingStatus.stopped, // Status is stopped
+        // trackedRoute: [], // DECIDE: Clear route from state/map now? Or leave it? Let's leave it for now.
+        errorMessageGetter: () => null, // Clear any previous error
+      ));
+
+    } catch (e) {
+      print("Error saving rated route: $e");
+      // Update state: stop tracking, set status to error
+      emit(state.copyWith(
+        isTracking: false, // Still stop tracking
+        trackingStatus: MapTrackingStatus.error, // Set error status
+        errorMessageGetter: () => 'Failed to save rated route: $e',
+        // Keep route data in state for potential retry or display
+      ));
+    }
   }
 
   /// Internal helper method to cancel the location stream subscription.
@@ -394,8 +442,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   /// Safely cancels the [_positionSubscription] if it exists and sets it to null.
   Future<void> _stopTrackingLogic() async {
     print("Stopping location subscription...");
-    await _positionSubscription?.cancel(); // Cancel the stream subscription
-    _positionSubscription = null;        // Nullify the subscription variable
+    await _positionSubscription?.cancel();
+    _positionSubscription = null;
   }
 
   /// Overrides the BLoC's close method for cleanup.
