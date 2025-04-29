@@ -95,30 +95,25 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 // Set the flag to true to prevent showing it again immediately.
                 _dialogShown = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  // Ensure the widget is still mounted before showing the dialog.
-                  if (mounted) {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false, //Requires completion
-                      builder: (dialogContext) => UserInfoPopup(
-                        // Callback function executed when the popup's form is submitted.
-                        onSubmit: (birthDate, disabilityType) {
-                          context.read<MyAccountBloc>().add(UpdateUserInfo(
-                            dateOfBirth: birthDate,
-                            disabilityType: disabilityType,
-                          ));
-                          // Close the dialog after submitting
-                          // Check if dialog context is still valid before popping
-                          if (Navigator.of(dialogContext).canPop()){
-                             Navigator.of(dialogContext).pop();
-                          }
-                        },
-                        // Pass current values to the popup.
-                        initialBirthDate: state.dateOfBirth,
-                        initialDisability: state.disabilityType,
-                      ),
-                    );
-                  }
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false, //Requires completion
+                    builder: (dialogContext) => UserInfoPopup(
+                      // Callback function executed when the popup's form is submitted.
+                          onSubmit: (birthDate, disabilityType) {
+                            context.read<MyAccountBloc>().add(UpdateUserInfo(
+                                dateOfBirth: birthDate,disabilityType: disabilityType,
+                              ),);
+                      // Close the dialog after submitting
+                            Navigator.of(
+                              dialogContext,
+                            ).pop();
+                          },
+                      // Pass current values to the popup.
+                          initialBirthDate:state.dateOfBirth,
+                          initialDisability: state.disabilityType,
+                        ),
+                  );
                 });
               }
 
@@ -152,30 +147,25 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     icon: const Icon(Icons.edit, size: 16),
                     label: const Text("Τροποποίηση στοιχείων", style: TextStyle(fontSize: 13)),
                     onPressed: () {
-                       // Get the current state
-                       final currentState = context.read<MyAccountBloc>().state;
-                       if (currentState is MyAccountLoaded) {
-                         // Show the UserInfoPopup for editing.
-                         showDialog(
-                           context: context,
-                           barrierDismissible: true,
-                           builder: (dialogContext) => UserInfoPopup(
-                             onSubmit: (birthDate, disabilityType) {
-                               context.read<MyAccountBloc>().add(UpdateUserInfo(
-                                 dateOfBirth: birthDate,
-                                 disabilityType: disabilityType,
-                               ));
-                               // Close the dialog if context is valid
-                               if (Navigator.of(dialogContext).canPop()){
-                                   Navigator.of(dialogContext).pop();
-                               }
-                             },
-                             // Pre-fill with current data from state.
-                             initialBirthDate: currentState.dateOfBirth,
-                             initialDisability: currentState.disabilityType,
-                           ),
-                         );
-                       }
+                      // Get the current state
+                      final currentState = context.read<MyAccountBloc>().state
+                      as MyAccountLoaded;
+                      // Show the UserInfoPopup for editing.
+                      showDialog(
+                        context: context,
+
+                        builder: (dialogContext) => UserInfoPopup(
+                              onSubmit: (birthDate, disabilityType) {
+                                context.read<MyAccountBloc>().add(UpdateUserInfo(dateOfBirth: birthDate,
+                                    disabilityType: disabilityType,
+                                  ),
+                                );
+                              },
+                              // Pre-fill with current data from state.
+                              initialBirthDate: currentState.dateOfBirth,
+                              initialDisability: currentState.disabilityType,
+                            ),
+                      );
                     },
                   ),
                   const SizedBox(height: 30),
