@@ -4,7 +4,6 @@ import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/services/search_service.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blocs/map_bloc/map_bloc.dart';
@@ -15,26 +14,40 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-/// Entry point of the Flutter application.
+/// Main entry point for the application
+///
+/// Initializes:
+/// - Flutter framework bindings
+/// - Mapbox SDK with access token
+/// - Firebase services
+///
+/// Throws:
+/// - [Exception] if Mapbox access token is not provided
+///
+/// Usage:
+/// ```bash
+/// flutter run --dart-define=token=YOUR_MAPBOX_TOKEN
+/// ```
 Future<void> main() async {
+  // Initialize Flutter framework bindings
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Securely retrieves the Mapbox access token via --dart-define
+  // Securely retrieve Mapbox access token from build arguments
   const ACCESS_TOKEN = String.fromEnvironment("token");
 
-  // Validate token and initialize Mapbox
+  // Validate and set Mapbox configuration
   if (ACCESS_TOKEN.isEmpty) {
     throw Exception('Missing Mapbox access token. Provide it with --dart-define=token=YOUR_TOKEN_HERE');
   }
-
   MapboxOptions.setAccessToken(ACCESS_TOKEN);
 
+  // Initialize Firebase services
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Launch the Flutter application
+  // Launch the application with BLoC provider
   runApp(
     BlocProvider(
       create: (_) => MyAccountBloc()..add(LoadUserProfile()),
@@ -43,10 +56,31 @@ Future<void> main() async {
   );
 }
 
-/// Root widget of the app
+/// Root application widget configuring global settings
+///
+/// Features:
+/// - Theme management (light/dark modes)
+/// - Route configuration
+/// - BLoC provider integration
+/// - Authentication flow
+///
+/// Routes:
+/// - '/home' : Main application screen
+/// - '/signup' : User registration
+/// - '/profile' : Authentication gateway
+/// - '/login' : User login
+/// - '/myaccount' : User profile management
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  /// Builds the root application structure
+  ///
+  /// Returns:
+  /// [MaterialApp] configured with:
+  /// - Theme settings from AppTheme
+  /// - Named route navigation
+  /// - BLoC providers for state management
+  /// - Authentication flow integration
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -55,20 +89,17 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: MultiBlocProvider( // Mobile: Παρέχουμε τους Blocs ΠΑΝΩ από τη HomePage
-        providers: [
-          BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
-          BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
-          // BlocProvider(create: (_) => MyAccountBloc()..add(LoadUserProfile())),
-        ],
-        child: const HomePage(),
-      ),
+      initialRoute: '/home',
       routes: {
         '/home': (context) => MultiBlocProvider(
           providers: [
-            BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
-            BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
-            // Πρόσθεσε κι άλλους Blocs αν τους χρειάζεται η HomePage
+            BlocProvider(
+              create: (_) => MapBloc()..add(RequestLocationPermission()),
+              child: const HomePage(),
+            ),
+            BlocProvider(
+              create: (_) => SearchBloc(searchService: SearchService()),
+            ),
           ],
           child: const HomePage(),
         ),
@@ -76,7 +107,6 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
         '/myaccount': (context) => const MyAccountScreen(),
-        '/admin': (context) => const AdminAuthGate(),
       },
     );
   }

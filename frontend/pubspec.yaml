@@ -1,76 +1,70 @@
-name: access
-description: "ACCESS"
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+# Application metadata
+name: access                      # Package identifier (lowercase_with_underscores)
+description: "ACCESS"             # Short app description
+publish_to: 'none'                # Disables pub.dev publishing
 
+# Versioning (Major.Minor.Patch+Build)
 version: 1.0.0+1
 
+# Development environment requirements
 environment:
-  sdk: ^3.7.0
+  sdk: ^3.7.0                     # Minimum Dart SDK version
 
+# Core dependencies
 dependencies:
   flutter:
-    sdk: flutter
-  flutter_secure_storage: ^9.0.0
-  flutter_bloc: ^9.1.0
-  bloc: ^9.0.0
-  dio: ^5.0.0
-  image_picker: ^1.0.4
-  intl: ^0.20.2
-  uuid: ^4.5.1
-  shared_preferences: ^2.0.7
-  device_info_plus: ^9.1.0
+    sdk: flutter                  # Flutter framework
+  flutter_secure_storage: ^9.0.0  # Encrypted storage solution
+  flutter_bloc: ^9.1.0            # State management library
+  bloc: ^9.0.0                    # BLoC pattern implementation
+  dio: ^5.0.0                     # HTTP client
+  image_picker: ^1.0.4            # Image selection from device
+  intl: ^0.20.2                   # Internationalization utilities
+  uuid: ^4.5.1                    # Unique ID generation
+  device_info_plus: ^9.1.0        # Device metadata access
+  shared_preferences: ^2.2.2      # Persistent key-value storage
 
-  # Maps & Geolocation
-  mapbox_maps_flutter: ^2.7.0
-  flutter_polyline_points: ^2.1.0
-  geolocator: ^13.0.4
-  geocoding: ^3.0.0
-  permission_handler: ^11.4.0
+  # Maps & Geolocation stack
+  mapbox_maps_flutter: ^2.7.0     # Mapbox integration
+  flutter_polyline_points: ^2.1.0 # Route polyline rendering
+  geolocator: ^13.0.4             # Location services
+  geocoding: ^3.0.0               # Address/coordinates conversion
+  permission_handler: ^11.4.0     # Runtime permission management
 
-  # Firebase
-  cloud_firestore: ^5.6.6
-  cloud_functions: ^5.4.0
-  firebase_auth: ^5.5.2
-  firebase_core: ^3.13.0
-  firebase_database: ^11.3.5
-  firebase_messaging: ^15.2.5
-  firebase_storage: ^12.4.5
-  google_sign_in: ^6.1.4
+  # Firebase ecosystem
+  cloud_firestore: ^5.6.6         # NoSQL database
+  cloud_functions: ^5.4.0         # Serverless functions
+  firebase_auth: ^5.5.2           # Authentication service
+  firebase_core: ^3.13.0          # Firebase core SDK
+  firebase_database: ^11.3.5      # Realtime database
+  firebase_messaging: ^15.2.5     # Push notifications
+  firebase_storage: ^12.4.5       # Cloud file storage
+  google_sign_in: ^6.1.4          # Google OAuth integration
 
-  # Country flag icons
-  country_icons: ^3.0.0
+  # UI components
+  country_icons: ^3.0.0           # Country flag icons
+  cupertino_icons: ^1.0.8         # iOS-style icons
+  email_validator: ^3.0.0         # Email format validation
+  equatable: ^2.0.5               # Value comparison utilities
 
-  # iOS style icons
-  cupertino_icons: ^1.0.8
-  email_validator: ^3.0.0
-  equatable: ^2.0.5
-
+# Development tools
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-  flutter_launcher_icons: ^0.14.3
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+    sdk: flutter                  # Testing framework
+  flutter_launcher_icons: ^0.14.3 # App icon generation
+  flutter_lints: ^5.0.0           # Code quality analysis
 
+# App icon configuration
 flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/logo.png"
-  pin: "assets/images/pin.png"
+  android: true                  # Generate Android icons
+  ios: true                      # Generate iOS icons
+  image_path: "assets/images/logo.png" # Source image
+  pin: "assets/images/pin.png"   # Map marker icon
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
+# Flutter-specific configuration
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
-  uses-material-design: true
+  uses-material-design: true     # Enable Material icons
+  
+  # Asset management
   assets:
-    - assets/images/
+    - assets/images/             # Image resources directory
