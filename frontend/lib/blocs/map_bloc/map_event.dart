@@ -72,7 +72,7 @@ class StopTrackingRequested extends MapEvent {}
 
 /// Event to rate and save the completed route.
 class RateAndSaveRouteRequested extends MapEvent {
-  final String rating;
+  final double rating;
   final List<geolocator.Position> route; // The tracked points
 
   RateAndSaveRouteRequested({required this.rating, required this.route});
