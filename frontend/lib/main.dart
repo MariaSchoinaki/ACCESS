@@ -1,11 +1,15 @@
 import 'package:access/screens/login_screen.dart';
 import 'package:access/screens/myaccount_screen.dart';
 import 'package:access/screens/sign_up_screen.dart';
+import 'package:access/services/search_service.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/map_bloc/map_bloc.dart';
 import 'blocs/my_account_bloc/my_account_bloc.dart';
+import 'blocs/search_bloc/search_bloc.dart';
 import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -51,13 +55,28 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      initialRoute: '/home',
+      home: MultiBlocProvider( // Mobile: Παρέχουμε τους Blocs ΠΑΝΩ από τη HomePage
+        providers: [
+          BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
+          BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
+          // BlocProvider(create: (_) => MyAccountBloc()..add(LoadUserProfile())),
+        ],
+        child: const HomePage(),
+      ),
       routes: {
-        '/home': (context) => const HomePage(),
+        '/home': (context) => MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
+            BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
+            // Πρόσθεσε κι άλλους Blocs αν τους χρειάζεται η HomePage
+          ],
+          child: const HomePage(),
+        ),
         '/signup': (context) => SignUpPage(),
         '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
         '/myaccount': (context) => const MyAccountScreen(),
+        '/admin': (context) => const AdminAuthGate(),
       },
     );
   }

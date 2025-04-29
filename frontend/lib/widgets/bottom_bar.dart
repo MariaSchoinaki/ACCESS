@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/report_obstacle_bloc/report_obstacle_bloc.dart';
+import '../blocs/search_bloc/search_bloc.dart';
 import '../screens/home_screen.dart';
 import '../screens/report_obstacle_screen.dart';
+import '../services/search_service.dart';
 import '../utils/auth_gate.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -73,7 +76,16 @@ class BottomNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           IconButton(
-            onPressed: () => _navigateToScreen(context, const HomePage(), '/home'),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(
+                builder: (newContext) => MultiBlocProvider( // <--- ΤΥΛΙΞΕ ΕΔΩ
+                  providers: [
+                    BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
+                    BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
+                    // Πρόσθεσε κι άλλους Blocs αν χρειάζεται
+                  ],
+                  child: const HomePage(), // screen είναι η HomePage
+                ),
+            )),
             icon: const Icon(Icons.home, size: 30),
           ),
           if (user != null)

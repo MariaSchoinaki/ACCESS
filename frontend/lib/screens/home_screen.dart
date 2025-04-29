@@ -79,42 +79,56 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   /// Callback for when the map style is loaded
   Future<void> _onStyleLoaded(mapbox.StyleLoadedEventData data) async {
-    // Add the source and layer for the tracked route ONCE
-    if (!mounted || _routeLayerAndSourceAdded) return;
+    // Έλεγχοι mounted και flag παραμένουν
+    if (!mounted) { print("[_onStyleLoaded] Not mounted, skipping."); return; }
+    if (_routeLayerAndSourceAdded) { print("[_onStyleLoaded] Already added, skipping."); return; }
 
-    print("Map style loaded. Checking/Adding route source and layer...");
-    if (mapboxMap != null) {
-      final sourceExists = await mapboxMap?.style.styleSourceExists(ROUTE_SOURCE_ID);
-      if (sourceExists == false) {
-        try {
-          // Add empty GeoJSON source initially
-          await mapboxMap?.style.addSource(mapbox.GeoJsonSource(
+    print("[_onStyleLoaded] Style loaded. Flag is false. Getting controller from BLoC state...");
+
+    // *** ΠΑΡΕ ΤΟΝ CONTROLLER ΑΠΟ ΤΟ STATE ΤΟΥ BLOC ***
+    final controllerFromState = context.read<MapBloc>().state.mapController;
+
+    if (controllerFromState != null) {
+      print("[_onStyleLoaded] Controller from state is NOT null. Checking if source exists...");
+      try {
+        final sourceExists = await controllerFromState.style.styleSourceExists(ROUTE_SOURCE_ID);
+        print("[_onStyleLoaded] Source exists check returned: $sourceExists");
+
+        if (sourceExists == false) {
+          print("[_onStyleLoaded] Source does NOT exist. Trying to add source...");
+          // *** ΧΡΗΣΙΜΟΠΟΙΗΣΕ ΤΟΝ controllerFromState ***
+          await controllerFromState.style.addSource(mapbox.GeoJsonSource(
             id: ROUTE_SOURCE_ID,
-            data: '{"type": "FeatureCollection", "features": []}', // Start empty
+            data: '{"type": "FeatureCollection", "features": []}',
           ));
-          print("Route source added: $ROUTE_SOURCE_ID");
+          print("[_onStyleLoaded] Route source ADDED successfully.");
 
-          // Add line layer linked to the source
-          await mapboxMap?.style.addLayer(mapbox.LineLayer(
-            id: ROUTE_LAYER_ID,
-            sourceId: ROUTE_SOURCE_ID,
-            lineColor: Colors.blue.value, // Customize color
-            lineWidth: 4.0,             // Customize width
-            lineOpacity: 0.8,           // Customize opacity
-            lineJoin: mapbox.LineJoin.ROUND,
-            lineCap: mapbox.LineCap.ROUND,
+          print("[_onStyleLoaded] Trying to add layer...");
+          // *** ΧΡΗΣΙΜΟΠΟΙΗΣΕ ΤΟΝ controllerFromState ***
+          await controllerFromState.style.addLayer(mapbox.LineLayer(
+            id: ROUTE_LAYER_ID, sourceId: ROUTE_SOURCE_ID,
+            lineColor: Colors.red.value, lineWidth: 6.0, lineOpacity: 1.0, // Έντονο στυλ για test
+            lineJoin: mapbox.LineJoin.ROUND, lineCap: mapbox.LineCap.ROUND,
           ));
-          print("Route layer added: $ROUTE_LAYER_ID");
+          print("[_onStyleLoaded] Route layer ADDED successfully.");
 
-          if(mounted){ setState(() { _routeLayerAndSourceAdded = true; }); }
-        } catch (e) {
-          print("Error adding route source/layer: $e");
-          if(mounted){ setState(() { _routeLayerAndSourceAdded = false; }); }
+          if (mounted) {
+            print("[_onStyleLoaded] Setting _routeLayerAndSourceAdded = true");
+            setState(() { _routeLayerAndSourceAdded = true; });
+          }
+        } else {
+          print("[_onStyleLoaded] Source already exists. Setting flag true.");
+          if (mounted && !_routeLayerAndSourceAdded) {
+            setState(() { _routeLayerAndSourceAdded = true; });
+          }
         }
-      } else {
-        print("Route source already exists.");
-        if(mounted && !_routeLayerAndSourceAdded){ setState(() { _routeLayerAndSourceAdded = true; }); }
+      } catch (e) {
+        print("[_onStyleLoaded] !!! CAUGHT ERROR adding source/layer: $e");
+        if (mounted) { setState(() { _routeLayerAndSourceAdded = false; }); } // Reset flag on error
       }
+    } else {
+      // Αυτό είναι λιγότερο πιθανό τώρα, αλλά το αφήνουμε
+      print("[_onStyleLoaded] Controller from BLoC state IS NULL at this point.");
     }
   }
 
@@ -129,12 +143,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => MapBloc()..add(RequestLocationPermission())),
-        BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
-      ],
-      child: Scaffold(
+    return Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: theme.scaffoldBackgroundColor,
         body: BlocListener<SearchBloc, SearchState>(
@@ -178,9 +187,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   previous.errorMessage != current.errorMessage;
             },
             listener: (context, mapState) async {
+              final currentMapController = mapState.mapController;
+              final bool layerAdded = _routeLayerAndSourceAdded; // Διάβασε το τοπικό flag
+
+              // DEBUG PRINT:
+              print("[Listener] Check: mapState.controller is ${currentMapController == null ? 'NULL' : 'NOT NULL'}, _routeLayerAndSourceAdded is $layerAdded");
 
               /// --- Update map source when route changes ---
-              if (mapboxMap != null && _routeLayerAndSourceAdded) {
+              if (currentMapController != null && _routeLayerAndSourceAdded) {
                 print("Listener triggered for route update. Points: ${mapState.trackedRoute.length}");
                 final List<List<double>> coordinates = mapState.trackedRoute
                     .map((pos) => [pos.longitude, pos.latitude])
@@ -202,7 +216,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 }
                 try {
                   print("Attempting to update route source using setStyleSourceProperty...");
-                  await mapboxMap?.style.setStyleSourceProperty(
+                  await currentMapController.style.setStyleSourceProperty(
                       ROUTE_SOURCE_ID,
                       'data',
                       geoJsonData
@@ -211,6 +225,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 } catch (e) {
                   print("Error updating route source with setStyleSourceProperty: $e");
                 }
+              } else {
+                if(currentMapController == null) print("[Listener] Skipping source update (controller from state is NULL).");
+                if(!layerAdded) print("[Listener] Skipping source update (layer not added yet).");
+                print("[Listener] Skipping source update (map controller null or layer not added yet)."); // DEBUG
               }
             },
             builder: (context, mapState) {
@@ -311,8 +329,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
         ),
         bottomNavigationBar: const BottomNavBar(),
-      ),
-    );
+      );
   }
 
   // --- Lifecycle Methods ---

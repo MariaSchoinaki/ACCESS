@@ -33,7 +33,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<DeleteMarker>(_onDeleteMarker);
     on<AddCategoryMarkers>(_onAddCategoryMarkers);
     on<ClearCategoryMarkers>(_onClearCategoryMarkers);
-    on<FetchMapRoutes>(...);
+    //on<FetchMapRoutes>(...);
 
     on<StartTrackingRequested>(_onStartTrackingRequested);
     on<StopTrackingRequested>(_onStopTrackingRequested);
