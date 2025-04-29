@@ -56,3 +56,13 @@ class ClearCategoryMarkers extends MapEvent {}
 
 /// Fetches route overlays or geometries from the map microservice
 class FetchMapRoutes extends MapEvent {}
+
+class StartTrackingRequested extends MapEvent {}
+
+class StopTrackingRequested extends MapEvent {}
+
+
+class _LocationUpdated extends MapEvent {
+  final geolocator.Position newPosition;
+  _LocationUpdated(this.newPosition);
+}

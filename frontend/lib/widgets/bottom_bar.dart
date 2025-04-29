@@ -45,14 +45,6 @@ class BottomNavBar extends StatelessWidget {
         );
       },
     );
-    /**final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      print('Image path: ${pickedFile.path}');
-    } else {
-      print('No image selected.');
-    }*/
   }
 
   @override
@@ -84,10 +76,10 @@ class BottomNavBar extends StatelessWidget {
             onPressed: () => _navigateToScreen(context, const HomePage(), '/home'),
             icon: const Icon(Icons.home, size: 30),
           ),
-          if (user != null) // Εμφανίζεται μόνο αν είναι συνδεδεμένος
+          if (user != null)
             IconButton(
               onPressed: () => _openCamera(context),
-              icon: const Icon(Icons.camera_alt, size: 30),
+              icon: const Icon(Icons.add_box_rounded, size: 30),
             ),
           IconButton(
             onPressed: () {
