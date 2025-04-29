@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 
 import 'package:bloc/bloc.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -36,12 +36,12 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
     on<SelectLocationOnMapRequested>(_onSelectLocationOnMapRequested);
     on<LocationUpdated>(_onLocationUpdated);
     on<SubmitReportRequested>(_onSubmitReportRequested);
+    on<ErrorHandler>(_onErrorHandler);
   }
 
   // --- Handlers ---
 
-  Future<void> _onLoadInitialData(
-      LoadInitialDataRequested event, Emitter<ReportObstacleState> emit) async {
+  Future<void> _onLoadInitialData(LoadInitialDataRequested event, Emitter<ReportObstacleState> emit) async {
     emit(state.copyWith(
         locationStatus: LocationStatus.loading,
         // Clean old location from previous state
@@ -105,91 +105,86 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
     }
   }
 
-  void _onDescriptionChanged(
-      DescriptionChanged event, Emitter<ReportObstacleState> emit) {
+  void _onDescriptionChanged(DescriptionChanged event, Emitter<ReportObstacleState> emit) {
     emit(state.copyWith(description: event.description));
   }
 
-  void _onObstacleTypeSelected(
-      ObstacleTypeSelected event, Emitter<ReportObstacleState> emit) {
+  void _onObstacleTypeSelected(ObstacleTypeSelected event, Emitter<ReportObstacleState> emit) {
     emit(state.copyWith(selectedObstacleType: event.type));
   }
 
-  void _onAccessibilityRatingSelected(
-      AccessibilityRatingSelected event, Emitter<ReportObstacleState> emit) {
+  void _onAccessibilityRatingSelected(AccessibilityRatingSelected event, Emitter<ReportObstacleState> emit) {
     emit(state.copyWith(accessibilityRating: event.rating));
   }
 
-  Future<void> _onPickImageRequested(
-      PickImageRequested event, Emitter<ReportObstacleState> emit) async {
-    print("--- _onPickImageRequested started for source: ${event.source} ---"); // DEBUG
-
-    PermissionStatus permissionStatus;
+  Future<void> _onPickImageRequested(PickImageRequested event, Emitter<ReportObstacleState> emit) async {
+    // Check and request permission depending on source
+    Permission? permission;
     if (event.source == ImageSource.camera) {
-      // Request camera permission
-      permissionStatus = await Permission.camera.request();
+      permission = Permission.camera;
     } else {
-      // Gallery permission depends on Android version
+      permission = Permission.photos; // For iOS / Android 13+
       if (Platform.isAndroid) {
-        int sdkInt = (await DeviceInfoPlugin().androidInfo).version.sdkInt;
-        if (sdkInt >= 33) {
-          permissionStatus = await Permission.photos.request();
-        } else {
-          permissionStatus = await Permission.storage.request();
+        // You may also need to check storage permission for old Androids (< API 33)
+        try {
+          final androidInfo = await DeviceInfoPlugin().androidInfo;
+          final sdkInt = androidInfo.version.sdkInt;
+          print("Android SDK Version: $sdkInt");
+          if (sdkInt < 33) {
+            permission = Permission.storage;
+            print("Android SDK < 33 detected. Requesting Permission.storage instead of Photos.");
+          } else {
+            print("Android SDK >= 33. Using Permission.photos.");
+          }
+        } catch (e) {
+          print("Error getting Android device info: $e. Proceeding with Permission.photos.");
+          permission = Permission.photos;
         }
-      } else {
-        // Assume iOS - use photos permission
-        permissionStatus = await Permission.photos.request();
       }
     }
 
-    if (permissionStatus.isGranted || permissionStatus.isLimited) {
+    PermissionStatus status = await permission.request();
+    print("--- _onPickImageRequested started for source: ${event.source} ---"); // DEBUG
+    if (status.isGranted || status.isLimited) {
       print("Permission granted. Trying to pick image..."); // DEBUG
       try {
+        print("Trying to pick image..."); // DEBUG
         final pickedFile = await _imagePicker.pickImage(
-          source: event.source,
+            source: event.source
         );
         if (pickedFile != null) {
-          print("Image picked: ${pickedFile.path}");
+          print("In != null"); // DEBUG
+          print("Image path: ${pickedFile.path}"); // DEBUG
           emit(state.copyWith(
-            pickedImageGetter: () => File(pickedFile.path),
-            errorMessageGetter: () => null,
+              pickedImageGetter: () => File(pickedFile.path),
+              errorMessageGetter: () => null // Clear any previous image error
           ));
         } else {
-          print("User cancelled picking image");
-          emit(state.copyWith(
-            errorMessageGetter: () => null,
-          ));
+          print("User canceled image picking");
+          emit(state.copyWith(errorMessageGetter: () => null)); // Clear error if existed
         }
       } catch (e) {
         print("Error picking image: $e");
         emit(state.copyWith(
-          errorMessageGetter: () => 'Error picking image: ${e.toString()}',
-        ));
+            errorMessageGetter: () => 'Error picking image: ${e.toString()}'));
       }
     } else {
       print("Permission denied");
-      if (permissionStatus.isPermanentlyDenied) {
-        // Open settings if user permanently denied
-        await openAppSettings();
-      }
       emit(state.copyWith(
-        errorMessageGetter: () => 'Permission required for ${event.source == ImageSource.camera ? "camera" : "gallery"}.',
-      ));
+          errorMessageGetter: () => 'Permission required for ${event.source == ImageSource.camera ? "camera" : "gallery"}.'));
+      // Optionally: open app settings
+      // openAppSettings();
     }
   }
 
-
-  void _onRemoveImageRequested(
-      RemoveImageRequested event, Emitter<ReportObstacleState> emit) {
+  void _onRemoveImageRequested(RemoveImageRequested event, Emitter<ReportObstacleState> emit) {
     emit(state.copyWith(
         pickedImageGetter: () => null, // Remove image
         errorMessageGetter: () => null // Clear any image error
     ));
   }
 
-  Future<void> _onSelectLocationOnMapRequested(
-      SelectLocationOnMapRequested event, Emitter<ReportObstacleState> emit) async {
+  Future<void> _onSelectLocationOnMapRequested(SelectLocationOnMapRequested event, Emitter<ReportObstacleState> emit) async {
     // ---- TODO: Navigation Logic to Map Screen ----
     // Here you should navigate to the map screen.
     // The map screen should return BOTH address/description AND coordinates (latitude, longitude).
@@ -217,8 +212,7 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
   }
 
   // Updated to also accept coordinates
-  void _onLocationUpdated(
-      LocationUpdated event, Emitter<ReportObstacleState> emit) {
+  void _onLocationUpdated(LocationUpdated event, Emitter<ReportObstacleState> emit) {
     emit(state.copyWith(
         userLocationGetter: () => event.locationString,
         latitudeGetter: () => event.latitude, // Update Lat
@@ -227,8 +221,7 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
     ));
   }
 
-  Future<void> _onSubmitReportRequested(
-      SubmitReportRequested event, Emitter<ReportObstacleState> emit) async {
+  Future<void> _onSubmitReportRequested( SubmitReportRequested event, Emitter<ReportObstacleState> emit) async {
 
     // --- Step 1:  // Validate mandatory fields ---
     final currentUser = _auth.currentUser;
@@ -319,6 +312,10 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
         errorMessageGetter: () => 'Παρουσιάστηκε ένα σφάλμα: ${e.toString()}',
       ));
     }
+  }
+
+  void _onErrorHandler(ErrorHandler event, Emitter<ReportObstacleState> emit) {
+    emit(state.copyWith(submissionStatus: SubmissionStatus.initial));
   }
 }
 

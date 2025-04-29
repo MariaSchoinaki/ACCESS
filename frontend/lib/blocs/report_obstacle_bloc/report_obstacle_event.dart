@@ -52,3 +52,5 @@ class LocationUpdated extends ReportObstacleEvent {
 }
 
 class SubmitReportRequested extends ReportObstacleEvent {}
+
+class ErrorHandler extends ReportObstacleEvent {}

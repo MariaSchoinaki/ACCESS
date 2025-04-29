@@ -108,6 +108,7 @@ class _ReportObstacleScreenState extends State<ReportObstacleScreen> {
               );
             },
           );
+          context.read<ReportObstacleBloc>().add(ErrorHandler());
         }
         else if (state.locationStatus == LocationStatus.error && state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
