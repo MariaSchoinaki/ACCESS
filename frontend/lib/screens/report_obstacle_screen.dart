@@ -120,6 +120,52 @@ class _ReportObstacleScreenState extends State<ReportObstacleScreen> {
     );
   }
 
+  /// Shows a generic information dialog.
+  ///
+  /// Displays an AlertDialog with a given [title], [content] message,
+  /// and an "OK" button to dismiss. Optionally takes a [titleColor]
+  /// and an [onDismiss] callback to execute after the dialog is closed.
+  /// Setting [barrierDismissible] controls if tapping outside closes the dialog.
+  Future<void> _showInfoDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    Color? titleColor, // Optional color for the title
+    bool barrierDismissible = true, // Default allows dismissing by tapping outside
+    VoidCallback? onDismiss, // Optional action after dismissal
+  }) {
+    // Check if the widget associated with the context is still mounted
+    if (!context.mounted) return Future.value();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: barrierDismissible, // Use the parameter
+      builder: (BuildContext dialogContext) {
+        final theme = Theme.of(dialogContext); // Get theme inside the builder
+        return AlertDialog(
+          title: Text(
+            title,
+            // Apply color if provided, otherwise use default dialog title theme
+            style: titleColor != null ? TextStyle(color: titleColor) : theme.dialogTheme.titleTextStyle,
+          ),
+          content: SingleChildScrollView( // Good practice for potentially long messages
+            child: Text(content),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Εντάξει'), // OK Button
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog first
+                onDismiss?.call(); // Execute the callback *after* popping, if provided
+              },
+            ),
+          ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        );
+      },
+    );
+  }
+
   /// Main build method for the obstacle reporting screen
   ///
   /// Returns:
@@ -138,40 +184,41 @@ class _ReportObstacleScreenState extends State<ReportObstacleScreen> {
       listener: (context, state) {
         /// Show success notification
         if (state.submissionStatus == SubmissionStatus.success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Η αναφορά υποβλήθηκε με επιτυχία!'), backgroundColor: Colors.green),
+          _showInfoDialog(
+            context: context,
+            title: 'Επιτυχής Υποβολή',
+            content: 'Η αναφορά υποβλήθηκε με επιτυχία!', // Success Message
+            titleColor: Colors.green, // Green color for success title
+            barrierDismissible: false, // User must press OK
+            onDismiss: () {
+              // Check if the display can still be closed (security)
+              if (Navigator.of(context).canPop()) {
+                Navigator.pop(context); // Closes the current screen
+              }
+            },
           );
         }
         /// Show error dialog on submission failure
         else if (state.submissionStatus == SubmissionStatus.failure && state.errorMessage != null) {
-          showDialog<void>(
+          _showInfoDialog(
             context: context,
-            barrierDismissible: false,
-            builder: (BuildContext dialogContext) {
-              return AlertDialog(
-                title: const Text(
-                  'Σφάλμα Υποβολής',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-                content: SingleChildScrollView(
-                  child: Text(state.errorMessage!),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Εντάξει'),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              );
+            title: 'Σφάλμα Υποβολής', // Submission Error Title
+            content: state.errorMessage!, // Error message from state
+            titleColor: Colors.redAccent, // Red color for error title
+            barrierDismissible: false, // User must press OK
+            onDismiss: () {
+              context.read<ReportObstacleBloc>().add(ErrorHandler());
             },
           );
-          context.read<ReportObstacleBloc>().add(ErrorHandler());
         }
         /// Show location error snackbar
         else if (state.locationStatus == LocationStatus.error && state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${state.errorMessage}'), backgroundColor: Colors.orange),
+          _showInfoDialog(
+            context: context,
+            title: 'Σφάλμα Τοποθεσίας', // Location Error Title
+            content: state.errorMessage!, // Error message from state
+            titleColor: Colors.orange.shade800, // Orange/Red color for warning/error title
+            barrierDismissible: true, // User can tap outside to dismiss
           );
         }
         /// Synchronize description text with controller
