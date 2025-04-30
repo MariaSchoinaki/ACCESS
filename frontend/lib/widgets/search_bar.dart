@@ -23,21 +23,21 @@ class SearchBar extends StatelessWidget {
     return Container(
       color: Colors.transparent,
       padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Container for the search input and results area.
-          Container(
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: theme.hintColor.withOpacity(0.3), blurRadius: 6)], // Adjusted opacity for subtlety
-            ),
-            // Use BlocBuilder to react to SearchBloc state changes.
-            child: BlocBuilder<SearchBloc, SearchState>(
-              builder: (context, state) {
-                // Build the inner column containing the text field and results/status.
-                return Column(
+      // Use BlocBuilder to react to SearchBloc state changes.
+      child: BlocBuilder<SearchBloc, SearchState>(
+        builder: (context, state) {
+          // Build the inner column containing the text field and results/status.
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Container for the search input and results area.
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: theme.hintColor.withOpacity(0.3), blurRadius: 6)],
+                ),
+                child: Column(
                   children: [
                     /// The text input field for searching.
                     TextField(
@@ -55,6 +55,13 @@ class SearchBar extends StatelessWidget {
                         hintStyle: theme.inputDecorationTheme.hintStyle,
                       ),
                     ),
+                    if (state is SearchLoaded)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.grey,
+                      ),
+
                     /// --- Conditional UI based on SearchState ---
                     // Show a loading indicator if the state is SearchLoading.
                     if (state is SearchLoading)
@@ -64,7 +71,8 @@ class SearchBar extends StatelessWidget {
                       ),
                     // Show the results list if the state is SearchLoaded.
                     if (state is SearchLoaded)
-                      ListView.builder(
+                      ListView.separated(
+                        padding: EdgeInsets.zero,
                         shrinkWrap: true, // Prevent ListView from taking infinite height.
                         // Disable scrolling for this inner ListView (parent ScrollView handles it).
                         physics: const NeverScrollableScrollPhysics(),
@@ -74,8 +82,14 @@ class SearchBar extends StatelessWidget {
                           final result = state.results[index];
                           // Display each result as a ListTile.
                           return ListTile(
-                            title: Text(result.name, style: theme.textTheme.bodyMedium),
+                            title: Text(result.name, style: theme.textTheme.titleMedium),
                             // Action when a result item is tapped.
+                            subtitle: Text(
+                              result.fullAddress,
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             onTap: () {
                               // Update the search bar text with the selected result name.
                               searchController.text = result.name;
@@ -88,6 +102,10 @@ class SearchBar extends StatelessWidget {
                             },
                           );
                         },
+                        separatorBuilder: (context, index) => const Divider(
+                          height: 0.5,
+                          thickness: 0.5,
+                        ),
                       ),
                     // Show an error message if the state is SearchError.
                     if (state is SearchError)
@@ -99,41 +117,36 @@ class SearchBar extends StatelessWidget {
                          ),
                       ),
                   ],
-                );
-              },
-            ),
-          ),
-          // Spacing between the search area and filter buttons.
-          const SizedBox(height: 8),
-          // Horizontally scrolling row for category filter buttons.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                /// --- Category Filter Buttons ---
-                CategoryFilterButton(
-                  label: 'Καφετέριες', // Display label
-                  categoryKey: 'coffee',   // Key for the event
                 ),
-                const SizedBox(width: 8.0), // Spacing between buttons.
+              ),
 
-                CategoryFilterButton(
-                  label: 'Εστιατόρια', // Display label
-                  categoryKey: 'restaurant',// Key for the event
+
+              // Spacing between the search area and filter buttons.
+              const SizedBox(height: 8),
+
+              if (state is! SearchLoaded)
+                Container(
+                  // Horizontally scrolling row for category filter buttons.
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        /// --- Category Filter Buttons ---
+                        CategoryFilterButton(label: 'Καφετέριες', categoryKey: 'coffee',),
+                        // Spacing between buttons.
+                        const SizedBox(width: 8.0),
+                        CategoryFilterButton(label: 'Εστιατόρια', categoryKey: 'restaurant',),
+                        const SizedBox(width: 8.0),
+                        CategoryFilterButton(label: 'Parking', categoryKey: 'parking',),
+                        // Add some padding at the end of the scrollable row.
+                        const SizedBox(width: 16.0),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8.0), // Spacing between buttons.
-
-                CategoryFilterButton(
-                  label: 'Parking',     // Display label
-                  categoryKey: 'parking',   // Key for the event
-                ),
-
-                // Add some padding at the end of the scrollable row.
-                const SizedBox(width: 16.0),
-              ],
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
