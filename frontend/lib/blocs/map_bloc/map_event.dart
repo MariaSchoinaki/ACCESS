@@ -88,3 +88,12 @@ class _LocationUpdated extends MapEvent {
 
   _LocationUpdated(this.newPosition);
 }
+
+class DisplayRouteFromJson extends MapEvent {
+  final Map<String, dynamic> routeJson;
+
+  DisplayRouteFromJson(this.routeJson);
+
+  @override
+  List<Object> get props => [routeJson];
+}
