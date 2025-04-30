@@ -1,148 +1,157 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
+import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
 
-/// A card widget designed to display information about a selected [MapboxFeature].
-///
-/// Shows details like the feature's name, address, categories, accessibility status,
-/// and coordinates. It also includes placeholder buttons for starting navigation or
-/// getting directions. If the provided [feature] is null, the card renders nothing.
+/// A service class for fetching route directions from the backend.
+class RouteService {
+  final Dio _dio;
+
+  RouteService({String? baseUrl, Dio? dioClient})
+      : _dio = dioClient ??
+      Dio(BaseOptions(
+        baseUrl: _resolveBaseUrl(baseUrl),
+        connectTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 5),
+        headers: {'Content-Type': 'application/json'},
+      ));
+
+  static String _resolveBaseUrl(String? overrideUrl) {
+    const envUrl = String.fromEnvironment('SEARCH_API_URL');
+    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
+  }
+
+  Future<Map<String, dynamic>> getRoute({
+    required double fromLat,
+    required double fromLng,
+    required double toLat,
+    required double toLng,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/map/route',
+        queryParameters: {
+          'lat': fromLat,
+          'lng': fromLng,
+          'toLat': toLat,
+          'toLng': toLng,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Unexpected response from route API.');
+      }
+    } on DioException catch (e) {
+      print('[RouteService] DioException: ${e.message}');
+      throw Exception(e.message ?? 'Route fetch error');
+    }
+  }
+}
+
+/// A card widget to display location info and route navigation options.
 class LocationInfoCard extends StatelessWidget {
-  /// The map feature whose information will be displayed. Can be null.
   final MapboxFeature? feature;
 
-  /// Creates a [LocationInfoCard].
-  ///
-  /// The [feature] parameter is required, but can be null. If null,
-  /// an empty widget ([SizedBox.shrink]) is rendered.
-  const LocationInfoCard({
-    Key? key,
-    required this.feature, // Note: required but nullable
-  }) : super(key: key);
+  const LocationInfoCard({Key? key, required this.feature}) : super(key: key);
 
   @override
-  /// Builds the visual representation of the location information card.
-  ///
-  /// Returns an empty widget if [feature] is null. Otherwise, displays
-  /// feature details using null-safe operators and default text for missing data.
   Widget build(BuildContext context) {
-    // Case 1: If feature is null, display nothing.
-    if (feature == null) {
-      return const SizedBox.shrink(); // Renders an empty box
-    }
+    if (feature == null) return const SizedBox.shrink();
 
-    // Get the current theme for styling.
     final theme = Theme.of(context);
 
-    // Main container for the card content.
     return Container(
-      // Apply padding around the content.
       padding: const EdgeInsets.all(16),
-      // Style the card container.
       decoration: BoxDecoration(
-        color: theme.cardColor, // Use cardColor for contrast or scaffoldBackgroundColor
-        borderRadius: BorderRadius.circular(18), // Rounded corners
-        boxShadow: [ // Optional: Add subtle shadow
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
-      // Arrange content vertically.
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
-        mainAxisSize: MainAxisSize.min, // Take up minimum vertical space
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Display feature name, using default text if null.
           Text(
-            feature?.name ?? 'Άγνωστη Τοποθεσία', // Default text if name is null
-            style: theme.textTheme.titleLarge, // Use large title style from theme
+            feature?.name ?? 'Άγνωστη Τοποθεσία',
+            style: theme.textTheme.titleLarge,
           ),
-          const SizedBox(height: 4), // Spacing
-
-          // Display full address, using default text if null.
+          const SizedBox(height: 4),
           Text(
-            feature?.fullAddress ?? 'Δεν βρέθηκε διεύθυνση', // Default text if address is null
-            style: theme.textTheme.bodyMedium, // Use standard body style
+            feature?.fullAddress ?? 'Δεν βρέθηκε διεύθυνση',
+            style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 4), // Spacing
-
-          // Display POI categories, only if available and not just 'address'.
-          // Added check for null and empty list, and ignore if only 'address'
+          const SizedBox(height: 4),
           if (feature?.poiCategory != null &&
               feature!.poiCategory.isNotEmpty &&
               !(feature!.poiCategory.length == 1 && feature!.poiCategory.first == 'address'))
-            Padding( // Add some padding if categories are shown
+            Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
-                // Join category list into a string. Safe due to checks above.
                 'Categories: ${feature!.poiCategory.join(', ')}',
-                style: theme.textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic, color: theme.hintColor), // Use body small italic greyed out
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: theme.hintColor,
+                ),
               ),
             ),
-
-          const SizedBox(height: 8), // Spacing
-
-          // Display accessibility information.
+          const SizedBox(height: 8),
           Row(
             children: [
-              Text(
-                'Accessibility: ', // Label
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text('Accessibility: ', style: theme.textTheme.bodyMedium),
               Icon(
-                // Choose icon based on accessibleFriendly flag (default to false).
                 feature?.accessibleFriendly ?? false
-                    ? Icons.accessible_forward // Use a more distinct icon
-                    : Icons.not_accessible, // Icon for not accessible
-                // Change color based on accessibility status.
+                    ? Icons.accessible_forward
+                    : Icons.not_accessible,
                 color: feature?.accessibleFriendly ?? false
-                    ? Colors.green.shade700 // Darker green for accessible
-                    : Colors.red.shade700,   // Darker red for not accessible
-                size: 20, // Adjust size
+                    ? Colors.green.shade700
+                    : Colors.red.shade700,
+                size: 20,
               ),
               const SizedBox(width: 4),
-              Text( // Add text description for clarity
+              Text(
                 feature?.accessibleFriendly ?? false ? 'Accessible' : 'Not Accessible',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                    color: feature?.accessibleFriendly ?? false
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                    fontWeight: FontWeight.bold
-                ),
-              )
-            ],
-          ),
-          const SizedBox(height: 4), // Spacing
-
-          // Display coordinates, using default text if null and formatting.
-          Text(
-            'Lat: ${feature?.latitude?.toStringAsFixed(5) ?? 'N/A'}   Lon: ${feature?.longitude?.toStringAsFixed(5) ?? 'N/A'}',
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700), // Use body small greyed out
-          ),
-          const SizedBox(height: 12), // Spacing before buttons
-
-          // Row containing action buttons.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start, // Align buttons to the start
-            children: [
-              // "Start" Button (placeholder action)
-              ElevatedButton.icon(
-                onPressed: () => _navigateToDirections(context), // Placeholder action
-                icon: const Icon(Icons.play_arrow, size: 18),
-                label: const Text('Start'), // English label
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  textStyle: theme.textTheme.labelMedium, // Adjust text style
+                  color: feature?.accessibleFriendly ?? false
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 10), // Spacing between buttons
-              // "Directions" Button (placeholder action)
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Lat: ${feature?.latitude?.toStringAsFixed(5) ?? 'N/A'}   Lon: ${feature?.longitude?.toStringAsFixed(5) ?? 'N/A'}',
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
               ElevatedButton.icon(
-                onPressed: () => _navigateToDirections(context), // Placeholder action
+                onPressed: () => _navigateToDirections(context),
+                icon: const Icon(Icons.play_arrow, size: 18),
+                label: const Text('Start'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  textStyle: theme.textTheme.labelMedium,
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: () => _navigateToDirections(context),
                 icon: const Icon(Icons.directions, size: 18),
-                label: const Text('Directions'), // English label
+                label: const Text('Directions'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   textStyle: theme.textTheme.labelMedium,
@@ -155,27 +164,31 @@ class LocationInfoCard extends StatelessWidget {
     );
   }
 
-  /// Placeholder method intended for initiating navigation or showing directions
-  /// to the selected [feature]'s location.
-  ///
-  /// This method should be implemented to use the [feature]'s coordinates
-  /// (latitude/longitude) to launch an external navigation app (like Google Maps,
-  /// Apple Maps) or display directions within the application's map interface.
-  /// Requires the [feature] passed to the widget to be non-null.
-  ///
-  /// - [context]: The build context, potentially used for showing SnackBars or dialogs.
-  void _navigateToDirections(BuildContext context) {
-    // Ensure feature is not null before proceeding.
+  void _navigateToDirections(BuildContext context) async {
     if (feature == null) {
       print("Attempted to navigate but feature was null.");
       return;
     }
-    // TODO: Implement navigation logic using feature!.latitude and feature!.longitude.
 
-    print('Navigate/Directions button pressed for: ${feature?.name ?? 'N/A'}');
-    print('Coordinates: ${feature?.latitude}, ${feature?.longitude}');
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Directions functionality not implemented yet.'))
-    );
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(const Duration(seconds: 10));
+
+      final routeService = RouteService();
+      final routeJson = await routeService.getRoute(
+        fromLat: position.latitude,
+        fromLng: position.longitude,
+        toLat: feature!.latitude,
+        toLng: feature!.longitude,
+      );
+
+      context.read<MapBloc>().add(DisplayRouteFromJson(routeJson));
+    } catch (e) {
+      print("Navigation error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load directions.')),
+      );
+    }
   }
 }
