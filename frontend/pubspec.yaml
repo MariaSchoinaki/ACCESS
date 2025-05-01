@@ -21,15 +21,15 @@ dependencies:
   image_picker: ^1.0.4            # Image selection from device
   intl: ^0.20.2                   # Internationalization utilities
   uuid: ^4.5.1                    # Unique ID generation
-  device_info_plus: ^9.1.0        # Device metadata access
+  device_info_plus: ^11.4.0       # Device metadata access
   shared_preferences: ^2.2.2      # Persistent key-value storage
 
   # Maps & Geolocation stack
   mapbox_maps_flutter: ^2.7.0     # Mapbox integration
   flutter_polyline_points: ^2.1.0 # Route polyline rendering
-  geolocator: ^13.0.4             # Location services
+  geolocator: ^14.0.0             # Location services
   geocoding: ^3.0.0               # Address/coordinates conversion
-  permission_handler: ^11.4.0     # Runtime permission management
+  permission_handler: ^12.0.0+1   # Runtime permission management
 
   # Firebase ecosystem
   cloud_firestore: ^5.6.6         # NoSQL database
