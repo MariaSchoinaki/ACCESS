@@ -1,58 +1,11 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
+import '../services/map_service.dart'; // import the new service
 
-/// A service class for fetching route directions from the backend.
-class RouteService {
-  final Dio _dio;
-
-  RouteService({String? baseUrl, Dio? dioClient})
-      : _dio = dioClient ??
-      Dio(BaseOptions(
-        baseUrl: _resolveBaseUrl(baseUrl),
-        connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 5),
-        headers: {'Content-Type': 'application/json'},
-      ));
-
-  static String _resolveBaseUrl(String? overrideUrl) {
-    const envUrl = String.fromEnvironment('SEARCH_API_URL');
-    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
-  }
-
-  Future<Map<String, dynamic>> getRoute({
-    required double fromLat,
-    required double fromLng,
-    required double toLat,
-    required double toLng,
-  }) async {
-    try {
-      final response = await _dio.get(
-        '/map/route',
-        queryParameters: {
-          'lat': fromLat,
-          'lng': fromLng,
-          'toLat': toLat,
-          'toLng': toLng,
-        },
-      );
-
-      if (response.statusCode == 200 && response.data != null) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception('Unexpected response from route API.');
-      }
-    } on DioException catch (e) {
-      print('[RouteService] DioException: ${e.message}');
-      throw Exception(e.message ?? 'Route fetch error');
-    }
-  }
-}
-
-/// A card widget to display location info and route navigation options.
+/// Card widget to display location info and fetch/display route.
 class LocationInfoCard extends StatelessWidget {
   final MapboxFeature? feature;
 
@@ -93,7 +46,8 @@ class LocationInfoCard extends StatelessWidget {
           const SizedBox(height: 4),
           if (feature?.poiCategory != null &&
               feature!.poiCategory.isNotEmpty &&
-              !(feature!.poiCategory.length == 1 && feature!.poiCategory.first == 'address'))
+              !(feature!.poiCategory.length == 1 &&
+                  feature!.poiCategory.first == 'address'))
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
@@ -119,7 +73,9 @@ class LocationInfoCard extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                feature?.accessibleFriendly ?? false ? 'Accessible' : 'Not Accessible',
+                feature?.accessibleFriendly ?? false
+                    ? 'Accessible'
+                    : 'Not Accessible',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: feature?.accessibleFriendly ?? false
                       ? Colors.green.shade700
@@ -132,28 +88,31 @@ class LocationInfoCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Lat: ${feature?.latitude?.toStringAsFixed(5) ?? 'N/A'}   Lon: ${feature?.longitude?.toStringAsFixed(5) ?? 'N/A'}',
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+            style:
+            theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ElevatedButton.icon(
-                onPressed: () => _navigateToDirections(context),
+                onPressed: () => _fetchAndDisplayRoute(context),
                 icon: const Icon(Icons.play_arrow, size: 18),
                 label: const Text('Start'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   textStyle: theme.textTheme.labelMedium,
                 ),
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
-                onPressed: () => _navigateToDirections(context),
+                onPressed: () => _fetchAndDisplayRoute(context),
                 icon: const Icon(Icons.directions, size: 18),
                 label: const Text('Directions'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   textStyle: theme.textTheme.labelMedium,
                 ),
               ),
@@ -164,7 +123,8 @@ class LocationInfoCard extends StatelessWidget {
     );
   }
 
-  void _navigateToDirections(BuildContext context) async {
+  /// Fetches and displays route using MapService and MapBloc.
+  void _fetchAndDisplayRoute(BuildContext context) async {
     if (feature == null) {
       print("Attempted to navigate but feature was null.");
       return;
@@ -175,8 +135,9 @@ class LocationInfoCard extends StatelessWidget {
         desiredAccuracy: LocationAccuracy.high,
       ).timeout(const Duration(seconds: 10));
 
-      final routeService = RouteService();
-      final routeJson = await routeService.getRoute(
+      final mapService = MapService(); // create instance
+
+      final routeJson = await mapService.getFullRouteJson(
         fromLat: position.latitude,
         fromLng: position.longitude,
         toLat: feature!.latitude,
