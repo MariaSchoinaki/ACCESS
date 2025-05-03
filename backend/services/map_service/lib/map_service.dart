@@ -26,19 +26,30 @@ Future<Response> _routeHandler(Request request) async {
   final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
   final url = 'https://api.mapbox.com/directions/v5/mapbox/walking/$lng,$lat;$toLng,$toLat';
 
+  final alternatives = request.url.queryParameters['alternatives'] ?? 'false';
+  final isAlternatives = alternatives.toLowerCase() == 'true';
+
   try {
     final response = await dioBackend.get(
       url,
       queryParameters: {
         'access_token': mapboxToken,
         'geometries': 'geojson',
+        'alternatives': alternatives,
       },
     );
 
-    final coords = response.data['routes']?[0]?['geometry']?['coordinates'] ?? [];
+    final routes = (response.data['routes'] as List<dynamic>? ?? [])
+        .map((route) => route['geometry']?['coordinates'])
+        .where((coords) => coords != null)
+        .toList();
+
+    final responseBody = isAlternatives
+        ? {'routes': routes}
+        : {'route': routes.isNotEmpty ? routes.first : []};
 
     return Response.ok(
-      jsonEncode({'route': coords}),
+      jsonEncode(responseBody),
       headers: {'Content-Type': 'application/json'},
     );
   } on dio.DioException catch (e) {
