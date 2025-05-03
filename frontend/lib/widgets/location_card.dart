@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
-import '../services/map_service.dart'; // import the new service
+import '../services/map_service.dart';
 
-/// Card widget to display location info and fetch/display route.
+/// Card widget to display location info and fetch/display route(s).
 class LocationInfoCard extends StatelessWidget {
   final MapboxFeature? feature;
 
@@ -88,15 +88,17 @@ class LocationInfoCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Lat: ${feature?.latitude?.toStringAsFixed(5) ?? 'N/A'}   Lon: ${feature?.longitude?.toStringAsFixed(5) ?? 'N/A'}',
-            style:
-            theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.grey.shade700,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               ElevatedButton.icon(
-                onPressed: () => _fetchAndDisplayRoute(context),
+                onPressed: () =>
+                    _fetchAndDisplayRoute(context, alternatives: false),
                 icon: const Icon(Icons.play_arrow, size: 18),
                 label: const Text('Start'),
                 style: ElevatedButton.styleFrom(
@@ -107,9 +109,10 @@ class LocationInfoCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               ElevatedButton.icon(
-                onPressed: () => _fetchAndDisplayRoute(context),
+                onPressed: () =>
+                    _fetchAndDisplayRoute(context, alternatives: true),
                 icon: const Icon(Icons.directions, size: 18),
-                label: const Text('Directions'),
+                label: const Text('Alternatives'),
                 style: ElevatedButton.styleFrom(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -123,8 +126,9 @@ class LocationInfoCard extends StatelessWidget {
     );
   }
 
-  /// Fetches and displays route using MapService and MapBloc.
-  void _fetchAndDisplayRoute(BuildContext context) async {
+  /// Fetches and displays route(s) using MapService and dispatches events to MapBloc.
+  void _fetchAndDisplayRoute(BuildContext context,
+      {required bool alternatives}) async {
     if (feature == null) {
       print("Attempted to navigate but feature was null.");
       return;
@@ -135,16 +139,47 @@ class LocationInfoCard extends StatelessWidget {
         desiredAccuracy: LocationAccuracy.high,
       ).timeout(const Duration(seconds: 10));
 
-      final mapService = MapService(); // create instance
+      final mapService = MapService();
 
-      final routeJson = await mapService.getFullRouteJson(
+      // Call the API with `alternatives` query param
+      final responseJson = await mapService.getRoutesJson(
         fromLat: position.latitude,
         fromLng: position.longitude,
         toLat: feature!.latitude,
         toLng: feature!.longitude,
+        alternatives: alternatives,
       );
 
-      context.read<MapBloc>().add(DisplayRouteFromJson(routeJson));
+      if (alternatives) {
+        // Extract all routes
+        final List<List<List<double>>> alternativeRoutes = [];
+
+        final routes = responseJson['routes'] as List<dynamic>?;
+
+
+        if (routes != null) {
+          for (var route in routes) {
+            if (route is List) {
+              alternativeRoutes.add(List<List<double>>.from(
+                  route.map((c) => [c[0].toDouble(), c[1].toDouble()])));
+            }
+          }
+        }
+
+        if (alternativeRoutes.isNotEmpty) {
+          context
+              .read<MapBloc>()
+              .add(DisplayAlternativeRoutesFromJson(alternativeRoutes));
+        } else {
+          print('No alternative routes found.');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No alternative routes found.')),
+          );
+        }
+      } else {
+        // Send only the first route as JSON
+        context.read<MapBloc>().add(DisplayRouteFromJson(responseJson));
+      }
     } catch (e) {
       print("Navigation error: $e");
       ScaffoldMessenger.of(context).showSnackBar(

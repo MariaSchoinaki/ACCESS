@@ -13,12 +13,6 @@ class MapException implements Exception {
 class MapService {
   final Dio _dio;
 
-  /// Initializes the service.
-  ///
-  /// Priority for base URL:
-  /// 1. --dart-define=MAP_API_URL
-  /// 2. [baseUrl] parameter
-  /// 3. Fallback to 'http://localhost:9090'
   MapService({String? baseUrl, Dio? dioClient})
       : _dio = dioClient ??
       Dio(
@@ -37,14 +31,16 @@ class MapService {
     return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
   }
 
-  /// Fetches the full route JSON between two points.
-  Future<Map<String, dynamic>> getFullRouteJson({
+  /// Fetches route JSON between two points.
+  Future<Map<String, dynamic>> getRoutesJson({
     required double fromLat,
     required double fromLng,
     required double toLat,
     required double toLng,
+    required bool alternatives,
   }) async {
-    print('Requesting route from ($fromLat, $fromLng) to ($toLat, $toLng)');
+    print(
+        'Requesting route(s) from ($fromLat, $fromLng) to ($toLat, $toLng) [alternatives=$alternatives]');
     try {
       final response = await _dio.get(
         '/map/route',
@@ -53,12 +49,13 @@ class MapService {
           'lng': fromLng,
           'toLat': toLat,
           'toLng': toLng,
+          'alternatives': alternatives.toString(),
         },
       );
 
       if (response.statusCode != 200 || response.data == null) {
         throw MapException(
-            'Failed to fetch route. Status: ${response.statusCode}');
+            'Failed to fetch route(s). Status: ${response.statusCode}');
       }
 
       return response.data as Map<String, dynamic>;
@@ -73,41 +70,55 @@ class MapService {
     }
   }
 
-  /// Optional: Extracts route coordinates [longitude, latitude] from the full JSON.
-  Future<List<List<double>>> getRouteCoordinates({
+  /// Extracts route coordinates (list of [longitude, latitude]) from the full JSON.
+  /// Returns a list of routes, where each route is a list of coordinate pairs.
+  Future<List<List<List<double>>>> getAllRoutesCoordinates({
     required double fromLat,
     required double fromLng,
     required double toLat,
     required double toLng,
   }) async {
-    final data = await getFullRouteJson(
+    final data = await getRoutesJson(
       fromLat: fromLat,
       fromLng: fromLng,
       toLat: toLat,
       toLng: toLng,
+      alternatives: true,
     );
 
-    final geometry = data['geometry'];
-    if (geometry == null ||
-        geometry['coordinates'] == null ||
-        geometry['coordinates'] is! List) {
-      throw MapException(
-          'Invalid response: geometry or coordinates missing/invalid.');
+    final routesList = data['routes'] as List<dynamic>?;
+
+    if (routesList == null || routesList.isEmpty) {
+      throw MapException('No routes found in response.');
     }
 
-    return List<List<double>>.from(
-      (geometry['coordinates'] as List<dynamic>).map<List<double>>(
-            (coord) {
-          if (coord is List &&
-              coord.length >= 2 &&
-              coord[0] is num &&
-              coord[1] is num) {
-            return [coord[0].toDouble(), coord[1].toDouble()];
-          } else {
-            throw MapException('Invalid coordinate format: $coord');
-          }
-        },
-      ),
-    );
+    final allCoordinates = <List<List<double>>>[];
+
+    for (final route in routesList) {
+      final geometry = route['geometry'];
+      if (geometry == null ||
+          geometry['coordinates'] == null ||
+          geometry['coordinates'] is! List) {
+        throw MapException(
+            'Invalid route format: geometry or coordinates missing.');
+      }
+
+      final coords = List<List<double>>.from(
+        (geometry['coordinates'] as List<dynamic>).map<List<double>>(
+              (coord) {
+            if (coord is List && coord.length >= 2 && coord[0] is num && coord[1] is num) {
+              return [coord[0].toDouble(), coord[1].toDouble()];
+            } else {
+              throw MapException('Invalid coordinate format: $coord');
+            }
+          },
+        ),
+      );
+
+      allCoordinates.add(coords);
+    }
+
+    print('[MapService] Extracted ${allCoordinates.length} route(s)');
+    return allCoordinates;
   }
 }

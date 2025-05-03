@@ -97,3 +97,13 @@ class DisplayRouteFromJson extends MapEvent {
   @override
   List<Object> get props => [routeJson];
 }
+
+class DisplayAlternativeRoutesFromJson extends MapEvent {
+  final List<List<List<double>>> routes; // List of routes (each route = list of [lng, lat])
+
+  DisplayAlternativeRoutesFromJson(this.routes);
+
+  @override
+  List<Object?> get props => [routes];
+}
+

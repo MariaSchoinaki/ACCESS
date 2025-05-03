@@ -9,28 +9,26 @@ class MapState extends Equatable {
   final mapbox.MapboxMap? mapController;
   // The zoom level of the map
   final double zoomLevel;
-  // List of routes displayed on the map
-  final List<dynamic> routes;
+  // List of main route coordinates displayed on the map
+  final List<List<double>> mainRoute;
+  // List of alternative routes (each is a list of coordinates)
+  final List<List<List<double>>> alternativeRoutes;
   // Annotations related to categories (e.g., points of interest, POI)
   final Set<mapbox.PointAnnotation> categoryAnnotations;
 
   // --- Properties for tracking ---
-  // Indicates whether tracking is active
   final bool isTracking;
-  // The route being tracked (list of positions)
   final List<geolocator.Position> trackedRoute;
-  // The current tracked position
   final geolocator.Position? currentTrackedPosition;
-  // Tracking status (e.g., initial, in progress, stopped, error)
   final MapTrackingStatus trackingStatus;
-  // Error message if any
   final String? errorMessage;
 
   // Constructor with default values
   const MapState({
     this.mapController,
     this.zoomLevel = 14.0,
-    this.routes = const [],
+    this.mainRoute = const [],
+    this.alternativeRoutes = const [],
     this.categoryAnnotations = const {},
     this.isTracking = false,
     this.trackedRoute = const [],
@@ -46,7 +44,8 @@ class MapState extends Equatable {
   MapState copyWith({
     mapbox.MapboxMap? mapController,
     double? zoomLevel,
-    List<dynamic>? routes,
+    List<List<double>>? mainRoute,
+    List<List<List<double>>>? alternativeRoutes,
     Set<mapbox.PointAnnotation>? categoryAnnotations,
     bool? isTracking,
     List<geolocator.Position>? trackedRoute,
@@ -57,29 +56,27 @@ class MapState extends Equatable {
     return MapState(
       mapController: mapController ?? this.mapController,
       zoomLevel: zoomLevel ?? this.zoomLevel,
-      routes: routes ?? this.routes,
+      mainRoute: mainRoute ?? this.mainRoute,
+      alternativeRoutes: alternativeRoutes ?? this.alternativeRoutes,
       categoryAnnotations: categoryAnnotations ?? this.categoryAnnotations,
       isTracking: isTracking ?? this.isTracking,
       trackedRoute: trackedRoute ?? this.trackedRoute,
-      // Returns the current tracked position based on a getter if available
       currentTrackedPosition: currentTrackedPositionGetter != null
           ? currentTrackedPositionGetter()
           : this.currentTrackedPosition,
-      // Returns the tracking status, uses the current one if not provided
       trackingStatus: trackingStatus ?? this.trackingStatus,
-      // Returns the error message, uses the current one if not provided
       errorMessage: errorMessageGetter != null
           ? errorMessageGetter()
           : this.errorMessage,
     );
   }
 
-  // Comparison of properties for equality (used by Equatable)
   @override
   List<Object?> get props => [
     mapController,
     zoomLevel,
-    routes,
+    mainRoute,
+    alternativeRoutes,
     categoryAnnotations,
     isTracking,
     trackedRoute,
@@ -91,9 +88,6 @@ class MapState extends Equatable {
 
 // Class for requesting details of a specific POI (Point of Interest) based on the mapboxId
 class _PoiDetailsRequested extends MapState {
-  // The mapboxId of the POI
   final String mapboxId;
-
-  // Constructor
   _PoiDetailsRequested(this.mapboxId);
 }
