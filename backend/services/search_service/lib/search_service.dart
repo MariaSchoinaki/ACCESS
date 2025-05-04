@@ -1,16 +1,30 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:shelf/shelf.dart';
-import 'package:dio/dio.dart' as dio;
+import 'dart:convert'; // Required for jsonEncode
+import 'dart:io'; // Required for File operations (reading token)
+import 'package:shelf/shelf.dart'; // Shelf framework for request handling
+import 'package:dio/dio.dart' as dio; // Dio HTTP client (aliased)
 
+/// Handles search suggestion requests, likely corresponding to an endpoint like `/search`.
+///
+/// Expects 'q' (query) and 'session_token' as query parameters in the [request].
+/// Proxies the request to the Mapbox SearchBox Suggest API and returns the suggestions.
+/// Includes a basic '/health' check endpoint.
+///
+/// Returns:
+/// - `Response.ok` with 'OK' for the health check.
+/// - `Response.ok` with a JSON body containing '{ "results": [...] }' on successful suggestion fetching.
+/// - `Response.badRequest` if 'q' or 'session_token' parameters are missing.
+/// - `Response.internalServerError` if fetching from Mapbox fails or another server error occurs.
 Future<Response> handleSearchRequest(Request request) async {
+  // Handle simple health check endpoint
   if (request.url.path == 'health') {
     return Response.ok('OK', headers: {'Content-Type': 'text/plain'});
   }
 
+  // Extract query parameters
   final query = request.url.queryParameters['q'];
   final sessionToken = request.url.queryParameters['session_token'];
 
+  // Validate required parameters
   if (query == null || query.isEmpty) {
     return Response.badRequest(
       body: jsonEncode({'error': 'Missing query parameter "q"'}),
@@ -23,6 +37,7 @@ Future<Response> handleSearchRequest(Request request) async {
     );
   }
 
+  // Initialize Dio client for making HTTP requests
   final dioBackend = dio.Dio();
   final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
 
@@ -34,11 +49,12 @@ Future<Response> handleSearchRequest(Request request) async {
   print('URL to Mapbox: $url');
 
   try {
+    // Make the GET request to Mapbox API
     final response = await dioBackend.get(
       url,
       queryParameters: {
         'session_token': sessionToken,
-        'access_token': mapboxToken,// Στέλνουμε το session token στο Mapbox
+        'access_token': mapboxToken,
       },
     );
 
@@ -52,6 +68,7 @@ Future<Response> handleSearchRequest(Request request) async {
     print('> Received query: $query');
     print('> Geocoding response: ${response.data}');
 
+    // Return Mapbox suggestions wrapped in a 'results' key
     return Response.ok(
       jsonEncode({'results': response.data['suggestions']}),
       headers: {'Content-Type': 'application/json'},
@@ -67,9 +84,21 @@ Future<Response> handleSearchRequest(Request request) async {
   }
 }
 
+/// Handles requests to retrieve detailed information for a specific Mapbox ID,
+/// corresponding to an endpoint `/retrieve`.
+///
+/// Expects 'mapbox_id' and 'session_token' as query parameters in the [request].
+/// Proxies the request to the Mapbox SearchBox Retrieve API.
+/// Extracts and formats relevant fields from the Mapbox response.
+///
+/// Returns:
+/// - `Response.ok` with a JSON body containing '{ "result": { ... } }' on success.
+/// - `Response.badRequest` if 'mapbox_id' parameter is missing.
+/// - `Response.internalServerError` if fetching from Mapbox fails, the ID is not found,
+///   or another server error occurs.
 Future<Response> handleCoordinatesRequest(Request request) async {
   final mapboxId = request.url.queryParameters['mapbox_id'];
-  final sessionToken = request.url.queryParameters['session_token']; // Ελέγχουμε για το session token
+  final sessionToken = request.url.queryParameters['session_token'];
 
   if (mapboxId == null || mapboxId.isEmpty) {
     return Response.badRequest(
@@ -90,7 +119,7 @@ Future<Response> handleCoordinatesRequest(Request request) async {
       url,
       queryParameters: {
         'session_token': sessionToken,
-        'access_token': mapboxToken,// Στέλνουμε το session token στο Mapbox
+        'access_token': mapboxToken,
       },
     );
 
@@ -103,7 +132,6 @@ Future<Response> handleCoordinatesRequest(Request request) async {
 
     print('> Geocoding response: ${response.data}');
 
-    // Επιστρέφουμε τις συντεταγμένες
     final featureData = response.data['features']?.first;
     if (featureData == null) {
       print('> No coordinates found in the response: ${response.data}');
@@ -164,6 +192,17 @@ Future<Response> handleCoordinatesRequest(Request request) async {
   }
 }
 
+/// Handles reverse geocoding requests using Mapbox Geocoding API v6,
+/// corresponding to an endpoint `/getname`.
+///
+/// Expects 'lat' (latitude) and 'lng' (longitude) as query parameters in the [request].
+/// Calls the Mapbox Reverse Geocoding API to find addresses or places at the given coordinates.
+/// Extracts and formats relevant fields from the first result feature.
+///
+/// Returns:
+/// - `Response.ok` with a JSON body containing '{ "result": { ... } }' on success.
+/// - `Response.badRequest` if 'lat' or 'lng' parameters are missing.
+/// - `Response.internalServerError` if fetching from Mapbox fails or another server error occurs.
 Future<Response> getLocationNameFromMapbox(Request request) async {
   final lat = request.url.queryParameters['lat'];
   final lng = request.url.queryParameters['lng'];
@@ -260,6 +299,18 @@ Future<Response> getLocationNameFromMapbox(Request request) async {
   }
 }
 
+/// Handles search requests filtered by category, optionally within a bounding box,
+/// corresponding to an endpoint `/category`.
+///
+/// Expects 'category', 'session_token', and optionally 'bbox' as query parameters
+/// in the [request]. The 'bbox' should be in "minLng,minLat,maxLng,maxLat" format.
+/// Proxies the request to the Mapbox SearchBox Category API.
+/// Formats the resulting features into a standardized list.
+///
+/// Returns:
+/// - `Response.ok` with a JSON body containing '{ "results": [...] }' on success.
+/// - `Response.badRequest` if 'category' or 'session_token' parameters are missing.
+/// - `Response.internalServerError` if fetching from Mapbox fails or another server error occurs.
 Future<Response> handleSearchByCategoryRequest(Request request) async {
   final category = request.url.queryParameters['category'];
   final sessionToken = request.url.queryParameters['session_token'];

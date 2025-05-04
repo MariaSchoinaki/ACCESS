@@ -96,11 +96,7 @@ class SearchService {
       print(response);
       return features.map((json) => MapboxFeature.fromJson(json)).toList();
     } on DioException catch (e) {
-      print('[SearchService] DioException');
-      print('    • type: ${e.type}');
-      print('    • error: ${e.error}');
-      print('    • response: ${e.response}');
-      print('    • message: ${e.message}');
+      _printException(e, operation: 'search');
       throw SearchException(e.message ?? 'Dio error: ${e.error}');
     }
   }
@@ -132,12 +128,9 @@ class SearchService {
 
       print(response);
       return features.map((json) => MapboxFeature.fromJson(json)).toList();
+
     } on DioException catch (e) {
-      print('[SearchService] DioException');
-      print('    • type: ${e.type}');
-      print('    • error: ${e.error}');
-      print('    • response: ${e.response}');
-      print('    • message: ${e.message}');
+      _printException(e, operation: 'searchByCategory');
       throw SearchException(e.message ?? 'Dio error: ${e.error}');
     }
   }
@@ -168,11 +161,7 @@ class SearchService {
       return MapboxFeature.fromJson(featureData);
 
     } on DioException catch (e) {
-      print('[SearchService] DioException');
-      print('    • type: ${e.type}');
-      print('    • error: ${e.error}');
-      print('    • response: ${e.response}');
-      print('    • message: ${e.message}');
+      _printException(e, operation: 'retrieveCoordinates');
       throw SearchException(e.message ?? 'Dio error: ${e.error}');
     }
   }
@@ -204,12 +193,17 @@ class SearchService {
       return MapboxFeature.fromJson(featureData);
 
     } on DioException catch (e) {
-      print('[SearchService] DioException');
-      print('    • type: ${e.type}');
-      print('    • error: ${e.error}');
-      print('    • response: ${e.response}');
-      print('    • message: ${e.message}');
+      _printException(e, operation: 'retrieveNameFromCoordinates');
       throw SearchException(e.message ?? 'Dio error: ${e.error}');
     }
+  }
+
+  /// Handles a [DioException] by printing detailed information
+  void _printException(DioException e, {String operation = 'operation'}) {
+    print('[SearchService] DioException during $operation:');
+    print('    • type: ${e.type}');
+    print('    • error: ${e.error}');
+    print('    • response: ${e.response}');
+    print('    • message: ${e.message}');
   }
 }
