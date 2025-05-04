@@ -9,7 +9,7 @@ Future<Response> handleSearchRequest(Request request) async {
   }
 
   final query = request.url.queryParameters['q'];
-  final sessionToken = request.url.queryParameters['session_token']; // Ελέγχουμε για το session token
+  final sessionToken = request.url.queryParameters['session_token'];
 
   if (query == null || query.isEmpty) {
     return Response.badRequest(
@@ -263,6 +263,8 @@ Future<Response> getLocationNameFromMapbox(Request request) async {
 Future<Response> handleSearchByCategoryRequest(Request request) async {
   final category = request.url.queryParameters['category'];
   final sessionToken = request.url.queryParameters['session_token'];
+  final bbox = request.url.queryParameters['bbox'];
+
 
   if (category == null || category.isEmpty) {
     return Response.badRequest(
@@ -284,12 +286,14 @@ Future<Response> handleSearchByCategoryRequest(Request request) async {
 
   print('Received category: $category');
   print('Received session_token: $sessionToken');
+  print('BBOX: $bbox');
   print('URL to Mapbox for category: $url');
 
   try {
     final response = await dioBackend.get(
       url,
       queryParameters: {
+        'bbox': bbox,
         'access_token': mapboxToken,
       },
     );

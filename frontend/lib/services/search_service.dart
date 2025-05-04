@@ -112,12 +112,13 @@ class SearchService {
   ///
   /// Returns a list of [MapboxFeature] objects parsed from the response.
   /// Throws a [SearchException] if the request fails or returns an unexpected status code.
-  Future<List<MapboxFeature>> searchByCategory(String category) async {
+  Future<List<MapboxFeature>> searchByCategory(String category, String? bbox) async {
     try {
       final response = await _dio.get(
         '/category', // Assuming this is your category search endpoint
         queryParameters: {
           'category': category,
+          'bbox': bbox,
           'session_token': _sessionToken,
         },
       );

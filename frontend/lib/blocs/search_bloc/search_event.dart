@@ -50,9 +50,10 @@ class RetrieveNameFromCoordinatesEvent extends SearchEvent {
 class FilterByCategoryPressed extends SearchEvent {
   /// The selected category string.
   final String category;
+  final String? bbox;
 
   /// Constructs a [FilterByCategoryPressed] event with the given [category].
-  FilterByCategoryPressed(this.category);
+  FilterByCategoryPressed(this.category, {this.bbox});
 
   @override
   String toString() => 'FilterByCategoryPressed(category: $category)';

@@ -25,10 +25,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   /// - [SearchLoading] while the search is being performed.
   /// - [SearchLoaded] with results if successful.
   /// - [SearchError] if an exception occurs.
-  Future<void> _onSearchQueryChanged(
-      SearchQueryChanged event,
-      Emitter<SearchState> emit,
-      ) async {
+  Future<void> _onSearchQueryChanged(SearchQueryChanged event, Emitter<SearchState> emit,) async {
     final query = event.query.trim();
 
     // If query is empty, reset to initial state
@@ -53,10 +50,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   /// - [CoordinatesLoading] before the request.
   /// - [CoordinatesLoaded] with the retrieved feature.
   /// - [CoordinatesError] if an exception occurs.
-  Future<void> _onRetrieveCoordinates(
-      RetrieveCoordinatesEvent event,
-      Emitter<SearchState> emit,
-      ) async {
+  Future<void> _onRetrieveCoordinates(RetrieveCoordinatesEvent event, Emitter<SearchState> emit,) async {
     emit(CoordinatesLoading());
 
     try {
@@ -73,10 +67,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   /// - [NameLoading] while the name is being retrieved.
   /// - [NameLoaded] with the feature containing the name.
   /// - [NameError] if an error occurs.
-  Future<void> _onRetrieveNameFromCoordinates(
-      RetrieveNameFromCoordinatesEvent event,
-      Emitter<SearchState> emit,
-      ) async {
+  Future<void> _onRetrieveNameFromCoordinates(RetrieveNameFromCoordinatesEvent event, Emitter<SearchState> emit,) async {
     emit(NameLoading());
 
     try {
@@ -96,14 +87,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   /// - [SearchLoading] while searching.
   /// - [CategoryResultsLoaded] if successful.
   /// - [SearchError] if an error occurs.
-  Future<void> _onFilterByCategoryPressed(
-      FilterByCategoryPressed event,
-      Emitter<SearchState> emit,
-      ) async {
+  Future<void> _onFilterByCategoryPressed(FilterByCategoryPressed event, Emitter<SearchState> emit,) async {
     emit(SearchLoading());
 
     try {
-      final results = await searchService.searchByCategory(event.category);
+      final results = await searchService.searchByCategory(event.category, event.bbox);
       emit(CategoryResultsLoaded(results));
     } catch (e) {
       emit(SearchError('An error occurred while filtering by category: ${e.toString()}'));
