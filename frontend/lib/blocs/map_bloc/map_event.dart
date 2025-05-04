@@ -58,6 +58,16 @@ class AddCategoryMarkers extends MapEvent {
   AddCategoryMarkers(this.features, {this.shouldZoomToBounds = false});
 }
 
+/// Private event triggered when a category marker is clicked
+class _AnnotationClickedInternal extends MapEvent {
+  final String mapboxId;
+
+  _AnnotationClickedInternal(this.mapboxId);
+
+  @override
+  List<Object> get props => [mapboxId];
+}
+
 /// Clears all category markers from the map
 class ClearCategoryMarkers extends MapEvent {}
 

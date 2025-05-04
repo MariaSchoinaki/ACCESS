@@ -14,12 +14,15 @@ import '../../models/mapbox_feature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../utils/point_annotation_click_listener.dart';
+
 part 'map_event.dart';
 part 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
   late mapbox.PointAnnotationManager? _annotationManager;
   late mapbox.PointAnnotationManager? _categoryAnnotationManager;
+  late List<mapbox.PointAnnotation?> createdAnnotations;
   StreamSubscription<geolocator.Position>? _positionSubscription;
 
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
@@ -36,6 +39,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<AddMarker>(_onAddMarker);
     on<DeleteMarker>(_onDeleteMarker);
     on<AddCategoryMarkers>(_onAddCategoryMarkers);
+    on<_AnnotationClickedInternal>(_onAnnotationClickedInternal);
     on<ClearCategoryMarkers>(_onClearCategoryMarkers);
 
     on<StartTrackingRequested>(_onStartTrackingRequested);
@@ -46,21 +50,37 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<DisplayAlternativeRoutesFromJson>(_onDisplayAlternativeRoutesFromJson);
   }
 
-  Future<void> _onRequestLocationPermission(
-      RequestLocationPermission event, Emitter<MapState> emit) async {
+  Future<void> _onRequestLocationPermission(RequestLocationPermission event, Emitter<MapState> emit) async {
     await Permission.locationWhenInUse.request();
   }
 
-  Future<void> _onInitializeMap(
-      InitializeMap event, Emitter<MapState> emit) async {
+  Future<void> _onInitializeMap(InitializeMap event, Emitter<MapState> emit) async {
     emit(state.copyWith(mapController: event.mapController));
     _annotationManager = await state.mapController?.annotations.createPointAnnotationManager();
     _categoryAnnotationManager = await state.mapController?.annotations.createPointAnnotationManager();
+
+    if (_categoryAnnotationManager != null) {
+      _categoryAnnotationManager!.addOnPointAnnotationClickListener(
+          PointAnnotationClickListener(
+              onAnnotationClick: (mapbox.PointAnnotation annotation) {
+                final String internalId = annotation.id;
+                final String? mapboxId = state.annotationIdMap[internalId];
+
+                //annotation.iconImage = 'assets/images/blue_pin.png';
+                //annotation.iconSize = 0.8;
+                if (mapboxId != null && mapboxId.isNotEmpty) {
+                  add(_AnnotationClickedInternal(mapboxId));
+                } else {
+                  print("!!! MapBloc: mapboxId not found in map or is empty for internal ID $internalId, SKIPPING event add.");
+                }
+              }));
+      print("[MapBloc] Annotation click listener added.");
+    }
+
     add(GetCurrentLocation());
   }
 
-  Future<void> _onGetCurrentLocation(
-      GetCurrentLocation event, Emitter<MapState> emit) async {
+  Future<void> _onGetCurrentLocation(GetCurrentLocation event, Emitter<MapState> emit) async {
     try {
       var status = await Permission.locationWhenInUse.status;
       if (!status.isGranted && !status.isLimited) {
@@ -122,44 +142,44 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   Future<void> _onAddMarker(AddMarker event, Emitter<MapState> emit) async {
     final map = state.mapController;
     if (map == null || _annotationManager == null) return;
-    try {
-      final bytes = await rootBundle.load('assets/images/pin.png');
-      final imageData = bytes.buffer.asUint8List();
-      final point = mapbox.Point(
-          coordinates: mapbox.Position(event.longitude, event.latitude));
+    if(state is! MapAnnotationClicked) {
+      try {
+        final bytes = await rootBundle.load('assets/images/pin.png');
+        final imageData = bytes.buffer.asUint8List();
+        final point = mapbox.Point(
+            coordinates: mapbox.Position(event.longitude, event.latitude));
 
-      await _annotationManager!.deleteAll();
-      await _annotationManager!.create(
-        mapbox.PointAnnotationOptions(
-          geometry: point,
-          iconSize: 0.5,
-          image: imageData,
-          iconAnchor: mapbox.IconAnchor.BOTTOM,
-        ),
-      );
-    } catch (e) {
-      print("Error adding marker: $e");
+        await _annotationManager!.deleteAll();
+        await _annotationManager!.create(
+          mapbox.PointAnnotationOptions(
+            geometry: point,
+            iconSize: 0.5,
+            image: imageData,
+            iconAnchor: mapbox.IconAnchor.BOTTOM,
+          ),
+        );
+      } catch (e) {
+        print("Error adding marker: $e");
+      }
     }
   }
 
-  Future<void> _onDeleteMarker(
-      DeleteMarker event, Emitter<MapState> emit) async {
+  Future<void> _onDeleteMarker(DeleteMarker event, Emitter<MapState> emit) async {
     await _annotationManager?.deleteAll();
   }
 
-  Future<void> _onAddCategoryMarkers(
-      AddCategoryMarkers event, Emitter<MapState> emit) async {
+  Future<void> _onAddCategoryMarkers(AddCategoryMarkers event, Emitter<MapState> emit) async {
     final map = state.mapController;
     if (map == null || _categoryAnnotationManager == null) return;
 
     try {
       final bytes = await rootBundle.load('assets/images/pin.png');
       final imageData = bytes.buffer.asUint8List();
-      final List<mapbox.PointAnnotationOptions> optionsList = [];
+      List<mapbox.PointAnnotationOptions> optionsList = [];
       double? minLat, maxLat, minLng, maxLng;
 
       for (final feature in event.features) {
-        final point = mapbox.Point(
+        var point = mapbox.Point(
             coordinates: mapbox.Position(feature.longitude, feature.latitude));
         optionsList.add(mapbox.PointAnnotationOptions(
           geometry: point,
@@ -167,7 +187,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           image: imageData,
           iconAnchor: mapbox.IconAnchor.BOTTOM,
           textField: feature.name,
+          textSize: 10,
+          textMaxWidth: 15,
         ));
+
 
         final lat = feature.latitude;
         final lng = feature.longitude;
@@ -176,9 +199,25 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         minLng = minLng == null ? lng : min(minLng, lng);
         maxLng = maxLng == null ? lng : max(maxLng, lng);
       }
+      await _categoryAnnotationManager!.deleteAll();
+      createdAnnotations = await _categoryAnnotationManager!.createMulti(optionsList);
 
-      final createdAnnotations = await _categoryAnnotationManager!.createMulti(optionsList);
-      emit(state.copyWith(categoryAnnotations: Set.from(createdAnnotations)));
+      final Map<String, String> idMap = {};
+      if (createdAnnotations.length == event.features.length) {
+        for (int i = 0; i < createdAnnotations.length; i++) {
+          final internalId = createdAnnotations[i]!.id;
+          final String correctMapboxId = event.features[i].id;
+          if (correctMapboxId.isNotEmpty) {
+            idMap[internalId] = correctMapboxId;
+            print("Mapping internal ID: $internalId -> mapboxId: $correctMapboxId"); // Debug
+          }
+        }
+      } else {
+        print("Warning: Mismatch between created annotations and input features count.");
+      }
+
+      emit(state.copyWith(categoryAnnotations: Set.from(createdAnnotations), annotationIdMap: idMap));
+
 
       if (event.shouldZoomToBounds && minLat != null && maxLat != null &&
           minLng != null && maxLng != null) {
@@ -191,12 +230,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
         final cameraOptions = await map.cameraForCoordinateBounds(
           bounds,
-          mapbox.MbxEdgeInsets(
-              top: 50.0, left: 50.0, bottom: 50.0, right: 50.0),
-          0.0,
-          0.0,
-          null,
-          null,
+          mapbox.MbxEdgeInsets(top: 50.0, left: 50.0, bottom: 50.0, right: 50.0),
+          0.0, 0.0, null, null,
         );
 
         if (cameraOptions != null) {
@@ -208,14 +243,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  Future<void> _onClearCategoryMarkers(
-      ClearCategoryMarkers event, Emitter<MapState> emit) async {
+  void _onAnnotationClickedInternal(_AnnotationClickedInternal event, Emitter<MapState> emit) {
+    emit(MapAnnotationClicked(event.mapboxId, state));
+  }
+
+  Future<void> _onClearCategoryMarkers(ClearCategoryMarkers event, Emitter<MapState> emit) async {
     await _categoryAnnotationManager?.deleteAll();
     emit(state.copyWith(categoryAnnotations: {}));
   }
 
-  Future<void> _onStartTrackingRequested(
-      StartTrackingRequested event, Emitter<MapState> emit) async {
+  Future<void> _onStartTrackingRequested(StartTrackingRequested event, Emitter<MapState> emit) async {
     final permissionStatus = await Permission.locationWhenInUse.request();
     if (permissionStatus.isGranted || permissionStatus.isLimited) {
       emit(state.copyWith(
@@ -271,8 +308,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     ));
   }
 
-  Future<void> _onStopTrackingRequested(
-      StopTrackingRequested event, Emitter<MapState> emit) async {
+  Future<void> _onStopTrackingRequested(StopTrackingRequested event, Emitter<MapState> emit) async {
     await _stopTrackingLogic();
     emit(state.copyWith(
       isTracking: false,
@@ -281,8 +317,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     print("Tracking stopped (without rating). Final points: ${state.trackedRoute.length}");
   }
 
-  Future<void> _onRateAndSaveRouteRequested(
-      RateAndSaveRouteRequested event, Emitter<MapState> emit) async {
+  Future<void> _onRateAndSaveRouteRequested(RateAndSaveRouteRequested event, Emitter<MapState> emit) async {
     await _stopTrackingLogic();
 
     final currentUser = _auth.currentUser;
@@ -350,10 +385,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     return super.close();
   }
 
-  Future<void> _onDisplayRouteFromJson(
-      DisplayRouteFromJson event,
-      Emitter<MapState> emit,
-      ) async {
+  Future<void> _onDisplayRouteFromJson(DisplayRouteFromJson event, Emitter<MapState> emit,) async {
     try {
       final map = state.mapController;
       if (map == null) {
@@ -423,10 +455,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  Future<void> _onDisplayAlternativeRoutesFromJson(
-      DisplayAlternativeRoutesFromJson event,
-      Emitter<MapState> emit,
-      ) async {
+  Future<void> _onDisplayAlternativeRoutesFromJson(DisplayAlternativeRoutesFromJson event, Emitter<MapState> emit,) async {
     try {
       final map = state.mapController;
       if (map == null) {

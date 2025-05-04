@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
@@ -73,24 +75,49 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     context.read<MapBloc>().add(AddMarker(lat, lng));
     context.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
   }
+
   /// It handles the tap gesture (tap) to the map provided by [Mainmaparea].
   ///
   /// cleans the currently selected location ([Location], [SelectedFeature]),
   /// cleans the text on the search bar and activates [Mapbloc]
-  /// to remove any indicators (simple TAP index and class indicators).
+  /// to remove any indicators (simple TAP index and class indicators),
+  /// only IF the user taps on an empty space on the map.
+  ///
   ///
   /// - [GestureContext]: Provides details of the gesture.
   /// - [BuildContext]: Buildcontext from the Widget tree where blocs can be accessed.
-  void _onTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) {
+  Future<void> _onTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) async {
+    final mapController = context.read<MapBloc>().state.mapController;
+    if (!mounted || mapController == null) {
+      print("_onTap: Widget not mounted or controller is null. Skipping.");
+      return;
+    }
+
     try {
-      if (!mounted) return;
-      setState(() { location = ''; selectedFeature = null; });
-      _searchController.clear();
-      // Use Homepage's context to access blocs
-      context.read<MapBloc>().add(DeleteMarker());
-      context.read<MapBloc>().add(ClearCategoryMarkers());
+      final screenPoint = gestureContext.touchPosition;
+      print("_onTap: Tap detected at screen coordinates: (${screenPoint.x}, ${screenPoint.y})");
+
+      final geometry = mapbox.RenderedQueryGeometry.fromScreenCoordinate(screenPoint);
+      final options = mapbox.RenderedQueryOptions(layerIds: null, filter: null);
+
+      print("_onTap: Querying rendered features...");
+      final List<mapbox.QueriedRenderedFeature?>? features = await mapController.queryRenderedFeatures(geometry, options);
+
+      if (features == null || features.isEmpty) {
+        print("_onTap: Empty space tapped. Clearing selection.");
+        if (!mounted) return;
+
+        setState(() { location = ''; selectedFeature = null; });
+        _searchController.clear();
+
+        context.read<MapBloc>().add(DeleteMarker());
+        context.read<MapBloc>().add(ClearCategoryMarkers());
+      } else {
+        print("_onTap: Annotation/Feature tapped. Letting specific listener handle.");
+      }
+
     } catch (e) {
-      print("Error on tap: $e");
+      print("Error during map query or state update in _onTap: $e");
     }
   }
 
@@ -154,6 +181,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
               );
             }
+
+            if (mapState is MapAnnotationClicked) {
+              print("UI Listener: Detected MapAnnotationClicked with ID: ${mapState.mapboxId}");
+              context.read<SearchBloc>().add(RetrieveCoordinatesEvent(mapState.mapboxId));
+            }
           },
           // Stack main layout contains the map and overlay widgets
           child: Stack(
@@ -170,17 +202,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               /// Location Info Card
               if (location.isNotEmpty && selectedFeature != null)
                 Positioned(
-                  left: 0, right: 0, bottom: 10,
+                  left: 0, right: 0, bottom: -10,
                   child: LocationInfoCard(feature: selectedFeature),
                 ),
               /// Zoom Controls
               Positioned(
-                right: 16, bottom: (location.isNotEmpty) ? 200 : 80,
+                right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
                 child: const ZoomControls(),
               ),
               /// Start/Stop Tracking Button
               Positioned(
-                right: 16, bottom: (location.isNotEmpty) ? 150 : 30,
+                right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
                 child: const StartStopTrackingButton(),
               )
             ],

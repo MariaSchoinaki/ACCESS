@@ -51,7 +51,7 @@ class LocationInfoCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
-                'Categories: ${feature!.poiCategory.join(', ')}',
+                'Κατηγορίες: ${feature!.poiCategory.join(', ')}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontStyle: FontStyle.italic,
                   color: theme.hintColor,
@@ -61,7 +61,7 @@ class LocationInfoCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Text('Accessibility: ', style: theme.textTheme.bodyMedium),
+              Text('Προσβασιμότητα: ', style: theme.textTheme.bodyMedium),
               Icon(
                 feature?.accessibleFriendly ?? false
                     ? Icons.accessible_forward
@@ -74,8 +74,8 @@ class LocationInfoCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 feature?.accessibleFriendly ?? false
-                    ? 'Accessible'
-                    : 'Not Accessible',
+                    ? 'Προσβάσιμο'
+                    : 'Μη Προσβάσιμο',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: feature?.accessibleFriendly ?? false
                       ? Colors.green.shade700
@@ -100,7 +100,7 @@ class LocationInfoCard extends StatelessWidget {
                 onPressed: () =>
                     _fetchAndDisplayRoute(context, alternatives: false),
                 icon: const Icon(Icons.play_arrow, size: 18),
-                label: const Text('Start'),
+                label: const Text('Έναρξη'),
                 style: ElevatedButton.styleFrom(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -112,7 +112,7 @@ class LocationInfoCard extends StatelessWidget {
                 onPressed: () =>
                     _fetchAndDisplayRoute(context, alternatives: true),
                 icon: const Icon(Icons.directions, size: 18),
-                label: const Text('Alternatives'),
+                label: const Text('Οδηγίες'),
                 style: ElevatedButton.styleFrom(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -173,7 +173,7 @@ class LocationInfoCard extends StatelessWidget {
         } else {
           print('No alternative routes found.');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No alternative routes found.')),
+            const SnackBar(content: Text('Δεν βρέθηκαν διαδρομές.')),
           );
         }
       } else {
@@ -183,7 +183,7 @@ class LocationInfoCard extends StatelessWidget {
     } catch (e) {
       print("Navigation error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load directions.')),
+        const SnackBar(content: Text('Δεν φορτώθηκαν οι οδηγίες. Ξαναπροσπάθησε αργότερα!')),
       );
     }
   }

@@ -49,8 +49,24 @@ Future<void> main() async {
 
   // Launch the application with BLoC provider
   runApp(
-    BlocProvider(
-      create: (_) => MyAccountBloc()..add(LoadUserProfile()),
+    MultiBlocProvider(
+      providers: [
+        // Ο MyAccountBloc που είχες ήδη
+        BlocProvider<MyAccountBloc>(
+          create: (_) => MyAccountBloc()..add(LoadUserProfile()),
+        ),
+        // Πρόσθεσε τον MapBloc εδώ
+        BlocProvider<MapBloc>(
+          // RequestLocationPermission ίσως καλύτερα να καλείται από το HomePage initState;
+          // Αλλιώς, το ..add() εδώ θα το τρέξει κατά την αρχικοποίηση.
+          create: (_) => MapBloc()..add(RequestLocationPermission()),
+        ),
+        // Πρόσθεσε τον SearchBloc εδώ
+        BlocProvider<SearchBloc>(
+          create: (_) => SearchBloc(searchService: SearchService()),
+        ),
+        // Πρόσθεσε κι άλλους Blocs εδώ αν χρειάζεται
+      ],
       child: const MyApp(),
     ),
   );
@@ -91,18 +107,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.light,
       initialRoute: '/home',
       routes: {
-        '/home': (context) => MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (_) => MapBloc()..add(RequestLocationPermission()),
-              child: const HomePage(),
-            ),
-            BlocProvider(
-              create: (_) => SearchBloc(searchService: SearchService()),
-            ),
-          ],
-          child: const HomePage(),
-        ),
+        '/home': (context) => const HomePage(),
         '/signup': (context) => SignUpPage(),
         '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
