@@ -65,7 +65,7 @@ class _MainMapAreaState extends State<MainMapArea> {
   ///
   /// Originizes [Mapbloc] with Controller (if not already defined)
   /// and adjusts the parameters of the map's location component.
-  void _onMapCreated(mapbox.MapboxMap controller) {
+  Future<void> _onMapCreated(mapbox.MapboxMap controller) async {
 
     // Check if widget is still on the tree
     if (!mounted) return;
@@ -80,6 +80,14 @@ class _MainMapAreaState extends State<MainMapArea> {
     } else {
       print("[MainMapArea] Bloc already has a map controller.");
     }
+
+    /// Set a new projection
+    mapbox.StyleProjection newProjection = mapbox.StyleProjection(
+        name: mapbox.StyleProjectionName.mercator
+    );
+    await controller.style.setProjection(newProjection);
+    /// change logo settings
+    controller.logo.updateSettings(mapbox.LogoSettings(enabled: false));
 
     /// Setting the Location Puck (User Location Indication)
     controller.location.updateSettings(
