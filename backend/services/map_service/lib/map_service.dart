@@ -24,7 +24,7 @@ Future<Response> _routeHandler(Request request) async {
 
   final dioBackend = dio.Dio();
   final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
-  final url = 'https://api.mapbox.com/directions/v5/mapbox/walking/$lng,$lat;$toLng,$toLat';
+  final url = 'https://api.mapbox.com/directions/v5/mapbox/driving/$lng,$lat;$toLng,$toLat';
 
   final alternatives = request.url.queryParameters['alternatives'] ?? 'false';
   final isAlternatives = alternatives.toLowerCase() == 'true';

@@ -160,11 +160,20 @@ class LocationInfoCard extends StatelessWidget {
         if (routes != null) {
           for (var route in routes) {
             if (route is List) {
-              alternativeRoutes.add(List<List<double>>.from(
-                  route.map((c) => [c[0].toDouble(), c[1].toDouble()])));
+              alternativeRoutes.add(
+                route.map<List<double>>((point) {
+                  if (point is List && point.length >= 2) {
+                    return [point[0].toDouble(), point[1].toDouble()];
+                  } else {
+                    throw Exception('Unexpected point format: $point');
+                  }
+                }).toList(),
+              );
             }
           }
         }
+
+
 
         if (alternativeRoutes.isNotEmpty) {
           context
