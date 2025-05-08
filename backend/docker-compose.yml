@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   gateway:
-    image: eleni/access_gateway:latest
+    image: schoin/access_gateway:latest
     ports:
       - "9090:9090"
     networks:
@@ -19,9 +19,10 @@ services:
       - internal
     secrets:
       - mapbox_token
+      - google_maps_key
 
   search_service:
-    image: eleni/access_search_service:latest
+    image: schoin/access_search_service:latest
     ports:
       - "8080:8080"
     networks:
@@ -32,6 +33,9 @@ services:
 secrets:
   mapbox_token:
     external: true
+  google_maps_key:
+    external: true
+
 
 networks:
   internal:
