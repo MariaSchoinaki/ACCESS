@@ -30,6 +30,8 @@ dependencies:
   geolocator: ^14.0.0             # Location services
   geocoding: ^3.0.0               # Address/coordinates conversion
   permission_handler: ^12.0.0+1   # Runtime permission management
+  polyline_codec: ^0.1.6          # Route display
+
 
   # Firebase ecosystem
   cloud_firestore: ^5.6.6         # NoSQL database
