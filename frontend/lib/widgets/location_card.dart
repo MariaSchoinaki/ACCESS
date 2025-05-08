@@ -159,9 +159,10 @@ class LocationInfoCard extends StatelessWidget {
 
         if (routes != null) {
           for (var route in routes) {
-            if (route is List) {
+            final coordinates = route['coordinates'] as List<dynamic>?;
+            if (coordinates != null) {
               alternativeRoutes.add(
-                route.map<List<double>>((point) {
+                coordinates.map<List<double>>((point) {
                   if (point is List && point.length >= 2) {
                     return [point[0].toDouble(), point[1].toDouble()];
                   } else {
@@ -172,7 +173,6 @@ class LocationInfoCard extends StatelessWidget {
             }
           }
         }
-
 
 
         if (alternativeRoutes.isNotEmpty) {

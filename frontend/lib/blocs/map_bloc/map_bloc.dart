@@ -385,24 +385,25 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     return super.close();
   }
 
-  Future<void> _onDisplayRouteFromJson(DisplayRouteFromJson event, Emitter<MapState> emit,) async {
+  Future<void> _onDisplayRouteFromJson(DisplayRouteFromJson event, Emitter<MapState> emit) async {
     try {
       final map = state.mapController;
       if (map == null) {
-        emit(state.copyWith(
-            errorMessageGetter: () => 'Map controller not ready'));
+        emit(state.copyWith(errorMessageGetter: () => 'Map controller not ready'));
         return;
       }
 
-      final coordinates = event.routeJson['route'];
-      if (coordinates == null || coordinates is! List) {
+      final routeObject = event.routeJson['route'];
+      if (routeObject == null || routeObject['coordinates'] == null || routeObject['coordinates'] is! List) {
         emit(state.copyWith(errorMessageGetter: () => 'Route data is invalid'));
         return;
       }
 
-      final lineCoordinates = coordinates.map<List<double>>((c) {
+      final coordinates = routeObject['coordinates'] as List;
+
+      final fixedLineCoordinates = coordinates.map<List<double>>((c) {
         if (c is List && c.length >= 2) {
-          return [c[0].toDouble(), c[1].toDouble()];
+          return [c[1].toDouble(), c[0].toDouble()]; // lng, lat (Mapbox needs [lng, lat])
         } else {
           throw Exception('Invalid coordinate format');
         }
@@ -415,7 +416,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
             "type": "Feature",
             "geometry": {
               "type": "LineString",
-              "coordinates": lineCoordinates,
+              "coordinates": fixedLineCoordinates,
             },
             "properties": {}
           }
@@ -427,9 +428,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       final style = map.style;
 
+      // Remove old layers/sources if they exist
       await style.removeStyleLayer(layerId).catchError((_) {});
       await style.removeStyleSource(sourceId).catchError((_) {});
 
+      // Add the new GeoJSON source
       await style.addSource(
         mapbox.GeoJsonSource(
           id: sourceId,
@@ -437,6 +440,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ),
       );
 
+      // Add the line layer
       await style.addLayer(
         mapbox.LineLayer(
           id: layerId,
@@ -450,10 +454,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       emit(state.copyWith(errorMessageGetter: () => null));
     } catch (e) {
-      emit(state.copyWith(
-          errorMessageGetter: () => 'Error displaying route: $e'));
+      emit(state.copyWith(errorMessageGetter: () => 'Error displaying route: $e'));
     }
   }
+
 
   Future<void> _onDisplayAlternativeRoutesFromJson(DisplayAlternativeRoutesFromJson event, Emitter<MapState> emit,) async {
     try {
@@ -483,6 +487,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       for (int i = 0; i < event.routes.length; i++) {
         final route = event.routes[i];
 
+        final fixedRoute = route.map((point) {
+          if (point.length >= 2) {
+            return [point[1], point[0]]; // lng, lat
+          }
+          throw Exception('Invalid point format');
+        }).toList();
+
         final geojson = {
           "type": "FeatureCollection",
           "features": [
@@ -490,7 +501,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
               "type": "Feature",
               "geometry": {
                 "type": "LineString",
-                "coordinates": route,
+                "coordinates": fixedRoute,
               },
               "properties": {}
             }
