@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:polyline_codec/polyline_codec.dart' as polyline;
 
 // Route handler
 Response _healthHandler(Request request) {
@@ -22,31 +23,52 @@ Future<Response> _routeHandler(Request request) async {
     );
   }
 
-  final dioBackend = dio.Dio();
-  final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
-  final url = 'https://api.mapbox.com/directions/v5/mapbox/driving/$lng,$lat;$toLng,$toLat';
-
   final alternatives = request.url.queryParameters['alternatives'] ?? 'false';
   final isAlternatives = alternatives.toLowerCase() == 'true';
 
-  try {
-    final response = await dioBackend.get(
-      url,
-      queryParameters: {
-        'access_token': mapboxToken,
-        'geometries': 'geojson',
-        'alternatives': alternatives,
-      },
-    );
+  final dioBackend = dio.Dio();
+  final url = 'https://maps.googleapis.com/maps/api/directions/json';
+  final googleApiKey = File('/run/secrets/google_maps_key').readAsStringSync().trim();
 
-    final routes = (response.data['routes'] as List<dynamic>? ?? [])
-        .map((route) => route['geometry']?['coordinates'])
-        .where((coords) => coords != null)
+  final queryParameters = {
+    'origin': '$lat,$lng',
+    'destination': '$toLat,$toLng',
+    'alternatives': alternatives,
+    'mode': 'walking',
+    'key': googleApiKey,
+  };
+
+  try {
+    final response = await dioBackend.get(url, queryParameters: queryParameters);
+    final data = response.data;
+
+    if (data['status'] != 'OK') {
+      return Response.internalServerError(
+        body: jsonEncode({
+          'error': 'Google Directions API error',
+          'details': data['status'],
+        }),
+        headers: {'Content-Type': 'application/json'},
+      );
+    }
+
+    final routes = (data['routes'] as List<dynamic>? ?? [])
+        .map((route) {
+      final encodedPolyline = route['overview_polyline']?['points'];
+      if (encodedPolyline == null) return null;
+
+      final decodedPoints = polyline.PolylineCodec.decode(encodedPolyline);
+      return {
+        'summary': route['summary'],
+        'coordinates': decodedPoints, // list of [lat, lng]
+      };
+    })
+        .where((route) => route != null)
         .toList();
 
     final responseBody = isAlternatives
         ? {'routes': routes}
-        : {'route': routes.isNotEmpty ? routes.first : []};
+        : {'route': routes.isNotEmpty ? routes.first : {}};
 
     return Response.ok(
       jsonEncode(responseBody),
@@ -55,7 +77,7 @@ Future<Response> _routeHandler(Request request) async {
   } on dio.DioException catch (e) {
     return Response.internalServerError(
       body: jsonEncode({
-        'error': 'Mapbox route error',
+        'error': 'Google Directions API request error',
         'details': e.message,
       }),
       headers: {'Content-Type': 'application/json'},
