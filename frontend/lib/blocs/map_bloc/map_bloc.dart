@@ -10,10 +10,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/mapbox_feature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../../utils/point_annotation_click_listener.dart';
 
 part 'map_event.dart';
@@ -48,6 +48,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<RateAndSaveRouteRequested>(_onRateAndSaveRouteRequested);
     on<DisplayRouteFromJson>(_onDisplayRouteFromJson);
     on<DisplayAlternativeRoutesFromJson>(_onDisplayAlternativeRoutesFromJson);
+
+    on<ShareLocationRequested>(_onShareLocation);
+    on<LaunchPhoneDialerRequested>(_onLaunchPhoneDialer);
   }
 
   Future<void> _onRequestLocationPermission(RequestLocationPermission event, Emitter<MapState> emit) async {
@@ -65,11 +68,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
               onAnnotationClick: (mapbox.PointAnnotation annotation) {
                 final String internalId = annotation.id;
                 final String? mapboxId = state.annotationIdMap[internalId];
-
+                final MapboxFeature? feature = state.featureMap[mapboxId];
                 //annotation.iconImage = 'assets/images/blue_pin.png';
                 //annotation.iconSize = 0.8;
                 if (mapboxId != null && mapboxId.isNotEmpty) {
-                  add(_AnnotationClickedInternal(mapboxId));
+                  add(_AnnotationClickedInternal(mapboxId, feature!));
                 } else {
                   print("!!! MapBloc: mapboxId not found in map or is empty for internal ID $internalId, SKIPPING event add.");
                 }
@@ -203,12 +206,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       createdAnnotations = await _categoryAnnotationManager!.createMulti(optionsList);
 
       final Map<String, String> idMap = {};
+      final Map<String, MapboxFeature> featureMap = {};
       if (createdAnnotations.length == event.features.length) {
         for (int i = 0; i < createdAnnotations.length; i++) {
           final internalId = createdAnnotations[i]!.id;
           final String correctMapboxId = event.features[i].id;
+          final MapboxFeature feature = event.features[i];
           if (correctMapboxId.isNotEmpty) {
             idMap[internalId] = correctMapboxId;
+            featureMap[correctMapboxId] = feature;
             print("Mapping internal ID: $internalId -> mapboxId: $correctMapboxId"); // Debug
           }
         }
@@ -216,7 +222,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         print("Warning: Mismatch between created annotations and input features count.");
       }
 
-      emit(state.copyWith(categoryAnnotations: Set.from(createdAnnotations), annotationIdMap: idMap));
+      emit(state.copyWith(categoryAnnotations: Set.from(createdAnnotations), annotationIdMap: idMap, featureMap: featureMap));
 
 
       if (event.shouldZoomToBounds && minLat != null && maxLat != null &&
@@ -244,7 +250,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   void _onAnnotationClickedInternal(_AnnotationClickedInternal event, Emitter<MapState> emit) {
-    emit(MapAnnotationClicked(event.mapboxId, state));
+    emit(MapAnnotationClicked(event.mapboxId, event.feature, state));
   }
 
   Future<void> _onClearCategoryMarkers(ClearCategoryMarkers event, Emitter<MapState> emit) async {
@@ -535,4 +541,29 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(errorMessageGetter: () => 'Error displaying alternative routes: $e'));
     }
   }
+
+  Future<void> _onShareLocation(ShareLocationRequested event, Emitter<MapState> emit,) async {
+    try {
+      final encodedLocation = Uri.encodeComponent(event.location);
+      final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=$encodedLocation';
+      await launchUrl(Uri.parse(googleMapsUrl));
+      emit(ActionCompleted());
+    } catch (e) {
+      emit(ActionFailed("Αποτυχία διαμοιρασμού τοποθεσίας"));
+    }
+  }
+
+  Future<void> _onLaunchPhoneDialer(LaunchPhoneDialerRequested event, Emitter<MapState> emit,) async {
+    try {
+      final Uri launchUri = Uri(
+        scheme: 'tel',
+        path: event.phoneNumber,
+      );
+      await launchUrl(launchUri);
+      emit(ActionCompleted());
+    } catch (e) {
+      emit(ActionFailed("Αποτυχία κλήσης τηλεφώνου"));
+    }
+  }
+
 }

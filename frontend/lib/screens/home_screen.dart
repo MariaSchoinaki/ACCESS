@@ -47,6 +47,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// Holds detailed location information selected either through search
   /// either by reverse geo categorization from prolonged tap. Used by [locationinfocard].
   MapboxFeature? selectedFeature;
+  MapboxFeature? feature;
 
   /// Controller for the search text of the search text, passes on [Mainmaparea].
   final TextEditingController _searchController = TextEditingController();
@@ -151,6 +152,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           /// for search box
           if (state is CoordinatesLoaded) {
             selectedFeature = state.feature;
+            //feature = state.feature;
             final latitude = selectedFeature?.latitude;
             final longitude = selectedFeature?.longitude;
             if (latitude != null && longitude != null) {
@@ -184,6 +186,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
             if (mapState is MapAnnotationClicked) {
               print("UI Listener: Detected MapAnnotationClicked with ID: ${mapState.mapboxId}");
+              feature = mapState.feature;
               context.read<SearchBloc>().add(RetrieveCoordinatesEvent(mapState.mapboxId));
             }
           },
@@ -203,18 +206,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               if (location.isNotEmpty && selectedFeature != null)
                 Positioned(
                   left: 0, right: 0, bottom: -10,
-                  child: LocationInfoCard(feature: selectedFeature),
+                  child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
                 ),
               /// Zoom Controls
-              Positioned(
-                right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
-                child: const ZoomControls(),
-              ),
-              /// Start/Stop Tracking Button
-              Positioned(
-                right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
-                child: const StartStopTrackingButton(),
-              )
+              if(!location.isNotEmpty)
+                Positioned(
+                  right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
+                  child: const ZoomControls(),
+                ),
+                /// Start/Stop Tracking Button
+                Positioned(
+                  right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
+                  child: const StartStopTrackingButton(),
+                )
             ],
           ),
         ),

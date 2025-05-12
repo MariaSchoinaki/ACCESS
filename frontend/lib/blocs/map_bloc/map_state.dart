@@ -17,6 +17,7 @@ class MapState extends Equatable {
   final Set<mapbox.PointAnnotation> categoryAnnotations;
   /// A map that associates Mapbox IDs with internal IDs. Map<InternalId, MapboxId>
   final Map<String, String> annotationIdMap;
+  final Map<String, MapboxFeature> featureMap;
 
   // --- Properties for tracking ---
   final bool isTracking;
@@ -33,6 +34,7 @@ class MapState extends Equatable {
     this.alternativeRoutes = const [],
     this.categoryAnnotations = const {},
     this.annotationIdMap = const {},
+    this.featureMap = const {},
     this.isTracking = false,
     this.trackedRoute = const [],
     this.currentTrackedPosition,
@@ -51,6 +53,7 @@ class MapState extends Equatable {
     List<List<List<double>>>? alternativeRoutes,
     Set<mapbox.PointAnnotation>? categoryAnnotations,
     Map<String, String>? annotationIdMap,
+    Map<String, MapboxFeature>? featureMap,
     bool? isTracking,
     List<geolocator.Position>? trackedRoute,
     ValueGetter<geolocator.Position?>? currentTrackedPositionGetter,
@@ -64,6 +67,7 @@ class MapState extends Equatable {
       alternativeRoutes: alternativeRoutes ?? this.alternativeRoutes,
       categoryAnnotations: categoryAnnotations ?? this.categoryAnnotations,
       annotationIdMap: annotationIdMap ?? this.annotationIdMap,
+      featureMap: featureMap ?? this.featureMap,
       isTracking: isTracking ?? this.isTracking,
       trackedRoute: trackedRoute ?? this.trackedRoute,
       currentTrackedPosition: currentTrackedPositionGetter != null
@@ -84,6 +88,7 @@ class MapState extends Equatable {
     alternativeRoutes,
     categoryAnnotations,
     annotationIdMap,
+    featureMap,
     isTracking,
     trackedRoute,
     currentTrackedPosition,
@@ -92,19 +97,14 @@ class MapState extends Equatable {
   ];
 }
 
-// Class for requesting details of a specific POI (Point of Interest) based on the mapboxId
-class _PoiDetailsRequested extends MapState {
-  final String mapboxId;
-  _PoiDetailsRequested(this.mapboxId);
-}
-
 /// State emitted when a specific point annotation (marker) on the map is clicked.
 /// Contains the ID needed to retrieve more details about the annotation.
 class MapAnnotationClicked extends MapState {
   /// The unique identifier (e.g., Mapbox ID) of the clicked annotation.
   final String mapboxId;
+  final MapboxFeature feature;
 
-  MapAnnotationClicked(this.mapboxId, MapState previousState) : super(
+  MapAnnotationClicked(this.mapboxId, this.feature, MapState previousState) : super(
     mapController: previousState.mapController,
     zoomLevel: previousState.zoomLevel,
     trackedRoute: previousState.trackedRoute,
@@ -113,8 +113,19 @@ class MapAnnotationClicked extends MapState {
     currentTrackedPosition: previousState.currentTrackedPosition,
     categoryAnnotations: previousState.categoryAnnotations,
     annotationIdMap: previousState.annotationIdMap,
+    featureMap: previousState.featureMap,
+    mainRoute: previousState.mainRoute,
+    alternativeRoutes: previousState.alternativeRoutes,
+    errorMessage: previousState.errorMessage,
   );
 
   @override
-  List<Object?> get props => [mapboxId];
+  List<Object?> get props => [mapboxId, feature];
+}
+
+class ActionCompleted extends MapState {}
+
+class ActionFailed extends MapState {
+  final String message;
+  ActionFailed(this.message);
 }

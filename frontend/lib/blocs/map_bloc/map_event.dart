@@ -61,8 +61,9 @@ class AddCategoryMarkers extends MapEvent {
 /// Private event triggered when a category marker is clicked
 class _AnnotationClickedInternal extends MapEvent {
   final String mapboxId;
+  final MapboxFeature feature;
 
-  _AnnotationClickedInternal(this.mapboxId);
+  _AnnotationClickedInternal(this.mapboxId, this.feature);
 
   @override
   List<Object> get props => [mapboxId];
@@ -117,3 +118,12 @@ class DisplayAlternativeRoutesFromJson extends MapEvent {
   List<Object?> get props => [routes];
 }
 
+class ShareLocationRequested extends MapEvent {
+  final String location;
+  ShareLocationRequested(this.location);
+}
+
+class LaunchPhoneDialerRequested extends MapEvent {
+  final String phoneNumber;
+  LaunchPhoneDialerRequested(this.phoneNumber);
+}

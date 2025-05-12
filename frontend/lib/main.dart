@@ -6,6 +6,7 @@ import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:app_links/app_links.dart'; // Import το πακέτο app_links
 import 'blocs/map_bloc/map_bloc.dart';
 import 'blocs/my_account_bloc/my_account_bloc.dart';
 import 'blocs/search_bloc/search_bloc.dart';
@@ -51,52 +52,66 @@ Future<void> main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        // Ο MyAccountBloc που είχες ήδη
         BlocProvider<MyAccountBloc>(
           create: (_) => MyAccountBloc()..add(LoadUserProfile()),
         ),
-        // Πρόσθεσε τον MapBloc εδώ
         BlocProvider<MapBloc>(
-          // RequestLocationPermission ίσως καλύτερα να καλείται από το HomePage initState;
-          // Αλλιώς, το ..add() εδώ θα το τρέξει κατά την αρχικοποίηση.
           create: (_) => MapBloc()..add(RequestLocationPermission()),
         ),
-        // Πρόσθεσε τον SearchBloc εδώ
         BlocProvider<SearchBloc>(
           create: (_) => SearchBloc(searchService: SearchService()),
         ),
-        // Πρόσθεσε κι άλλους Blocs εδώ αν χρειάζεται
       ],
       child: const MyApp(),
     ),
   );
 }
 
-/// Root application widget configuring global settings
-///
-/// Features:
-/// - Theme management (light/dark modes)
-/// - Route configuration
-/// - BLoC provider integration
-/// - Authentication flow
-///
-/// Routes:
-/// - '/home' : Main application screen
-/// - '/signup' : User registration
-/// - '/profile' : Authentication gateway
-/// - '/login' : User login
-/// - '/myaccount' : User profile management
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  /// Builds the root application structure
-  ///
-  /// Returns:
-  /// [MaterialApp] configured with:
-  /// - Theme settings from AppTheme
-  /// - Named route navigation
-  /// - BLoC providers for state management
-  /// - Authentication flow integration
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _appLinks = AppLinks();
+  Uri? _currentUri;
+
+  @override
+  void initState() {
+    super.initState();
+    //_init();
+  }
+
+  Future<void> _init() async {
+    final appLink = await _appLinks.getInitialLink();
+    if (appLink != null) {
+      _handleIncomingLink(appLink);
+    }
+
+    _appLinks.uriLinkStream.listen((uri) {
+      if (!mounted) {
+        return;
+      }
+      _handleIncomingLink(uri);
+    }, onError: (err) {
+      print('Error receiving URI: $err');
+    });
+  }
+
+  void _handleIncomingLink(Uri uri) {
+    setState(() {
+      _currentUri = uri;
+    });
+    if (uri.scheme == 'https://accessiblecity.gr' && uri.host == 'location') {
+      String? locationId = uri.queryParameters['id'];
+      if (locationId != null) {
+        print('Opened with location ID: $locationId');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
