@@ -48,6 +48,9 @@ dependencies:
   cupertino_icons: ^1.0.8         # iOS-style icons
   email_validator: ^3.0.0         # Email format validation
   equatable: ^2.0.5               # Value comparison utilities
+  url_launcher: ^6.1.5
+  share_plus: ^11.0.0              # Share functionality
+  app_links: ^6.4.0                # Universal link handling
 
 # Development tools
 dev_dependencies:

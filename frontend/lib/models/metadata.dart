@@ -1,7 +1,7 @@
 class ParsedMetadata {
-  final String? phone;
-  final String? website;
-  final List<OpenPeriod>? openHours;
+  late String? phone;
+  late String? website;
+  late List<Map<String, dynamic>>? openHours;
 
   ParsedMetadata({
     this.phone,

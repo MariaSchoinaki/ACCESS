@@ -124,6 +124,6 @@ class ShareLocationRequested extends MapEvent {
 }
 
 class LaunchPhoneDialerRequested extends MapEvent {
-  final String phoneNumber;
+  final String? phoneNumber;
   LaunchPhoneDialerRequested(this.phoneNumber);
 }
