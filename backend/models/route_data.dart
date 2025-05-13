@@ -1,19 +1,17 @@
 
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'point.dart';
 
 class RouteData {
-  final DateTime createdAt;
-  final int pointCount;
+  final DateTime? createdAt;
+  final int? pointCount;
   final double rating;
   final List<Point> routePoints;
   final String? userEmail;
   final String? userId;
 
   RouteData({
-    required this.createdAt,
-    required this.pointCount,
+    this.createdAt,
+    this.pointCount,
     required this.rating,
     required this.routePoints,
     this.userEmail,
@@ -24,7 +22,7 @@ class RouteData {
     DateTime created;
     var createdAtData = json['createdAt'];
 
-    if (createdAtData is Timestamp) { // Άμεσο αντικείμενο Timestamp από Firestore
+    if (createdAtData) { // Άμεσο αντικείμενο Timestamp από Firestore
       created = createdAtData.toDate();
     } else if (createdAtData is Map && createdAtData['_seconds'] != null && createdAtData['_nanoseconds'] != null) {
       created = DateTime.fromMillisecondsSinceEpoch(

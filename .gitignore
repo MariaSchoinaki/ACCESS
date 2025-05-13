@@ -46,3 +46,5 @@ frontend/android/app/release
 frontend/android/app/google-services.json
 frontend/firebase.json
 frontend/lib/firebase_options.dart
+
+backend/services/map_service/algorithms/firebase_conf.json

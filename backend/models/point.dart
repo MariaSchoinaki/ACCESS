@@ -19,6 +19,27 @@ class Point {
     required this.referenceAccessibility,
   });
 
+  factory Point.fromFirebase(Map<String, dynamic> map) {
+    final fields = map['mapValue']['fields'];
+    return Point(
+      latitude: _getDouble(fields['latitude']),
+      longitude: _getDouble(fields['longitude']),
+      altitude: _getDouble(fields['altitude']),
+      accuracy: _getDouble(fields['accuracy']),
+      speed: _getDouble(fields['speed']),
+      timestamp: fields['timestamp']['stringValue'] ?? '',
+      referenceAccessibility: _getDouble(fields['referenceAccessibility']),
+    );
+  }
+
+  static double _getDouble(Map<String, dynamic>? value) {
+    if (value == null) return 0.0;
+    return value['doubleValue'] is String
+        ? double.tryParse(value['doubleValue']) ?? 0.0
+        : value['doubleValue']?.toDouble() ?? 0.0;
+  }
+
+
   /// Factory constructor για δημιουργία από ένα map (δηλαδή ένα αντικείμενο από τη λίστα routePoints).
   /// Το [determinedReferenceAccessibility] παρέχεται από την [RouteData.fromJson]
   /// και είναι το συνολικό 'rating' της διαδρομής.
