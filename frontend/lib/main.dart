@@ -126,7 +126,14 @@ class _MyAppState extends State<MyApp> {
         '/signup': (context) => SignUpPage(),
         '/profile': (context) => AuthGate(),
         '/login': (context) => LoginScreen(),
-        '/myaccount': (context) => const MyAccountScreen(),
+        '/myaccount': (context) => BlocListener<MyAccountBloc, MyAccountState>(
+          listener: (context, state) {
+            if (state is MyAccountSignedOut) {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
+          },
+          child: const MyAccountScreen(),
+        ),
       },
     );
   }

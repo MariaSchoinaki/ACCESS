@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 // Adjust import paths based on your project structure
+import '../blocs/my_account_bloc/my_account_bloc.dart';
 import '../screens/login_screen.dart';
 import '../screens/myaccount_screen.dart';
-
 /// A widget that acts as an authentication gate.
 ///
 /// Listens to Firebase authentication state changes ([FirebaseAuth.instance.authStateChanges])
@@ -36,8 +37,15 @@ class AuthGate extends StatelessWidget {
 
         // If the snapshot contains user data, the user is signed in.
         if (snapshot.hasData) {
-          // Display the screen for authenticated users.
-          return const MyAccountScreen();
+          // Προσθήκη έλεγχου για signed out κατάσταση
+          return BlocListener<MyAccountBloc, MyAccountState>(
+            listener: (context, state) {
+              if (state is MyAccountSignedOut) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+            child: const MyAccountScreen(),
+          );
         }
 
         // If the snapshot has no data, the user is signed out.

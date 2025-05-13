@@ -67,12 +67,9 @@ class MyAccountBloc extends Bloc<MyAccountEvent, MyAccountState> {
   Future<void> _onSignOutRequested(
       SignOutRequested event, Emitter<MyAccountState> emit) async {
     try {
-      // Attempt to sign out the current user.
       await FirebaseAuth.instance.signOut();
-      // Emit the signed-out state upon success.
       emit(MyAccountSignedOut());
     } catch (e) {
-      // If sign-out fails, emit an error state.
       emit(MyAccountError('Sign out failed.'));
     }
   }

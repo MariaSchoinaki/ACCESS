@@ -224,7 +224,7 @@ Future<void> readRoutesAndRunAlgorithm() async {
   final accessToken = await _getAccessToken(jwt);
 
   final url = Uri.parse(
-    'https://firestore.googleapis.com/v1/projects/access-id/databases/(default)/documents/rated_routes',
+    'https://firestore.googleapis.com/v1/projects/access-b54d6/databases/(default)/documents/rated_routes',
   );
 
   final response = await http.get(url, headers: {

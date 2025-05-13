@@ -1,7 +1,6 @@
 import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 // Import related widgets and BLoC
 import '../widgets/bottom_bar.dart';
 import '../../blocs/my_account_bloc/my_account_bloc.dart';
@@ -240,7 +239,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
               return Center(child: Text('Κάτι πήγε λάθος. ${state.message}'));
             }
             // Fallback case if state is none of the above
-            return const Center(child: Text("Ο λογαριασμός δεν βρέθηκε."));
+            return const SizedBox.shrink();
           },
         ),
         // Add the bottom navigation bar.
