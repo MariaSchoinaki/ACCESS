@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
+import 'map.dart';
+
 class HomeWebScreen extends StatefulWidget {
   const HomeWebScreen({super.key});
 
@@ -22,22 +24,6 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
         body: Center(child: Text('This screen is for Web only.')),
       );
     }
-
-    // Πάρε το token από τη γραμμή εντολών
-    const accessToken = String.fromEnvironment('token');
-
-    // Κάνε register το iframe view (μία φορά)
-    ui.platformViewRegistry.registerViewFactory('mapbox-view', (int viewId) {
-      final iframe = html.IFrameElement()
-        ..src = 'map.html?token=$accessToken'
-        ..id = 'map-iframe'
-        ..style.pointerEvents = 'auto' // default
-        ..style.border = 'none'
-        ..style.width = '100%'
-        ..style.height = '100%';
-
-      return iframe;
-    });
 
     return Scaffold(
       appBar: AppBar(title: const Text("Accessible City")),
@@ -119,7 +105,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                   color: Colors.white,
                   border: Border.all(color: Colors.blueAccent),
                 ),
-                child: const HtmlElementView(viewType: 'mapbox-view'),
+                child: const MapBoxIframeView(),
               ),
             ),
           ),

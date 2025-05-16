@@ -1,7 +1,5 @@
 // Flutter constant for checking if platform is Web
 import 'package:access/web_screens/home_web_screen.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,16 +19,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Initialize Mapbox only on mobile platforms
-  if (!kIsWeb) {
-    const ACCESS_TOKEN = String.fromEnvironment("token_web");
-    if (ACCESS_TOKEN.isEmpty) {
-      throw Exception('Missing Mapbox token. Run with --dart-define=token=YOUR_TOKEN');
-    }
-    // Set the Mapbox token only for mobile platforms
-    MapboxOptions.setAccessToken(ACCESS_TOKEN);
-  }
 
   // Run different app depending on platform
   runApp(const WebApp());
