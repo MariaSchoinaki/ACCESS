@@ -69,3 +69,13 @@ class FilterByCategoryPressed extends SearchEvent {
   int get hashCode => category.hashCode;
 }
 
+class SearchForPoiClicked extends SearchEvent {
+
+  final String category;
+  final String? bbox;
+  final List<double> coordinates;
+  final Map<String, dynamic> properties;
+
+  SearchForPoiClicked(this.category, this.properties, this.coordinates, {this.bbox});
+
+}

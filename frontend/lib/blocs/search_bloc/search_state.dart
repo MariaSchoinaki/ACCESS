@@ -110,3 +110,9 @@ class CategoryResultsLoaded extends SearchState {
   /// Constructs a [CategoryResultsLoaded] state with the given [features].
   CategoryResultsLoaded(this.features);
 }
+
+class PoiFound extends SearchState {
+  final MapboxFeature feature1;
+  final MapboxFeature feature2;
+  PoiFound(this.feature1, this.feature2);
+}

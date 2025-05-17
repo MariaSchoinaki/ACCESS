@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
       final geometry = mapbox.RenderedQueryGeometry.fromScreenCoordinate(screenPoint);
       final options = mapbox.RenderedQueryOptions(layerIds: null, filter: null);
-
+      print("HEHHEHEHHHE ${mapController.style.getStyleLayers().toString()}");
       print("_onTap: Querying rendered features...");
       final List<mapbox.QueriedRenderedFeature?>? features = await mapController.queryRenderedFeatures(geometry, options);
 
@@ -115,6 +115,64 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         context.read<MapBloc>().add(ClearCategoryMarkers());
       } else {
         print("_onTap: Annotation/Feature tapped. Letting specific listener handle.");
+        final feature = features.first;
+        final props = feature?.queriedFeature.feature;
+        print("Feature properties: $props");
+        final rawProps = feature?.queriedFeature.feature['properties'];
+        final Map<String, dynamic> properties = Map<String, dynamic>.from(rawProps as Map);
+
+        String? bboxString;
+        print("Feature properties: $properties");
+
+        var geometry = feature?.queriedFeature.feature['geometry'];
+        geometry =  Map<String, dynamic>.from(geometry as Map);
+        final coords = geometry?['coordinates'];
+
+        List<double> coordinates = [];
+        if (coords is List) {
+          coordinates = coords
+              .whereType<num>() // κρατάει μόνο num και απορρίπτει null/λάθος τύπους
+              .map((c) => c.toDouble())
+              .toList();
+          print("Coordinates: $coordinates");
+        }
+
+
+        final name = properties?['name'] ?? 'Χωρίς όνομα';
+        final category = properties?['maki'] ?? 'Άγνωστη κατηγορία';
+        final subtype = properties?['type'] ?? '';
+
+        try{
+          final mapbox.CameraState currentCameraState = await mapController.getCameraState();
+
+          // Calculate the limits for the current camera
+          // Make Cameraopations from Camerastate
+          final mapbox.CameraOptions currentCameraOptions = mapbox.CameraOptions(
+            center: currentCameraState.center,
+            padding: currentCameraState.padding,
+            zoom: currentCameraState.zoom,
+            bearing: currentCameraState.bearing,
+            pitch: currentCameraState.pitch,
+          );
+
+          final mapbox.CoordinateBounds? bounds = await mapController.coordinateBoundsForCamera(currentCameraOptions);
+
+          //Format the string
+          if (bounds != null) {
+            // Access to Coordinatebounds' Properties coordinates
+            final minLng = bounds.southwest.coordinates.lng;
+            final minLat = bounds.southwest.coordinates.lat;
+            final maxLng = bounds.northeast.coordinates.lng;
+            final maxLat = bounds.northeast.coordinates.lat;
+            bboxString = '$minLng,$minLat,$maxLng,$maxLat';
+          } else {
+            print('[ Button] Could not get map bounds (getVisibleCoordinateBounds returned null).');
+          }
+        } catch (e) {
+          print("[Button] Error getting map bounds: $e");
+        }
+        context.read<SearchBloc>().add(SearchForPoiClicked(category, properties, coordinates, bbox: bboxString));
+
       }
 
     } catch (e) {
@@ -174,6 +232,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           if (state is CategoryResultsLoaded) {
             context.read<MapBloc>().add(AddCategoryMarkers(state.features, shouldZoomToBounds: true));
           }
+          if (state is PoiFound){
+            print("POI FOUND");
+            selectedFeature = state.feature1;
+            feature = state.feature2;
+            setState(() { location = selectedFeature!.name; });
+            print("POI FOUND: ${selectedFeature!.fullAddress}");
+            context.read<MapBloc>().add(AddMarker(selectedFeature!.latitude, selectedFeature!.longitude));
+          }
         },
         // Listener for Mapbloc bugs that do not handle children Widgets
         child: BlocListener<MapBloc, MapState>(
@@ -214,11 +280,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
                   child: const ZoomControls(),
                 ),
-                /// Start/Stop Tracking Button
-                Positioned(
-                  right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
-                  child: const StartStopTrackingButton(),
-                )
+              /// Start/Stop Tracking Button
+              Positioned(
+                right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
+                child: const StartStopTrackingButton(),
+              )
             ],
           ),
         ),

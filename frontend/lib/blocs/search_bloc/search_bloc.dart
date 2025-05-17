@@ -17,6 +17,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     on<RetrieveCoordinatesEvent>(_onRetrieveCoordinates);
     on<RetrieveNameFromCoordinatesEvent>(_onRetrieveNameFromCoordinates);
     on<FilterByCategoryPressed>(_onFilterByCategoryPressed);
+    on<SearchForPoiClicked>(_onSearchForPoiClicked);
   }
 
   /// Handles [SearchQueryChanged] by performing a text-based location search.
@@ -88,7 +89,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   /// - [CategoryResultsLoaded] if successful.
   /// - [SearchError] if an error occurs.
   Future<void> _onFilterByCategoryPressed(FilterByCategoryPressed event, Emitter<SearchState> emit,) async {
-    emit(SearchLoading());
 
     try {
       final results = await searchService.searchByCategory(event.category, event.bbox);
@@ -97,4 +97,27 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       emit(SearchError('An error occurred while filtering by category: ${e.toString()}'));
     }
   }
+
+  Future<void> _onSearchForPoiClicked(SearchForPoiClicked event, Emitter<SearchState> emit,) async {
+
+    final properties = event.properties;
+    try {
+      final results = await searchService.searchByCategory(event.category, event.bbox);
+      for (final feature in results) {
+        if (isClose(event.coordinates[0], feature.longitude) &&
+            isClose(event.coordinates[1], feature.latitude)){
+          final f = await searchService.retrieveCoordinates(feature.id);
+          print("hEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+          emit(PoiFound(f, feature));
+        }
+      }
+    } catch (e) {
+      emit(SearchError('An error occurred while filtering by category: ${e.toString()}'));
+    }
+  }
+
+  bool isClose(double a, double b, [double tolerance = 0.0002]) {
+    return (a - b).abs() < tolerance;
+  }
+
 }
