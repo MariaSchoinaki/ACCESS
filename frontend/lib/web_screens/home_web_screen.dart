@@ -4,12 +4,12 @@ import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_event.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_state.dart';
 import 'package:access/web_screens/web_bloc/map_bloc/map_event.dart';
 import 'package:access/web_screens/web_bloc/map_bloc/map_bloc.dart';
+import 'package:access/web_screens/web_bloc/report_cart_bloc/report_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
-
 import 'map.dart';
 
 class HomeWebScreen extends StatefulWidget {
@@ -56,7 +56,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                             },
                           ),
                           ListTile(
-                            title: const Text("Προσθήκη βλάβης"),
+                            title: const Text("Προσθήκη έργου"),
                             onTap: () {
                               if (!state.isReportDialogOpen) {
                                 context.read<HomeWebBloc>().add(OpenReportDialog());
@@ -67,16 +67,12 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                   builder: (context) {
                                     return Dialog(
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      child: SizedBox(
-                                        height: 500,
-                                        width: 500,
-                                        child: ReportCart(
-                                          onWorkPeriodReport: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          onDamageReport: () {
-                                            Navigator.of(context).pop();
-                                          },
+                                      child: BlocProvider(
+                                        create: (_) => ReportBloc(),
+                                        child: SizedBox(
+                                          height: 500,
+                                          width: 500,
+                                          child: ReportCart(),
                                         ),
                                       ),
                                     );
