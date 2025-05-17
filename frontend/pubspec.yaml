@@ -12,6 +12,7 @@ environment:
 
 # Core dependencies
 dependencies:
+
   flutter:
     sdk: flutter                  # Flutter framework
   flutter_secure_storage: ^9.0.0  # Encrypted storage solution
@@ -19,13 +20,14 @@ dependencies:
   bloc: ^9.0.0                    # BLoC pattern implementation
   dio: ^5.0.0                     # HTTP client
   image_picker: ^1.0.4            # Image selection from device
-  intl: ^0.20.2                   # Internationalization utilities
+  intl: ^0.18.0                   # Internationalization utilities
   uuid: ^4.5.1                    # Unique ID generation
   device_info_plus: ^11.4.0       # Device metadata access
   shared_preferences: ^2.2.2      # Persistent key-value storage
   html: ^0.15.0
   js: ^0.6.3
   web: ^1.1.1
+  syncfusion_flutter_datepicker: ^23.1.36
 
     # Maps & Geolocation stack
   mapbox_maps_flutter: ^2.7.0     # Mapbox integration
