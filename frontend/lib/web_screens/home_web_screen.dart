@@ -1,3 +1,4 @@
+import 'package:access/web_screens/profile_screen.dart';
 import 'package:access/web_screens/report_cart.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_bloc.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_event.dart';
@@ -50,12 +51,17 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           ListTile(
-                            title: const Text("Προφίλ"),
+                            leading: const Icon(Icons.person),
+                            title: const Text('Προφίλ'),
                             onTap: () {
-                              context.read<HomeWebBloc>().add(OpenProfile());
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                              );
                             },
                           ),
                           ListTile(
+                            leading: const Icon(Icons.add_box_rounded),
                             title: const Text("Προσθήκη έργου"),
                             onTap: () {
                               if (!state.isReportDialogOpen) {
@@ -82,12 +88,6 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                   context.read<HomeWebBloc>().add(CloseReportDialog());
                                 });
                               }
-                            },
-                          ),
-                          ListTile(
-                            title: const Text("Ρυθμίσεις"),
-                            onTap: () {
-                              context.read<HomeWebBloc>().add(OpenSettings());
                             },
                           ),
                         ],

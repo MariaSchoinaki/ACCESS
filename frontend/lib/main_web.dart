@@ -1,5 +1,6 @@
 // Flutter constant for checking if platform is Web
 import 'package:access/web_screens/home_web_screen.dart';
+import 'package:access/web_screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -36,6 +37,7 @@ class WebApp extends StatelessWidget {
       initialRoute: '/webhome',
       routes: {
         '/webhome': (context) => const HomeWebScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
