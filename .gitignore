@@ -47,4 +47,9 @@ frontend/android/app/google-services.json
 frontend/firebase.json
 frontend/lib/firebase_options.dart
 
-backend/services/map_service/algorithms/firebase_conf.json
+
+backend/.flutter-plugins
+backend/.flutter-plugins-dependencies
+
+#firebase info
+**/firebase_conf.json
