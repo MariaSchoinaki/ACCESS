@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
+import '../utils/bbox.dart';
 
 
 /// A reusable button widget for category filtering in the search bar.
@@ -37,7 +38,7 @@ class CategoryFilterButton extends StatelessWidget {
       onPressed: () async {
         print('Selected category: $label (key: $categoryKey)');
         // --- Get map limits ---
-        String? bboxString; // initialization of bbox string
+
 
         // Get Map Controller from Mapbloc State
         // it can find the Mapbloc provided above (from the widget tree).
@@ -49,39 +50,8 @@ class CategoryFilterButton extends StatelessWidget {
           context.read<SearchBloc>().add(FilterByCategoryPressed(categoryKey));
           return;
         }
+        final bboxString = await getBbox(context); // initialization of bbox string
 
-        try {
-          print('[$label Button] Getting current camera state...');
-          final mapbox.CameraState currentCameraState = await mapController.getCameraState();
-          print('[$label Button] Current CameraState received.');
-
-          // Calculate the limits for the current camera
-          // Make Cameraopations from Camerastate
-          final mapbox.CameraOptions currentCameraOptions = mapbox.CameraOptions(
-            center: currentCameraState.center,
-            padding: currentCameraState.padding,
-            zoom: currentCameraState.zoom,
-            bearing: currentCameraState.bearing,
-            pitch: currentCameraState.pitch,
-          );
-
-          final mapbox.CoordinateBounds? bounds = await mapController.coordinateBoundsForCamera(currentCameraOptions);
-
-          //Format the string
-          if (bounds != null) {
-            // Access to Coordinatebounds' Properties coordinates
-            final minLng = bounds.southwest.coordinates.lng;
-            final minLat = bounds.southwest.coordinates.lat;
-            final maxLng = bounds.northeast.coordinates.lng;
-            final maxLat = bounds.northeast.coordinates.lat;
-            bboxString = '$minLng,$minLat,$maxLng,$maxLat';
-            print('[$label Button] Calculated BBOX: $bboxString');
-          } else {
-            print('[$label Button] Could not get map bounds (getVisibleCoordinateBounds returned null).');
-          }
-        } catch (e) {
-          print("[$label Button] Error getting map bounds: $e");
-        }
         // Dispatch the event to the SearchBloc using the provided categoryKey and bboxString
         context.read<SearchBloc>().add(FilterByCategoryPressed(categoryKey, bbox: bboxString));
       },

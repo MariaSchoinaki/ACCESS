@@ -10,6 +10,7 @@ import '../blocs/search_bloc/search_bloc.dart';
 
 import '../models/mapbox_feature.dart';
 
+import '../utils/bbox.dart';
 ///Services Imports
 
 ///Widget and Theme Imports
@@ -90,21 +91,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _onTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) async {
     final mapController = context.read<MapBloc>().state.mapController;
     if (!mounted || mapController == null) {
-      print("_onTap: Widget not mounted or controller is null. Skipping.");
       return;
     }
 
     try {
       final screenPoint = gestureContext.touchPosition;
-      print("_onTap: Tap detected at screen coordinates: (${screenPoint.x}, ${screenPoint.y})");
 
       final geometry = mapbox.RenderedQueryGeometry.fromScreenCoordinate(screenPoint);
       final options = mapbox.RenderedQueryOptions(layerIds: null, filter: null);
-      print("HEHHEHEHHHE ${mapController.style.getStyleLayers().toString()}");
-      print("_onTap: Querying rendered features...");
-      final List<mapbox.QueriedRenderedFeature?>? features = await mapController.queryRenderedFeatures(geometry, options);
+      final List<mapbox.QueriedRenderedFeature?> features = await mapController.queryRenderedFeatures(geometry, options);
 
-      if (features == null || features.isEmpty) {
+      if (features.isEmpty) {
         print("_onTap: Empty space tapped. Clearing selection.");
         if (!mounted) return;
 
@@ -114,65 +111,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         context.read<MapBloc>().add(DeleteMarker());
         context.read<MapBloc>().add(ClearCategoryMarkers());
       } else {
-        print("_onTap: Annotation/Feature tapped. Letting specific listener handle.");
         final feature = features.first;
-        final props = feature?.queriedFeature.feature;
-        print("Feature properties: $props");
         final rawProps = feature?.queriedFeature.feature['properties'];
         final Map<String, dynamic> properties = Map<String, dynamic>.from(rawProps as Map);
 
-        String? bboxString;
-        print("Feature properties: $properties");
-
         var geometry = feature?.queriedFeature.feature['geometry'];
         geometry =  Map<String, dynamic>.from(geometry as Map);
-        final coords = geometry?['coordinates'];
+        final coords = geometry['coordinates'];
 
         List<double> coordinates = [];
         if (coords is List) {
           coordinates = coords
-              .whereType<num>() // κρατάει μόνο num και απορρίπτει null/λάθος τύπους
+              .whereType<num>()
               .map((c) => c.toDouble())
               .toList();
-          print("Coordinates: $coordinates");
         }
+        final category = properties['maki'] ?? 'Άγνωστη κατηγορία';
+        final bboxString = await getBbox(context);
 
-
-        final name = properties?['name'] ?? 'Χωρίς όνομα';
-        final category = properties?['maki'] ?? 'Άγνωστη κατηγορία';
-        final subtype = properties?['type'] ?? '';
-
-        try{
-          final mapbox.CameraState currentCameraState = await mapController.getCameraState();
-
-          // Calculate the limits for the current camera
-          // Make Cameraopations from Camerastate
-          final mapbox.CameraOptions currentCameraOptions = mapbox.CameraOptions(
-            center: currentCameraState.center,
-            padding: currentCameraState.padding,
-            zoom: currentCameraState.zoom,
-            bearing: currentCameraState.bearing,
-            pitch: currentCameraState.pitch,
-          );
-
-          final mapbox.CoordinateBounds? bounds = await mapController.coordinateBoundsForCamera(currentCameraOptions);
-
-          //Format the string
-          if (bounds != null) {
-            // Access to Coordinatebounds' Properties coordinates
-            final minLng = bounds.southwest.coordinates.lng;
-            final minLat = bounds.southwest.coordinates.lat;
-            final maxLng = bounds.northeast.coordinates.lng;
-            final maxLat = bounds.northeast.coordinates.lat;
-            bboxString = '$minLng,$minLat,$maxLng,$maxLat';
-          } else {
-            print('[ Button] Could not get map bounds (getVisibleCoordinateBounds returned null).');
-          }
-        } catch (e) {
-          print("[Button] Error getting map bounds: $e");
-        }
         context.read<SearchBloc>().add(SearchForPoiClicked(category, properties, coordinates, bbox: bboxString));
-
       }
 
     } catch (e) {
