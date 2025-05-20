@@ -53,3 +53,4 @@ backend/.flutter-plugins-dependencies
 
 #firebase info
 **/firebase_conf.json
+backend/services/update_service/firebase_conf.json
