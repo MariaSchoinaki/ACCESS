@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../blocs/map_bloc/map_bloc.dart';
+import '../utils/displayRoutes.dart';
 import 'search_bar.dart' as SB;
 
 /// Type of Callback Function for TAP events on the map.
@@ -218,6 +219,11 @@ class _MainMapAreaState extends State<MainMapArea> {
             child: mapbox.MapWidget(
               key: const ValueKey("mapWidget"),
               cameraOptions: widget.initialCameraOptions,
+              viewport: getFollow() ? mapbox.FollowPuckViewportState(
+                zoom: 16.0,
+                bearing: mapbox.FollowPuckViewportStateBearingHeading(),
+                pitch: 45.0,
+              ) : mapbox.IdleViewportState(),
               styleUri: widget.styleUri,
               textureView: true,
               onTapListener: widget.onMapTap,

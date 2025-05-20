@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
 import '../services/map_service.dart';
+import '../utils/displayRoutes.dart';
 import '../utils/metadata_utils.dart';
 
 /// Card widget to display location info and fetch/display route(s).
@@ -109,7 +110,7 @@ class LocationInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => _fetchAndDisplayRoute(context, alternatives: false),
+                  onPressed: () => fetchAndDisplayRoute(context, alternatives: false, feature:feature),
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Έναρξη'),
                   style: ElevatedButton.styleFrom(
@@ -119,7 +120,7 @@ class LocationInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () => _fetchAndDisplayRoute(context, alternatives: true),
+                  onPressed: () => fetchAndDisplayRoute(context, alternatives: true, feature: feature),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Οδηγίες'),
                   style: ElevatedButton.styleFrom(
@@ -160,73 +161,4 @@ class LocationInfoCard extends StatelessWidget {
     );
   }
 
-  /// Fetches and displays route(s) using MapService and dispatches events to MapBloc.
-  void _fetchAndDisplayRoute(BuildContext context, {required bool alternatives}) async {
-    if (feature == null) {
-      print("Attempted to navigate but feature was null.");
-      return;
-    }
-
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      ).timeout(const Duration(seconds: 10));
-
-      final mapService = MapService();
-
-      // Call the API with `alternatives` query param
-      final responseJson = await mapService.getRoutesJson(
-        fromLat: position.latitude,
-        fromLng: position.longitude,
-        toLat: feature!.latitude,
-        toLng: feature!.longitude,
-        alternatives: alternatives,
-      );
-
-      if (alternatives) {
-        // Extract all routes
-        final List<List<List<double>>> alternativeRoutes = [];
-
-        final routes = responseJson['routes'] as List<dynamic>?;
-
-
-        if (routes != null) {
-          for (var route in routes) {
-            final coordinates = route['coordinates'] as List<dynamic>?;
-            if (coordinates != null) {
-              alternativeRoutes.add(
-                coordinates.map<List<double>>((point) {
-                  if (point is List && point.length >= 2) {
-                    return [point[0].toDouble(), point[1].toDouble()];
-                  } else {
-                    throw Exception('Unexpected point format: $point');
-                  }
-                }).toList(),
-              );
-            }
-          }
-        }
-
-
-        if (alternativeRoutes.isNotEmpty) {
-          context
-              .read<MapBloc>()
-              .add(DisplayAlternativeRoutesFromJson(alternativeRoutes));
-        } else {
-          print('No alternative routes found.');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Δεν βρέθηκαν διαδρομές.')),
-          );
-        }
-      } else {
-        // Send only the first route as JSON
-        context.read<MapBloc>().add(DisplayRouteFromJson(responseJson));
-      }
-    } catch (e) {
-      print("Navigation error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Δεν φορτώθηκαν οι οδηγίες. Ξαναπροσπάθησε αργότερα!')),
-      );
-    }
-  }
 }
