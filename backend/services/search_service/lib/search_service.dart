@@ -391,3 +391,83 @@ Future<Response> handleSearchByCategoryRequest(Request request) async {
     );
   }
 }
+
+Future<Response> handlePoiRequest(Request request) async {
+  // Handle simple health check endpoint
+  if (request.url.path == 'health') {
+    return Response.ok('OK', headers: {'Content-Type': 'text/plain'});
+  }
+
+  print("MPHKA");
+  // Extract query parameters
+  final query = request.url.queryParameters['q'];
+  final proximity = request.url.queryParameters['proximity'];
+  final countyCode = request.url.queryParameters['county_code'];
+  final sessionToken = request.url.queryParameters['session_token'];
+  final bbox = request.url.queryParameters['bbox'];
+  final category = request.url.queryParameters['category'];
+
+
+  // Validate required parameters
+  if (query == null || query.isEmpty) {
+    return Response.badRequest(
+      body: jsonEncode({'error': 'Missing query parameter "q"'}),
+    );
+  }
+
+  if (sessionToken == null || sessionToken.isEmpty) {
+    return Response.badRequest(
+      body: jsonEncode({'error': 'Missing session token "session_token"'}),
+    );
+  }
+
+  // Initialize Dio client for making HTTP requests
+  final dioBackend = dio.Dio();
+  final mapboxToken = File('/run/secrets/mapbox_token').readAsStringSync().trim();
+
+  final encodedQuery = Uri.encodeComponent(query);
+  final url = 'https://api.mapbox.com/search/searchbox/v1/suggest?q=$encodedQuery';
+
+  print('Received session_token: $sessionToken');
+  print('Query: $query');
+  print('URL to Mapbox: $url');
+
+  try {
+    // Make the GET request to Mapbox API
+    final response = await dioBackend.get(
+      url,
+      queryParameters: {
+        'proximity': proximity,
+        'country': countyCode,
+        'bbox': bbox,
+        'poi_category': category,
+        'session_token': sessionToken,
+        'access_token': mapboxToken,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      print('> Error fetching data from Mapbox');
+      return Response.internalServerError(
+        body: jsonEncode({'error': 'Failed to fetch data from Mapbox'}),
+      );
+    }
+
+    print('> Received query: $query');
+    print('> Geocoding response: ${response.data}');
+
+    // Return Mapbox suggestions wrapped in a 'results' key
+    return Response.ok(
+      jsonEncode({'results': response.data['suggestions']}),
+      headers: {'Content-Type': 'application/json'},
+    );
+  } on dio.DioException catch (e) {
+    print('> Error fetching data from Mapbox, 47');
+    return Response.internalServerError(
+      body: jsonEncode({
+        'error': 'Internal server error while contacting Mapbox',
+        'details': e.response?.data ?? e.message,
+      }),
+    );
+  }
+}

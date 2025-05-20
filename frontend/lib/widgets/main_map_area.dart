@@ -168,6 +168,11 @@ class _MainMapAreaState extends State<MainMapArea> {
         // Read local flag for whether the layer has been added
         final bool layerAdded = _routeLayerAndSourceAdded;
 
+        final style = await currentMapController?.style;
+        final layers = await style?.getStyleLayers();
+        for (final layer in layers!) {
+          print('Layer ID: ${layer?.id}');
+        }
         print("[MainMapArea Listener] Check: Controller ${currentMapController == null ? 'NULL' : 'OK'}, LayerAdded: $layerAdded");
 
         // Go ahead only if there is controller and layer/source have been added

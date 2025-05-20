@@ -11,6 +11,7 @@ import '../blocs/search_bloc/search_bloc.dart';
 import '../models/mapbox_feature.dart';
 
 import '../utils/bbox.dart';
+import '../utils/nearFeatures.dart';
 ///Services Imports
 
 ///Widget and Theme Imports
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     context.read<SearchBloc>().add(RetrieveNameFromCoordinatesEvent(lat, lng));
   }
 
+
   /// It handles the tap gesture (tap) to the map provided by [Mainmaparea].
   ///
   /// cleans the currently selected location ([Location], [SelectedFeature]),
@@ -97,11 +99,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     try {
       final screenPoint = gestureContext.touchPosition;
+      final features = await queryNearbyFeatures(screenPoint, 5, context); // 5 pixel radius
 
-      final geometry = mapbox.RenderedQueryGeometry.fromScreenCoordinate(screenPoint);
-      final options = mapbox.RenderedQueryOptions(layerIds: null, filter: null);
-      final List<mapbox.QueriedRenderedFeature?> features = await mapController.queryRenderedFeatures(geometry, options);
-
+      if (features.isNotEmpty) {
+        print("Βρέθηκαν: ${features.length}");
+        for (var f in features) {
+          print("Layer: ${f.queriedFeature.feature['properties']}");
+        }
+      } else {
+        print("Τίποτα");
+      }
       if (features.isEmpty) {
         print("_onTap: Empty space tapped. Clearing selection.");
         if (!mounted) return;
@@ -112,25 +119,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         context.read<MapBloc>().add(DeleteMarker());
         context.read<MapBloc>().add(ClearCategoryMarkers());
       } else {
-        final feature = features.first;
-        final rawProps = feature?.queriedFeature.feature['properties'];
-        final Map<String, dynamic> properties = Map<String, dynamic>.from(rawProps as Map);
+            final feature = features.first;
+            final rawProps = feature?.queriedFeature.feature['properties'];
+            final Map<String, dynamic> properties = Map<String, dynamic>.from(rawProps as Map);
 
-        var geometry = feature?.queriedFeature.feature['geometry'];
-        geometry =  Map<String, dynamic>.from(geometry as Map);
-        final coords = geometry['coordinates'];
+            var geometry = feature?.queriedFeature.feature['geometry'];
+            geometry =  Map<String, dynamic>.from(geometry as Map);
+            final coords = geometry['coordinates'];
 
-        List<double> coordinates = [];
-        if (coords is List) {
-          coordinates = coords
-              .whereType<num>()
-              .map((c) => c.toDouble())
-              .toList();
-        }
-        final category = properties['maki'] ?? 'Άγνωστη κατηγορία';
-        final bboxString = await getBbox(context);
+            List<double> coordinates = [];
+            if (coords is List) {
+            coordinates = coords
+            .whereType<num>()
+            .map((c) => c.toDouble())
+            .toList();
+            }
+            final category = properties['maki'] ?? 'Άγνωστη κατηγορία';
+            final bboxString = await getBbox(context);
 
-        context.read<SearchBloc>().add(SearchForPoiClicked(category, properties, coordinates, bbox: bboxString));
+            print(bboxString);
+            if(category != 'Άγνωστη κατηγορία')
+              context.read<SearchBloc>().add(SearchForPoiClicked(category, properties, coordinates, bbox: bboxString));
       }
 
     } catch (e) {
@@ -226,7 +235,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
 
               SafeArea(
-                  child: SB.SearchBar(searchController: _searchController),
+                child: SB.SearchBar(searchController: _searchController),
               ),
               /// Widgets
               /// Location Info Card

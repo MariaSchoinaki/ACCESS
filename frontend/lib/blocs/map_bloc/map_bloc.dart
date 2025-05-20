@@ -59,8 +59,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   Future<void> _onInitializeMap(InitializeMap event, Emitter<MapState> emit) async {
     emit(state.copyWith(mapController: event.mapController));
-    _annotationManager = await state.mapController?.annotations.createPointAnnotationManager();
-    _categoryAnnotationManager = await state.mapController?.annotations.createPointAnnotationManager();
+    _annotationManager = await state.mapController?.annotations.createPointAnnotationManager(id: 'tapped-layer');
+    _categoryAnnotationManager = await state.mapController?.annotations.createPointAnnotationManager(id: 'categories-layer');
 
     if (_categoryAnnotationManager != null) {
       _categoryAnnotationManager!.addOnPointAnnotationClickListener(
@@ -188,7 +188,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
           geometry: point,
           iconSize: 0.4,
           image: imageData,
-          iconAnchor: mapbox.IconAnchor.BOTTOM,
+          iconAnchor: mapbox.IconAnchor.BOTTOM_LEFT,
           textField: feature.name,
           textSize: 10,
           textMaxWidth: 15,

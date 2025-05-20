@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:access/services/search_service.dart';
 import '../../models/mapbox_feature.dart';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:diacritic/diacritic.dart';
 
 part 'search_event.dart';
 part 'search_state.dart';
@@ -101,13 +103,14 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
   Future<void> _onSearchForPoiClicked(SearchForPoiClicked event, Emitter<SearchState> emit,) async {
 
     final properties = event.properties;
+    print(properties['name']);
+    final q = '${event.coordinates[0]},${event.coordinates[1]}';
     try {
-      final results = await searchService.searchByCategory(event.category, event.bbox);
+      final results = await searchService.searchForPoi(properties['name'], q, properties['iso_3166_1'], event.bbox, properties['category_en'].toLowerCase());
       for (final feature in results) {
-        if (isClose(event.coordinates[0], feature.longitude) &&
-            isClose(event.coordinates[1], feature.latitude)){
+
+        if (areSimilar(properties['name'], feature.name)){
           final f = await searchService.retrieveCoordinates(feature.id);
-          print("hEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
           emit(PoiFound(f, feature));
         }
       }
@@ -116,8 +119,12 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     }
   }
 
-  bool isClose(double a, double b, [double tolerance = 0.0002]) {
-    return (a - b).abs() < tolerance;
+  bool areSimilar(String a, String b, {int threshold = 85}) {
+    final normA = removeDiacritics(a).toLowerCase();
+    final normB = removeDiacritics(b).toLowerCase();
+
+    final ratio = partialRatio(normA, normB); // ή tokenSortRatio, tokenSetRatio
+    return ratio >= threshold;
   }
 
 }

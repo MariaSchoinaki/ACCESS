@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:access/models/metadata.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +16,15 @@ class LocationInfoCard extends StatelessWidget {
   final MapboxFeature? feature;
   final MapboxFeature? feature2;
 
-  const LocationInfoCard({Key? key, required this.feature, this.feature2}) : super(key: key);
+  const LocationInfoCard({super.key, required this.feature, this.feature2});
 
   @override
   Widget build(BuildContext context) {
     if (feature == null) return const SizedBox.shrink();
-    final metadata = createMetaData(feature2!.metadata);
+    ParsedMetadata? metadata;
+    if (feature2 != null) {
+      metadata = createMetaData(feature2!.metadata);
+    }
     final theme = Theme.of(context);
 
     return Container(
@@ -124,16 +128,17 @@ class LocationInfoCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                if (metadata.phone != null)
-                  ElevatedButton.icon(
-                    onPressed: () => context.read<MapBloc>().add(LaunchPhoneDialerRequested(metadata.phone)),
-                    icon: const Icon(Icons.call, size: 18),
-                    label: const Text('Κλήση'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      textStyle: theme.textTheme.labelMedium,
+                if (feature2 != null)
+                  if(metadata?.phone != null)
+                    ElevatedButton.icon(
+                      onPressed: () => context.read<MapBloc>().add(LaunchPhoneDialerRequested(metadata?.phone)),
+                      icon: const Icon(Icons.call, size: 18),
+                      label: const Text('Κλήση'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        textStyle: theme.textTheme.labelMedium,
+                      ),
                     ),
-                  ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
                   onPressed: () => context.read<MapBloc>().add(ShareLocationRequested(feature!.id)),
@@ -148,7 +153,8 @@ class LocationInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          buildMetadataFromList(feature2?.metadata),
+          if (feature2 != null)
+            buildMetadataFromList(feature2?.metadata),
         ],
       ),
     );

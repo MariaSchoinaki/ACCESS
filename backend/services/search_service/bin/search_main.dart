@@ -10,12 +10,16 @@ Future<void> main() async {
   final handler = Pipeline()
       .addMiddleware(logRequests()) // Logs method, URI, status, duration
       .addHandler((Request request) async {
+        print('Received request: ${request.method} ${request.url}');
     if (request.url.path == 'retrieve') {
       return await handleCoordinatesRequest(request);
     }else if (request.url.path == 'getname'){
       return await getLocationNameFromMapbox(request);
     }else if (request.url.path == 'category') {
       return await handleSearchByCategoryRequest(request);
+    } else if (request.url.path == 'poi') {
+      print('Received request to /poi');
+      return await handlePoiRequest(request);
     }
     return await handleSearchRequest(request);  // Υπάρχων handler για search
   }); // Defined in lib/search_service.dart
