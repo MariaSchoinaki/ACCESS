@@ -1,0 +1,5 @@
+service_name: update_service
+port: 8082
+features:
+  - obstacle_report     # real-time obstacle updates (α = 0.9)
+  - roadtrip_rating     # post-trip accessibility ratings (α = 0.5)

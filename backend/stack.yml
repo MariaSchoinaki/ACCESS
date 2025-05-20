@@ -42,6 +42,22 @@ services:
     networks:
       - internal
 
+  update_service:
+    image: update_service
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.2'
+    ports:
+      - "8082:8082"
+    networks:
+      - internal
+
 networks:
   internal:
     driver: overlay

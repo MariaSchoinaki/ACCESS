@@ -30,6 +30,15 @@ services:
     secrets:
       - mapbox_token
 
+  update_service:
+    image: schoin/access_update_service:latest
+    ports:
+      - "8082:8082"
+    networks:
+      - internal
+    secrets:
+      - mapbox_token
+
 secrets:
   mapbox_token:
     external: true
