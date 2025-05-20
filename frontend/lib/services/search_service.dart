@@ -206,4 +206,33 @@ class SearchService {
     print('    • response: ${e.response}');
     print('    • message: ${e.message}');
   }
+
+  Future<List<MapboxFeature>> searchForPoi(String query, String proximity, String countyCode, String? bbox, String? category) async {
+    try {
+      final response = await _dio.get(
+        '/poi',
+        queryParameters: {
+          'q': query,
+          'proximity': proximity,
+          'county_code': countyCode,
+          'bbox': bbox,
+          'category': category,
+          'session_token': _sessionToken,
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw SearchException('Unexpected status code: ${response.statusCode}');
+      }
+
+      final features = List<Map<String, dynamic>>.from(
+          response.data['results'] ?? []);
+
+      print(response);
+      return features.map((json) => MapboxFeature.fromJson(json)).toList();
+    } on DioException catch (e) {
+      _printException(e, operation: 'poi');
+      throw SearchException(e.message ?? 'Dio error: ${e.error}');
+    }
+  }
 }
