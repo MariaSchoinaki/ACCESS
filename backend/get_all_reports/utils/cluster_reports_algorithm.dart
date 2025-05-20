@@ -1,5 +1,5 @@
 import 'dart:math';
-import '../../models/report.dart';
+import '../../models/lib/report.dart';
 
 // Υπολογισμός απόστασης (σε μέτρα) με τη Haversine formula
 double haversineDistance(double lat1, double lon1, double lat2, double lon2) {

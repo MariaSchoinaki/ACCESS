@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:googleapis_auth/auth_io.dart';
 import 'utils/get_from_firebase.dart';
-import '../models/report.dart';
+import '../models/lib/report.dart';
 import 'utils/cluster_reports_algorithm.dart';
 
 const _scopes = ['https://www.googleapis.com/auth/datastore'];
