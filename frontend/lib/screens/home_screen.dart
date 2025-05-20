@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
@@ -16,7 +17,9 @@ import '../utils/nearFeatures.dart';
 
 ///Widget and Theme Imports
 import '../widgets/bottom_bar.dart';
+import '../widgets/directionsCard.dart';
 import '../widgets/location_card.dart';
+import '../widgets/navLocCard.dart';
 import '../widgets/search_bar.dart' as SB;
 import '../widgets/zoom_controls.dart';
 import '../widgets/start_stop_tracking_button.dart';
@@ -51,6 +54,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// either by reverse geo categorization from prolonged tap. Used by [locationinfocard].
   MapboxFeature? selectedFeature;
   MapboxFeature? feature;
+  List<String> routeInstructions = [];
+  bool isNavigating = true;
 
   /// Controller for the search text of the search text, passes on [Mainmaparea].
   final TextEditingController _searchController = TextEditingController();
@@ -159,6 +164,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  void stopNavigation() {
+    setState(() {
+      isNavigating = false;
+      routeInstructions.clear();
+    });
+  }
+
 
   @override
   /// Builds HomePage's main UI structure.
@@ -168,6 +180,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// places the main elements UI ([Mainmaparea], [LocationInfocard], [Zoomcontrolswidget],
   /// [Startstoptrackingbutton]) within a [stack].
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -216,7 +229,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
               );
             }
-
+            if (routeInstructions != mapState.routeInstructions) {
+              setState(() {
+                routeInstructions = mapState.routeInstructions;
+              });
+            }
             if (mapState is MapAnnotationClicked) {
               print("UI Listener: Detected MapAnnotationClicked with ID: ${mapState.mapboxId}");
               feature = mapState.feature;
@@ -235,15 +252,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
 
               SafeArea(
-                child: SB.SearchBar(searchController: _searchController),
+                child: routeInstructions.isEmpty ? SB.SearchBar(searchController: _searchController) : Positioned(
+                  left: 0, right: 0, bottom: 0,
+                  child: DirectionsCard(instructions: routeInstructions, currentStep: 0,),
+                ),
               ),
               /// Widgets
               /// Location Info Card
               if (location.isNotEmpty && selectedFeature != null)
-                Positioned(
-                  left: 0, right: 0, bottom: -10,
-                  child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
-                ),
+                if(routeInstructions.isEmpty)
+                  Positioned(
+                    left: 0, right: 0, bottom: -10,
+                    child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
+                  ),
+                if(routeInstructions.isNotEmpty)
+                  NavigationInfoBar(title: selectedFeature!.name, onClose: stopNavigation),
               /// Zoom Controls
               if(!location.isNotEmpty)
                 Positioned(

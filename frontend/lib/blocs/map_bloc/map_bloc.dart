@@ -400,6 +400,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       }
 
       final routeObject = event.routeJson['route'];
+      print(jsonEncode(event.routeJson));
+
       if (routeObject == null || routeObject['coordinates'] == null || routeObject['coordinates'] is! List) {
         emit(state.copyWith(errorMessageGetter: () => 'Route data is invalid'));
         return;
@@ -409,11 +411,24 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
       final fixedLineCoordinates = coordinates.map<List<double>>((c) {
         if (c is List && c.length >= 2) {
-          return [c[1].toDouble(), c[0].toDouble()]; // lng, lat (Mapbox needs [lng, lat])
+          return [c[1].toDouble(), c[0].toDouble()]; // lat, lng για Mapbox
         } else {
           throw Exception('Invalid coordinate format');
         }
       }).toList();
+
+      // === Extract instructions from steps ===
+      final instructionsList = routeObject['instructions'];
+
+      final routeInstructions = <String>[];
+
+      if (instructionsList is List) {
+        for (final instructionEntry in instructionsList) {
+          if (instructionEntry is Map && instructionEntry['instruction'] != null) {
+            routeInstructions.add(instructionEntry['instruction'] as String);
+          }
+        }
+      }
 
       final geojson = {
         "type": "FeatureCollection",
@@ -458,12 +473,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ),
       );
 
-      emit(state.copyWith(errorMessageGetter: () => null));
+      print(routeInstructions);
+      emit(state.copyWith(
+        errorMessageGetter: () => null,
+        routeInstructions: routeInstructions,
+      ));
     } catch (e) {
       emit(state.copyWith(errorMessageGetter: () => 'Error displaying route: $e'));
     }
   }
-
 
   Future<void> _onDisplayAlternativeRoutesFromJson(DisplayAlternativeRoutesFromJson event, Emitter<MapState> emit,) async {
     try {

@@ -127,3 +127,4 @@ class LaunchPhoneDialerRequested extends MapEvent {
   final String? phoneNumber;
   LaunchPhoneDialerRequested(this.phoneNumber);
 }
+
