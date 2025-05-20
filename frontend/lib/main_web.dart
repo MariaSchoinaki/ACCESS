@@ -1,8 +1,12 @@
 // Flutter constant for checking if platform is Web
+import 'package:access/services/search_service.dart';
 import 'package:access/web_screens/home_web_screen.dart';
 import 'package:access/web_screens/profile_screen.dart';
+import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/search_bloc/search_bloc.dart';
 import 'firebase_options.dart';
 
 
@@ -29,16 +33,23 @@ class WebApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Accessible City',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => HomeWebBloc()),
+        BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
+      ],
+      child: MaterialApp(
+        title: 'Accessible City',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.light(),
 
-      initialRoute: '/webhome',
-      routes: {
-        '/webhome': (context) => const HomeWebScreen(),
-        '/profile': (context) => const ProfileScreen(),
-      },
+        initialRoute: '/webhome',
+        routes: {
+          '/webhome': (context) => const HomeWebScreen(),
+          '/profile': (context) => const ProfileScreen(),
+        },
+      ),
     );
   }
 }
+
