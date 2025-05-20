@@ -38,6 +38,7 @@ Future<void> main() async {
 
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
+      .addMiddleware(corsMiddleware())
       .addHandler(router);
 
   final port = int.tryParse(Platform.environment['PORT'] ?? '9090') ?? 9090;
@@ -45,6 +46,28 @@ Future<void> main() async {
 
   print('\x1B[32m✅ Gateway running on http://${server.address.address}:$port\x1B[0m');
 }
+
+shelf.Middleware corsMiddleware() {
+  return (innerHandler) {
+    return (request) async {
+      final headers = {
+        'Access-Control-Allow-Origin': request.headers['origin'] ?? '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+      };
+
+      if (request.method == 'OPTIONS') {
+        return shelf.Response.ok('', headers: headers);
+      }
+
+      // Αλλιώς περνάμε το request στον επόμενο handler και προσθέτουμε headers
+      final response = await innerHandler(request);
+      return response.change(headers: headers);
+    };
+  };
+}
+
 
 Future<shelf.Response> _proxy(
     shelf.Request request,
