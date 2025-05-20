@@ -20,7 +20,7 @@ dependencies:
   bloc: ^9.0.0                    # BLoC pattern implementation
   dio: ^5.0.0                     # HTTP client
   image_picker: ^1.0.4            # Image selection from device
-  intl: ^0.20.2                   # Internationalization utilities
+  intl: ^0.19.0                   # Internationalization utilities
   uuid: ^4.5.1                    # Unique ID generation
   device_info_plus: ^11.4.0       # Device metadata access
   shared_preferences: ^2.2.2      # Persistent key-value storage

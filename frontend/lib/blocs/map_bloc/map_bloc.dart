@@ -358,6 +358,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         'routePoints': routeForFirestore,
         'pointCount': event.route.length,
         'createdAt': FieldValue.serverTimestamp(),
+        'needsUpdate': true,
       };
 
       await _firestore.collection('rated_routes').add(ratedRouteData);
