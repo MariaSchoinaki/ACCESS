@@ -4,11 +4,13 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:polyline_codec/polyline_codec.dart' as polyline;
+import 'package:html/parser.dart' show parse;
 
 // Route handler
 Response _healthHandler(Request request) {
   return Response.ok('OK', headers: {'Content-Type': 'text/plain'});
 }
+
 
 Future<Response> _routeHandler(Request request) async {
   final lat = request.url.queryParameters['lat'];
@@ -52,19 +54,36 @@ Future<Response> _routeHandler(Request request) async {
       );
     }
 
-    final routes = (data['routes'] as List<dynamic>? ?? [])
-        .map((route) {
+    final routes = (data['routes'] as List<dynamic>? ?? []).map((route) {
       final encodedPolyline = route['overview_polyline']?['points'];
       if (encodedPolyline == null) return null;
 
       final decodedPoints = polyline.PolylineCodec.decode(encodedPolyline);
+      final summary = route['summary'] ?? '';
+
+      final steps = ((route['legs']?.first?['steps']) as List<dynamic>? ?? []);
+      final instructions = steps.map((step) {
+        final rawHtml = step['html_instructions'] ?? '';
+        final document = parse(rawHtml);
+        final cleanText = document.body?.text ?? '';
+
+        return {
+          'instruction': cleanText,
+          'distance': step['distance']?['value'],
+          'duration': step['duration']?['value'],
+          'location': {
+            'lat': step['start_location']?['lat'],
+            'lng': step['start_location']?['lng'],
+          },
+        };
+      }).toList();
+
       return {
-        'summary': route['summary'],
-        'coordinates': decodedPoints, // list of [lat, lng]
+        'summary': summary,
+        'coordinates': decodedPoints,
+        'instructions': instructions,
       };
-    })
-        .where((route) => route != null)
-        .toList();
+    }).where((route) => route != null).toList();
 
     final responseBody = isAlternatives
         ? {'routes': routes}
@@ -84,6 +103,7 @@ Future<Response> _routeHandler(Request request) async {
     );
   }
 }
+
 
 Handler get handler {
   final router = Router()
