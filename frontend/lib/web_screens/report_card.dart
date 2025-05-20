@@ -4,14 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 
 
-class ReportCart extends StatefulWidget {
-  const ReportCart({Key? key}) : super(key: key);
+class ReportCard extends StatefulWidget {
+  const ReportCard({Key? key}) : super(key: key);
 
   @override
-  State<ReportCart> createState() => _ReportCartState();
+  State<ReportCard> createState() => _ReportCardState();
 }
 
-class _ReportCartState extends State<ReportCart> {
+class _ReportCardState extends State<ReportCard> {
   final TextEditingController _damageReportController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   List<double>? selectedCoordinates;
@@ -68,36 +68,30 @@ class _ReportCartState extends State<ReportCart> {
   void _submitForm() {
     final location = _locationController.text.trim();
 
-    if (_startDate == null || _endDate == null || _selectedProjectType == null || location.isEmpty) {
+    if (_startDate == null || _endDate == null || _selectedProjectType == null || location.isEmpty || selectedCoordinates?[0] == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Συμπλήρωσε όλα τα απαιτούμενα πεδία.")),
       );
       return;
+    }else{
+      context.read<ReportBloc>().add(
+        SubmitReport(
+          location: _locationController.text.trim(),
+          startDate: _startDate!,
+          endDate: _endDate!,
+          obstacleType: _selectedProjectType!,
+          damageReport: _damageReportController.text.trim(),
+          accessibility: _accessibility,
+          latitude: selectedCoordinates?[1],
+          longitude: selectedCoordinates?[0],
+        ),
+      );
     }
-
-    context.read<SearchBloc>().add(SearchQueryChanged(location));
   }
 
   void _handleSearchResult(BuildContext context, SearchState state) {
     if (state is SearchLoaded) {
-      if (state.results.isNotEmpty) {
-        final feature = state.results.first;
-
-        selectedCoordinates = [feature.longitude, feature.latitude];
-
-        context.read<ReportBloc>().add(
-          SubmitReport(
-            location: _locationController.text.trim(),
-            startDate: _startDate!,
-            endDate: _endDate!,
-            obstacleType: _selectedProjectType!,
-            damageReport: _damageReportController.text.trim(),
-            accessibility: _accessibility,
-            latitude: selectedCoordinates?[1],
-            longitude: selectedCoordinates?[0],
-          ),
-        );
-      } else {
+      if (state.results.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Δεν βρέθηκε τοποθεσία. Δοκίμασε ξανά.")),
         );
@@ -107,10 +101,14 @@ class _ReportCartState extends State<ReportCart> {
         SnackBar(content: Text("Σφάλμα αναζήτησης: ${state.message}")),
       );
     }
+    else if (state is CoordinatesLoaded){
+      selectedCoordinates = [state.feature.longitude, state.feature.latitude];
+    }
   }
 
   void _handleReportResult(BuildContext context, ReportState state) {
     if (state is ReportSuccess) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Η αναφορά υποβλήθηκε επιτυχώς!")),
       );
@@ -146,6 +144,11 @@ class _ReportCartState extends State<ReportCart> {
                 TextField(
                   controller: _locationController,
                   decoration: const InputDecoration(hintText: 'Πληκτρολόγησε διεύθυνση'),
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty){
+                      context.read<SearchBloc>().add(SearchQueryChanged(value));
+                    }
+                  }
                 ),
                 BlocBuilder<SearchBloc, SearchState>(
                   builder: (context, state) {
@@ -165,7 +168,8 @@ class _ReportCartState extends State<ReportCart> {
                             title: Text(feature.fullAddress),
                             onTap: () {
                               _locationController.text = feature.fullAddress;
-                              selectedCoordinates = [feature.longitude, feature.latitude];
+                              context.read<SearchBloc>().add(SearchQueryChanged(""));
+                              context.read<SearchBloc>().add(RetrieveCoordinatesEvent(feature.id));
                             },
                           );
                         },

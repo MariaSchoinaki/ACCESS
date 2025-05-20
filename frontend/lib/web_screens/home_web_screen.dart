@@ -58,7 +58,10 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                   // Sidebar
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height,
+                      minHeight: MediaQuery
+                          .of(context)
+                          .size
+                          .height,
                     ),
                     child: IntrinsicWidth(
                       child: Container(
@@ -95,7 +98,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                           child: const SizedBox(
                                             height: 500,
                                             width: 500,
-                                            child: ReportCart(),
+                                            child: ReportCard(),
                                           ),
                                         ),
                                       );
