@@ -207,7 +207,7 @@ class _MainMapAreaState extends State<MainMapArea> {
       child: Column(
         children: [
           // The search bar, uses the controller given as a parameter
-          SB.SearchBar(searchController: widget.searchController),
+          //SB.SearchBar(searchController: widget.searchController),
           // Mapbox Map, gets the rest of the height available
           Expanded(
             child: mapbox.MapWidget(

@@ -21,8 +21,7 @@ class SearchBar extends StatelessWidget {
 
     // Main container for the search bar area.
     return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 5),
       // Use BlocBuilder to react to SearchBloc state changes.
       child: BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {

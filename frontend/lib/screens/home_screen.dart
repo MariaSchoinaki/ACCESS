@@ -16,6 +16,7 @@ import '../utils/bbox.dart';
 ///Widget and Theme Imports
 import '../widgets/bottom_bar.dart';
 import '../widgets/location_card.dart';
+import '../widgets/search_bar.dart' as SB;
 import '../widgets/zoom_controls.dart';
 import '../widgets/start_stop_tracking_button.dart';
 import '../widgets/main_map_area.dart';
@@ -224,6 +225,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 onMapLongTap: (gestureContext) => _onLongTap(gestureContext, context),
               ),
 
+              SafeArea(
+                  child: SB.SearchBar(searchController: _searchController),
+              ),
               /// Widgets
               /// Location Info Card
               if (location.isNotEmpty && selectedFeature != null)
