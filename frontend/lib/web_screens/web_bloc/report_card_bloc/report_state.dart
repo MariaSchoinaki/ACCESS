@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'report_bloc.dart';
 
 abstract class ReportState extends Equatable {
   @override

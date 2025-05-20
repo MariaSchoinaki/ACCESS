@@ -1,7 +1,8 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'report_event.dart';
-import 'report_state.dart';
+part 'report_event.dart';
+part 'report_state.dart';
 
 class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ReportBloc() : super(ReportInitial()) {
@@ -16,8 +17,11 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         'location': event.location,
         'startDate': event.startDate,
         'endDate': event.endDate,
-        'projectType': event.projectType,
+        'obstacleType': event.obstacleType,
         'damageReport': event.damageReport,
+        'accessibility': event.accessibility,
+        'latitude': event.latitude,
+        'longitude': event.longitude,
         'createdAt': Timestamp.now(),
       });
 

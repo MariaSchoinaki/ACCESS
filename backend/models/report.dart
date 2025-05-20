@@ -7,6 +7,7 @@ class Report {
   final String locationDescription;
   final String imageUrl;
   final String accessibility;
+  final String description;
 
   Report({
     required this.id,
@@ -17,6 +18,7 @@ class Report {
     required this.locationDescription,
     required this.imageUrl,
     required this.accessibility,
+    required this.description,
   });
 
   factory Report.fromFirestore(Map<String, dynamic> doc) {
@@ -35,12 +37,14 @@ class Report {
       locationDescription: fields['locationDescription']?['stringValue'] ?? '',
       imageUrl: fields['imageUrl']?['stringValue'] ?? '',
       accessibility: fields['accessibility']?['stringValue'] ?? 'Άγνωστο',
+      description: fields['description']?['stringValue'] ?? '',
     );
   }
 
   @override
   String toString() {
     return 'Report(id: $id, timestamp: $timestamp, location: ($latitude, $longitude), '
-        'type: $obstacleType, description: $locationDescription, accessibility: $accessibility)';
+        'type: $obstacleType, locationdescription: $locationDescription, '
+        'accessibility: $accessibility, description: $description)';
   }
 }

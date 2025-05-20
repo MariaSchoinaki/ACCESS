@@ -1,12 +1,12 @@
 import 'package:access/services/search_service.dart';
 import 'package:access/web_screens/profile_screen.dart';
-import 'package:access/web_screens/report_cart.dart';
+import 'package:access/web_screens/report_card.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_bloc.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_event.dart';
 import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_state.dart';
 import 'package:access/web_screens/web_bloc/map_bloc/map_event.dart';
 import 'package:access/web_screens/web_bloc/map_bloc/map_bloc.dart';
-import 'package:access/web_screens/web_bloc/report_cart_bloc/report_bloc.dart';
+import 'package:access/web_screens/web_bloc/report_card_bloc/report_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,12 +37,11 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => HomeWebBloc()),
-        BlocProvider(create: (_) => SearchBloc(searchService: SearchService())), // <-- SearchBloc added
+        BlocProvider(create: (_) => SearchBloc(searchService: SearchService())),
       ],
       child: BlocListener<SearchBloc, SearchState>(
         listener: (context, state) {
           if (state is SearchLoaded) {
-            // Εδώ μπορείς να εμφανίσεις ειδοποίηση ή να φορτώσεις αποτελέσματα
             print('Αποτελέσματα αναζήτησης: ${state.results}');
           } else if (state is SearchError) {
             ScaffoldMessenger.of(context).showSnackBar(
