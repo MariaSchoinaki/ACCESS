@@ -1,16 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
-/// Firestore REST client.
+/// Firestore REST API client for reading and writing documents.
 class FirestoreRest {
   final String projectId, clientEmail, privateKey;
   String? _token;
   DateTime? _expiry;
 
   FirestoreRest._(this.projectId, this.clientEmail, this.privateKey);
+
+  /// Creates a FirestoreRest instance from a Google service account JSON file.
   factory FirestoreRest.fromServiceAccount(String path) {
     final j = jsonDecode(File(path).readAsStringSync());
     return FirestoreRest._(
@@ -20,8 +21,9 @@ class FirestoreRest {
     );
   }
 
+  /// Returns a valid OAuth token for Firestore requests, creating one if necessary.
   Future<String> _getToken() async {
-    if (_token != null && _expiry!.isAfter(DateTime.now())) return _token!;
+    if (_token != null && _expiry != null && _expiry!.isAfter(DateTime.now())) return _token!;
     final now = DateTime.now().toUtc();
     final jwt = JWT({
       'iss': clientEmail,
@@ -48,11 +50,11 @@ class FirestoreRest {
     return _token!;
   }
 
+  /// Low-level: Returns the raw list of documents from a Firestore collection.
   Future<List<Map<String, dynamic>>> listDocs(String path) async {
     final t = await _getToken();
     final url = Uri.parse(
-      'https://firestore.googleapis.com/v1/projects/$projectId'
-          '/databases/(default)/documents/$path',
+      'https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/$path',
     );
     final r = await http.get(url, headers: {'Authorization': 'Bearer $t'});
     if (r.statusCode != 200) {
@@ -62,6 +64,21 @@ class FirestoreRest {
     return (b['documents'] as List? ?? []).cast<Map<String, dynamic>>();
   }
 
+  /// High-level: Returns a list of maps with 'name' and 'fields' for each document in a collection.
+  /// This is compatible with the format your project expects.
+  Future<List<Map<String, dynamic>>> fetchCollectionDocuments(String collection) async {
+    final docs = await listDocs(collection);
+    return docs.map<Map<String, dynamic>>((doc) {
+      final docName = doc['name'] as String;
+      final fields = doc['fields'] as Map<String, dynamic>;
+      return {
+        'name': docName,
+        'fields': fields,
+      };
+    }).toList();
+  }
+
+  /// Updates a document (PATCH). Use updateMaskFields to only update specific fields if needed.
   Future<void> patchDoc(String path, String docId, Map<String, dynamic> fields, {List<String>? updateMaskFields}) async {
     final t = await _getToken();
     String urlStr = 'https://firestore.googleapis.com/v1/projects/$projectId'
@@ -84,6 +101,7 @@ class FirestoreRest {
     }
   }
 
+  /// Retrieves a single document by collection path and document ID.
   Future<Map<String, dynamic>> getDoc(String path, String docId) async {
     final t = await _getToken();
     final url = Uri.parse(
