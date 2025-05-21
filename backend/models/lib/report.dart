@@ -25,18 +25,27 @@ class Report {
     final fields = doc['fields'] as Map<String, dynamic>? ?? {};
     final geo = fields['coordinates']?['geoPointValue'] ?? {};
 
+    // Extract the ID from the Firestore document name if necessary
+    final fullName = doc['name'] as String? ?? '';
+    final id = fullName.isNotEmpty ? fullName.split('/').last : '';
+
+    // Safely parse latitude and longitude to double
+    double parseDouble(dynamic v) {
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0.0;
+      return 0.0;
+    }
+
     return Report(
-      id: doc['name'] ?? '',
-      timestamp: DateTime.tryParse(
-        fields['timestamp']?['timestampValue'] ?? '',
-      ) ??
-          DateTime.now(),
-      latitude: geo['latitude'] ?? 0.0,
-      longitude: geo['longitude'] ?? 0.0,
-      obstacleType: fields['obstacleType']?['stringValue'] ?? 'Άγνωστο',
+      id: id,
+      timestamp: DateTime.tryParse(fields['timestamp']?['timestampValue'] ?? '') ?? DateTime.now(),
+      latitude: parseDouble(geo['latitude']),
+      longitude: parseDouble(geo['longitude']),
+      obstacleType: fields['obstacleType']?['stringValue'] ?? 'Unknown',
       locationDescription: fields['locationDescription']?['stringValue'] ?? '',
       imageUrl: fields['imageUrl']?['stringValue'] ?? '',
-      accessibility: fields['accessibility']?['stringValue'] ?? 'Άγνωστο',
+      accessibility: fields['accessibility']?['stringValue'] ?? 'Unknown',
       description: fields['description']?['stringValue'] ?? '',
     );
   }
@@ -44,7 +53,7 @@ class Report {
   @override
   String toString() {
     return 'Report(id: $id, timestamp: $timestamp, location: ($latitude, $longitude), '
-        'type: $obstacleType, locationdescription: $locationDescription, '
+        'type: $obstacleType, locationDescription: $locationDescription, '
         'accessibility: $accessibility, description: $description)';
   }
 }
