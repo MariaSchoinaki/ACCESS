@@ -354,6 +354,7 @@ class ReportObstacleBloc extends Bloc<ReportObstacleEvent, ReportObstacleState> 
         'description': state.description.isNotEmpty ? state.description : null, // User's description (null if empty)
         'imageUrl': imageUrl, // URL of the uploaded image (null if upload failed or no image)
         'timestamp': FieldValue.serverTimestamp(), // Server-side timestamp for creation time
+        'needsUpdate': true, // Backend checks if update is needed
       };
 
       // --- Step 4: Store data in Firestore ---
