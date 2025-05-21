@@ -1,9 +1,9 @@
 import 'dart:math';
-import '../../models/lib/report.dart';
+import 'package:access_models/report.dart';
 
-// Υπολογισμός απόστασης (σε μέτρα) με τη Haversine formula
+// Calculates distance (in meters) using the Haversine formula
 double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
-  const R = 6371000; // Ακτίνα Γης σε μέτρα
+  const R = 6371000; // Earth radius in meters
   final dLat = _toRadians(lat2 - lat1);
   final dLon = _toRadians(lon2 - lon1);
   final a = sin(dLat / 2) * sin(dLat / 2) +
@@ -15,7 +15,7 @@ double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
 
 double _toRadians(double degree) => degree * pi / 180;
 
-
+/// Groups reports that are close in space, time, and type
 List<List<Report>> clusterReports(List<Report> reports) {
   final List<List<Report>> clusters = [];
 
