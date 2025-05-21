@@ -1,6 +1,8 @@
 import 'package:access_models/route_data.dart';
 import 'package:access_models/route_segment.dart';
 import 'package:access_models/disability_type.dart';
+import 'package:access_models/obstacle_type.dart';
+import 'package:access_models/report.dart';
 import 'package:access_models/firebase/rest.dart';
 
 // GeoJSON imports
@@ -12,7 +14,8 @@ class AccessibilityUpdaterService {
   AccessibilityUpdaterService(this._rest);
   final FirestoreRest _rest;
 
-  Future<void> run({required double alpha}) async {
+  /// Updates road accessibility based on user-rated routes
+  Future<void> runRatings({double alpha = 0.5}) async {
     print('[STEP] Loading road geojson...');
     final geojson = await loadGeoJson('../../data/roads.geojson');
     print('[STEP] Geojson loaded with ${geojson.features.length} features.');
@@ -129,6 +132,97 @@ class AccessibilityUpdaterService {
       print('[ROUTES] Reset needsUpdate for ${route.id}');
     }
     print('\n✅ Accessibility update completed for all routes needing update.');
+  }
+
+  /// Updates road accessibility based on obstacle reports (using new utils)
+  Future<void> runReports({double alpha = 0.9}) async {
+    print('[STEP] Loading road geojson...');
+    final geojson = await loadGeoJson('../../data/roads.geojson');
+    print('[STEP] Geojson loaded with ${geojson.features.length} features.');
+
+    print('[STEP] Fetching user and municipal reports needing update...');
+    final userReportsRaw = await _rest.fetchCollectionDocuments('reports');
+    final municipalReportsRaw = await _rest.fetchCollectionDocuments('municipal_reports');
+
+    // Filter only those reports with needsUpdate == true
+    final userReportsToUpdate = userReportsRaw.where((d) =>
+    (d['fields'] as Map<String, dynamic>)['needsUpdate']?['booleanValue'] == true
+    ).toList();
+
+    final municipalReportsToUpdate = municipalReportsRaw.where((d) =>
+    (d['fields'] as Map<String, dynamic>)['needsUpdate']?['booleanValue'] == true
+    ).toList();
+
+    final allReports = [
+      ...userReportsToUpdate.map((d) => {'doc': d, 'collection': 'reports'}),
+      ...municipalReportsToUpdate.map((d) => {'doc': d, 'collection': 'municipal_reports'}),
+    ];
+
+    print('[STEP] Found ${allReports.length} reports needing update.');
+    if (allReports.isEmpty) {
+      print('No reports needing update. Exiting.');
+      return;
+    }
+
+    for (final reportData in allReports) {
+      final doc = reportData['doc'] as Map<String, dynamic>;
+      final collection = reportData['collection'] as String;
+      final report = Report.fromFirestore(doc);
+
+      final point = [report.longitude, report.latitude];
+
+      // Find nearest segment for this report
+      final feature = findNearestFeature(point, geojson);
+      if (feature == null) {
+        print('[REPORT] No segment found for report: ${report.id}');
+        continue;
+      }
+      final segmentId = feature.properties['id']?.toString() ?? '';
+      final docId = segmentId.replaceAll('/', '_');
+
+      double prevAccessibilityScore = 0.5;
+      try {
+        final segmentDoc = await _rest.getDoc('roads', docId);
+        final fields = segmentDoc['fields'] as Map<String, dynamic>;
+        final accScore = fields['AccessibilityScore'];
+        if (accScore != null && accScore['doubleValue'] != null) {
+          prevAccessibilityScore = (accScore['doubleValue'] as num).toDouble();
+        }
+      } catch (_) {}
+
+      final ObstacleType obstacleType = obstacleTypeFromGreek(report.obstacleType);
+      final double reportImpact = getObstacleWeight(obstacleType);
+
+      final double Pold = prevAccessibilityScore;
+      final double Pnew = (Pold + alpha * (reportImpact - Pold)).clamp(0.0, 1.0);
+
+      final String color = getObstacleImpactColor(Pnew);
+
+      print('\n[REPORT]');
+      print('  Report ID: ${report.id}');
+      print('  Obstacle Type: ${report.obstacleType} (impact: $reportImpact)');
+      print('  Segment ID: $segmentId');
+      print('  Pold: $Pold | Pnew: $Pnew | Color: $color');
+
+      final Map<String, dynamic> roadFields = {
+        'segmentId': {'stringValue': segmentId},
+        'AccessibilityScore': {'doubleValue': Pnew},
+        'lastUpdatedByReport': {'stringValue': report.id},
+        'updatedAt': {'timestampValue': DateTime.now().toUtc().toIso8601String()},
+      };
+      await _rest.patchDoc('roads', docId, roadFields);
+      print('    [FIRESTORE] Updated segment $segmentId with score $Pnew due to report ${report.id}');
+
+      // After processing, set needsUpdate = false for this report
+      await _rest.patchDoc(
+        collection,
+        report.id,
+        {'needsUpdate': {'booleanValue': false}},
+        updateMaskFields: ['needsUpdate'],
+      );
+      print('    [FIRESTORE] Reset needsUpdate for report ${report.id} in $collection');
+    }
+    print('\n✅ Accessibility update completed for all reports needing update.');
   }
 }
 

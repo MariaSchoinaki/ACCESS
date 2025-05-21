@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:access_models/firebase/rest.dart';
-
 import '../lib/update_service.dart';
 
 void main() async {
@@ -17,25 +16,27 @@ void main() async {
   print('>>> [MAIN] Creating updater...');
   final updater = AccessibilityUpdaterService(rest);
 
-  // Run the updater immediately for the first time
-  print('>>> [MAIN] Running updater...');
-  await runUpdate(updater);
+  // Run immediately on start
+  print('>>> [MAIN] Running both ratings and reports updaters (only needsUpdate == true)...');
+  await runBothUpdates(updater);
 
   // Then run periodically every 1 minute
   Timer.periodic(Duration(minutes: 1), (timer) async {
-    print('\n>>> [TIMER] Running updater...');
-    await runUpdate(updater);
+    print('\n>>> [TIMER] Running both ratings and reports updaters (only needsUpdate == true)...');
+    await runBothUpdates(updater);
   });
 
-  // Keep main alive forever (or as long as you want)
+  // Keep main alive forever
   await Future.delayed(Duration(days: 365));
 }
 
-Future<void> runUpdate(AccessibilityUpdaterService updater) async {
+Future<void> runBothUpdates(AccessibilityUpdaterService updater) async {
   try {
-    await updater.run(alpha: 0.5); // Change alpha if you want
-    print('✅ Accessibility update completed.');
+    // Only process rated_routes and reports with needsUpdate == true
+    await updater.runRatings(alpha: 0.5); // Update from user ratings (routes)
+    await updater.runReports(alpha: 0.9); // Update from obstacle reports
+    print('✅ Both ratings and reports accessibility updates completed.');
   } catch (e, st) {
-    print('❌ Error during update: $e\n$st');
+    print('❌ Error during updates: $e\n$st');
   }
 }
