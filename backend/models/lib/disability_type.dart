@@ -1,5 +1,3 @@
-// lib/utils/disability_utils.dart
-
 enum DisabilityType {
   mobility,
   visual,
@@ -10,18 +8,14 @@ enum DisabilityType {
 }
 
 DisabilityType disabilityTypeFromGreek(String greek) {
-  switch (greek) {
-    case 'Χρήση αμαξιδίου':
-    case 'Χρήση βοηθητικού εξοπλισμού':
-    case 'Γονείς με μωρό σε καρότσι':
-    case 'Προσωρινή κινητική δυσκολία':
-      return DisabilityType.mobility;
-    case 'Προβλήματα όρασης':
-      return DisabilityType.visual;
-    case 'Καμία':
-      return DisabilityType.none;
-    default:
-      return DisabilityType.unknown;
+  if (greek == 'Χρήση αμαξιδίου' || greek == 'Χρήση βοηθητικού εξοπλισμού' || greek == 'Γονείς με μωρό σε καρότσι' || greek == 'Προσωρινή κινητική δυσκολία') {
+    return DisabilityType.mobility;
+  } else if (greek == 'Προβλήματα όρασης') {
+    return DisabilityType.visual;
+  } else if (greek == 'Καμία') {
+    return DisabilityType.none;
+  } else {
+    return DisabilityType.unknown;
   }
 }
 
