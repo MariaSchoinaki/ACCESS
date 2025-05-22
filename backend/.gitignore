@@ -68,5 +68,5 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-backend/deploy.ps1
+deploy.ps1
 
