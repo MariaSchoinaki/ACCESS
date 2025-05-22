@@ -76,14 +76,17 @@ class _ReportCardState extends State<ReportCard> {
     }else{
       context.read<ReportBloc>().add(
         SubmitReport(
-          location: _locationController.text.trim(),
+          locationDescription: _locationController.text.trim(),
           startDate: _startDate!,
           endDate: _endDate!,
           obstacleType: _selectedProjectType!,
-          damageReport: _damageReportController.text.trim(),
+          description: _damageReportController.text.trim(),
           accessibility: _accessibility,
-          latitude: selectedCoordinates?[1],
-          longitude: selectedCoordinates?[0],
+          coordinates: selectedCoordinates,
+          needsUpdate: false,
+          timestamp: DateTime.now(),
+          userEmail: "dimos@dimos.gr",
+          userId: "tttt",
         ),
       );
     }

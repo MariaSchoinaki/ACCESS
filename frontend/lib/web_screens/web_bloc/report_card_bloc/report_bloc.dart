@@ -9,20 +9,21 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<SubmitReport>(_onSubmitReport);
   }
 
-  Future<void> _onSubmitReport(SubmitReport event, Emitter<ReportState> emit) async {
+  Future<void> _onSubmitReport(SubmitReport event,
+      Emitter<ReportState> emit) async {
     emit(ReportLoading());
 
     try {
       await FirebaseFirestore.instance.collection('municipal_reports').add({
-        'location': event.location,
-        'startDate': event.startDate,
-        'endDate': event.endDate,
-        'obstacleType': event.obstacleType,
-        'damageReport': event.damageReport,
         'accessibility': event.accessibility,
-        'latitude': event.latitude,
-        'longitude': event.longitude,
-        'createdAt': Timestamp.now(),
+        'coordinates': GeoPoint(event.coordinates![0], event.coordinates![1]),
+        'locationDescription': event.locationDescription,
+        'needsUpdate': event.needsUpdate,
+        'obstacleType': event.obstacleType,
+        'timestamp': Timestamp.fromDate(event.timestamp),
+        'userEmail': event.userEmail,
+        'userId': event.userId,
+        'description': event.description,
       });
 
       emit(ReportSuccess());

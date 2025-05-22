@@ -1,40 +1,51 @@
 part of 'report_bloc.dart';
 
-class ReportEvent extends Equatable {
+abstract class ReportEvent extends Equatable {
+  const ReportEvent();
+
   @override
   List<Object?> get props => [];
 }
 
 class SubmitReport extends ReportEvent {
-  final String location;
+  final String? accessibility;
   final DateTime startDate;
   final DateTime endDate;
+  final List<double>? coordinates;
+  final String locationDescription;
+  final bool needsUpdate;
   final String obstacleType;
-  final String? damageReport;
-  final String? accessibility;
-  final double? latitude;
-  final double? longitude;
+  final DateTime timestamp;
+  final String userEmail;
+  final String userId;
+  final String description;
 
-  SubmitReport({
-    required this.location,
+  const SubmitReport({
+    required this.accessibility,
     required this.startDate,
     required this.endDate,
+    required this.coordinates,
+    required this.locationDescription,
+    required this.needsUpdate,
     required this.obstacleType,
-    this.damageReport,
-    this.accessibility,
-    this.latitude,
-    this.longitude,
+    required this.timestamp,
+    required this.userEmail,
+    required this.userId,
+    required this.description,
   });
 
   @override
   List<Object?> get props => [
-    location,
+    accessibility,
     startDate,
     endDate,
+    coordinates,
+    locationDescription,
+    needsUpdate,
     obstacleType,
-    damageReport,
-    accessibility,
-    latitude,
-    longitude,
+    timestamp,
+    userEmail,
+    userId,
+    description,
   ];
 }
