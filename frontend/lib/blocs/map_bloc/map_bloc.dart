@@ -23,6 +23,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 part 'map_event.dart';
 part 'map_state.dart';
 
+
 class MapBloc extends Bloc<MapEvent, MapState> {
   late mapbox.PointAnnotationManager? _annotationManager;
   late mapbox.PointAnnotationManager? _categoryAnnotationManager;
@@ -61,6 +62,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ToggleVoiceInstructions>((event, emit) {
       emit(state.copyWith(isVoiceEnabled: !state.isVoiceEnabled));
     });
+
+    on<NavigationPositionUpdated>(_onNavigationPositionUpdated);
 
   }
 
@@ -283,9 +286,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       trackingStatus: MapTrackingStatus.loading,
     ));
 
-    await stopLocationListening(); // αν έχει προηγούμενο
+    await stopLocationListening();
     await startLocationListening(
-      emit: emit,
       onPositionUpdate: (position) {
         if (!state.isTracking) return;
         final updatedRoute = List<geolocator.Position>.from(state.trackedRoute)..add(position);
@@ -583,30 +585,18 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     await stopLocationListening();
     startCompassListener();
     flutterTts.speak("run boy run");
-    await startLocationListening(
-      emit: emit,
-      onPositionUpdate: (position) {
-        if (!state.isNavigating || state.routeSteps.isEmpty) return;
-
-        int closestStepIndex = 0;
-        double minDistance = double.infinity;
-        for (int i = 0; i < state.routeSteps.length; i++) {
-          final stepPoint = state.routeSteps[i].location;
-          final dist = distanceBetweenPoints(mapbox.Point(coordinates: mapbox.Position(position.longitude, position.latitude)), stepPoint);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestStepIndex = i;
-          }
-        }
-        _updateNavigationStep(closestStepIndex, emit);
-      },
-    );
+    await startLocationListening(onPositionUpdate: (position) => add(NavigationPositionUpdated(position)));
   }
 
+
   Future<void> _updateNavigationStep(int newStepIndex, Emitter<MapState> emit) async {
+    print("Trying to update step: $newStepIndex");
+    print("Current step in state: ${state.currentStepIndex}");
+
     if (!state.isNavigating || newStepIndex == state.currentStepIndex) return;
 
     emit(state.copyWith(currentStepIndex: newStepIndex));
+    print("Updated step to: $newStepIndex");
 
     if (state.isVoiceEnabled && newStepIndex < state.routeSteps.length) {
       await flutterTts.speak(state.routeSteps[newStepIndex].instruction);
@@ -651,9 +641,29 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
 
+  Future<void> _onNavigationPositionUpdated(NavigationPositionUpdated event, Emitter<MapState> emit) async {
+      if (!state.isNavigating || state.routeSteps.isEmpty) return;
+
+      int closestStepIndex = 0;
+      double minDistance = double.infinity;
+
+      for (int i = 0; i < state.routeSteps.length; i++) {
+        final stepPoint = state.routeSteps[i].location;
+        final dist = distanceBetweenPoints(
+          mapbox.Point(coordinates: mapbox.Position(event.position.longitude, event.position.latitude)),
+          stepPoint,
+        );
+
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestStepIndex = i;
+        }
+      }
+      _updateNavigationStep(closestStepIndex, emit);
+  }
 
 
-  Future<void> startLocationListening({required Function(geolocator.Position) onPositionUpdate, required Emitter<MapState> emit,}) async {
+  Future<void> startLocationListening({required Function(geolocator.Position) onPositionUpdate}) async {
     final permissionStatus = await Permission.locationWhenInUse.request();
     if (permissionStatus.isGranted || permissionStatus.isLimited) {
       const locationSettings = geolocator.LocationSettings(
@@ -666,7 +676,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ).handleError((error) {
           print("Error in location stream: $error");
           _positionSubscription?.cancel();
-          // Προαιρετικά: emit σφάλμα
         }).listen((position) {
           onPositionUpdate(position);
         });
@@ -677,7 +686,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       }
     } else {
       print("Location permission denied");
-      // Προαιρετικά: emit σφάλμα
     }
   }
 
