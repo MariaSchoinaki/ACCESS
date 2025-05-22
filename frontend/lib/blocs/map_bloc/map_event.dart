@@ -143,3 +143,10 @@ class UpdateNavigationStep extends MapEvent {
 class StopNavigationRequested extends MapEvent {}
 
 class ToggleVoiceInstructions extends MapEvent {}
+
+
+class NavigationPositionUpdated extends MapEvent {
+  final geolocator.Position position;
+
+  NavigationPositionUpdated(this.position);
+}
