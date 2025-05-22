@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 if(routeInstructions.isNotEmpty)
                   NavigationInfoBar(title: selectedFeature!.name),
               /// Zoom Controls
-              if(!location.isNotEmpty)
+              if(location.isEmpty || routeInstructions.isNotEmpty)
                 Positioned(
                   right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
                   child: const ZoomControls(),

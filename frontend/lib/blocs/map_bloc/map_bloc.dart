@@ -599,12 +599,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   Future<void> _changeCamera(double heading) async {
     final point = await geolocator.Geolocator.getCurrentPosition();
+    final pitch = state.isNavigating ? 60.0 : 0.0;
     state.mapController?.easeTo(
       mapbox.CameraOptions(
         center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
         bearing: heading,
         zoom: 20.0,
-        pitch: 60.0,
+        pitch: pitch,
       ),
       mapbox.MapAnimationOptions(duration: 300),
     );
@@ -628,16 +629,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     await state.mapController?.style.removeStyleLayer(layerId).catchError((_) {});
     await state.mapController?.style.removeStyleSource(sourceId).catchError((_) {});
     final point = await geolocator.Geolocator.getCurrentPosition();
-
-    state.mapController?.easeTo(
-      mapbox.CameraOptions(
-        center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
-        bearing: 0,
-        zoom: 16,
-        pitch: 0,
-      ),
-      mapbox.MapAnimationOptions(duration: 1000),
-    );
+    _changeCamera(point.heading);
   }
 
 
