@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:access/models/navigation_step.dart';
 import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -54,7 +55,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// either by reverse geo categorization from prolonged tap. Used by [locationinfocard].
   MapboxFeature? selectedFeature;
   MapboxFeature? feature;
-  List<String> routeInstructions = [];
+  List<NavigationStep> routeInstructions = [];
   bool isNavigating = true;
 
   /// Controller for the search text of the search text, passes on [Mainmaparea].
@@ -98,7 +99,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   /// - [BuildContext]: Buildcontext from the Widget tree where blocs can be accessed.
   Future<void> _onTap(mapbox.MapContentGestureContext gestureContext, BuildContext buildContext) async {
     final mapController = context.read<MapBloc>().state.mapController;
-    if (!mounted || mapController == null) {
+    if (!mounted || mapController == null || context.read<MapBloc>().state.isNavigating) {
       return;
     }
 
@@ -164,14 +165,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  void stopNavigation() {
-    setState(() {
-      isNavigating = false;
-      routeInstructions.clear();
-    });
-  }
-
-
   @override
   /// Builds HomePage's main UI structure.
   ///
@@ -229,9 +222,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
               );
             }
-            if (routeInstructions != mapState.routeInstructions) {
+            if (routeInstructions != mapState.routeSteps) {
               setState(() {
-                routeInstructions = mapState.routeInstructions;
+                routeInstructions = mapState.routeSteps;
               });
             }
             if (mapState is MapAnnotationClicked) {
@@ -252,9 +245,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
 
               SafeArea(
-                child: routeInstructions.isEmpty ? SB.SearchBar(searchController: _searchController) : Positioned(
-                  left: 0, right: 0, bottom: 0,
-                  child: DirectionsCard(instructions: routeInstructions, currentStep: 0,),
+                child: Stack(
+                  children: [
+                    // Search bar πάντα πάνω
+                    if (routeInstructions.isEmpty)
+                      SB.SearchBar(searchController: _searchController),
+
+                    // DirectionsCard εμφανίζεται κάτω όταν υπάρχουν οδηγίες
+                    if (routeInstructions.isNotEmpty)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        child: DirectionsCard(
+                          steps: routeInstructions,
+                          currentStep: context.read<MapBloc>().state.currentStepIndex,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               /// Widgets
@@ -266,7 +274,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
                   ),
                 if(routeInstructions.isNotEmpty)
-                  NavigationInfoBar(title: selectedFeature!.name, onClose: stopNavigation),
+                  NavigationInfoBar(title: selectedFeature!.name),
               /// Zoom Controls
               if(!location.isNotEmpty)
                 Positioned(
