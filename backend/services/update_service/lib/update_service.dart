@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:access_models/route_data.dart';
 import 'package:access_models/route_segment.dart';
 import 'package:access_models/disability_type.dart';
@@ -17,8 +19,12 @@ class AccessibilityUpdaterService {
   /// Updates road accessibility based on user-rated routes
   Future<void> runRatings({double alpha = 0.5}) async {
     print('[STEP] Loading road geojson...');
-    final geojson = await loadGeoJson('../../data/roads.geojson');
+
+    final geojsonPath = Platform.environment['GEOJSON_PATH'] ?? 'data/roads.geojson';
+    final geojson = await loadGeoJson(geojsonPath);
+
     print('[STEP] Geojson loaded with ${geojson.features.length} features.');
+
 
     print('[STEP] Loading rated_routes needing update...');
     final rawRoutes = await _rest.listDocs('rated_routes');
@@ -137,7 +143,10 @@ class AccessibilityUpdaterService {
   /// Updates road accessibility based on obstacle reports (using new utils)
   Future<void> runReports({double alpha = 0.9}) async {
     print('[STEP] Loading road geojson...');
-    final geojson = await loadGeoJson('../../data/roads.geojson');
+
+    final geojsonPath = Platform.environment['GEOJSON_PATH'] ?? 'data/roads.geojson';
+    final geojson = await loadGeoJson(geojsonPath);
+
     print('[STEP] Geojson loaded with ${geojson.features.length} features.');
 
     print('[STEP] Fetching user and municipal reports needing update...');
@@ -224,6 +233,10 @@ class AccessibilityUpdaterService {
     }
     print('\n✅ Accessibility update completed for all reports needing update.');
   }
+}
+
+extension on String {
+  get features => null;
 }
 
 class _User {

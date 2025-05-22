@@ -1,13 +1,15 @@
-### Build Stage
 FROM dart:stable AS builder
 
 WORKDIR /app
 
-COPY pubspec.* ./
+COPY services/map_service/pubspec.* ./
+COPY models/ ../models/
+
 RUN dart pub get
 
-COPY bin/ bin/
-COPY lib/ lib/
+COPY services/map_service/bin/ bin/
+COPY services/map_service/lib/ lib/
+
 RUN dart compile exe bin/map_main.dart -o bin/server
 
 

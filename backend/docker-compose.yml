@@ -32,19 +32,25 @@ services:
 
   update_service:
     image: schoin/access_update_service:latest
+    volumes:
+      - ./data/roads.geojson:/app/data/roads.geojson
     ports:
       - "8082:8082"
     networks:
       - internal
     secrets:
-      - mapbox_token
+      - firebase_conf.json
+    environment:
+      FIREBASE_CONF: /run/secrets/firebase_conf.json
+      GEOJSON_PATH: /app/data/roads.geojson
 
 secrets:
   mapbox_token:
     external: true
   google_maps_key:
     external: true
-
+  firebase_conf.json:
+    external: true
 
 networks:
   internal:

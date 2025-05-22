@@ -4,12 +4,15 @@ FROM dart:stable AS builder
 WORKDIR /app
 
 # Copy and get dependencies
-COPY pubspec.* ./
+COPY services/update_service/pubspec.* ./
+COPY data/ data/
+COPY models/ ../models/
+
 RUN dart pub get
 
 # Copy source
-COPY bin/ bin/
-COPY lib/ lib/
+COPY services/update_service/bin/ bin/
+COPY services/update_service/lib/ lib/
 
 # Compile the CLI entrypoint
 RUN dart compile exe bin/update_main.dart -o bin/server
@@ -40,8 +43,8 @@ ENV PORT=8082
 EXPOSE 8082
 
 # Healthcheck
-HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl --fail http://localhost:8082/health || exit 1
+#HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+#  CMD curl --fail http://localhost:8082/health || exit 1
 
 # Run the server
 CMD ["./server"]

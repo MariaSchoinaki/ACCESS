@@ -3,11 +3,14 @@ FROM dart:stable AS builder
 
 WORKDIR /app
 
-COPY pubspec.* ./
+COPY services/search_service/pubspec.* ./
+COPY models/ ../models/
+
 RUN dart pub get
 
-COPY bin/ bin/
-COPY lib/ lib/
+COPY services/search_service/bin/ bin/
+COPY services/search_service/lib/ lib/
+
 RUN dart compile exe bin/search_main.dart -o bin/server
 
 

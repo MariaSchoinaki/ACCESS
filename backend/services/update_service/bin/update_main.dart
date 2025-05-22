@@ -4,7 +4,7 @@ import 'package:access_models/firebase/rest.dart';
 import '../lib/update_service.dart';
 
 void main() async {
-  const saPath = 'firebase_conf.json';
+  final saPath = Platform.environment['FIREBASE_CONF'] ?? 'firebase_conf.json';
   if (!File(saPath).existsSync()) {
     stderr.writeln('❌ Cannot find service-account JSON at "$saPath"');
     exit(1);
