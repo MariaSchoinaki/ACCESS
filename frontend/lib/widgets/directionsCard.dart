@@ -1,28 +1,59 @@
 import 'package:access/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../../models/navigation_step.dart';
 
-class DirectionsCard extends StatelessWidget {
-  final List<String> instructions;
+class DirectionsCard extends StatefulWidget {
+  final List<NavigationStep> steps;
   final int currentStep;
 
   const DirectionsCard({
-    required this.instructions,
+    required this.steps,
     required this.currentStep,
     Key? key,
   }) : super(key: key);
 
+  @override
+  _DirectionsCardState createState() => _DirectionsCardState();
+}
+
+class _DirectionsCardState extends State<DirectionsCard> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void didUpdateWidget(DirectionsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentStep != widget.currentStep) {
+      _scrollToCurrentStep();
+    }
+  }
+
+  void _scrollToCurrentStep() {
+    // Πλάτος κάθε item + margin (περίπου 250 + 16)
+    final double offset = widget.currentStep * (250 + 16);
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
   Widget getDirectionIcon(String instruction) {
-    instruction = instruction.toLowerCase();
-    if (instruction.contains('right')) {
+    final instr = instruction.toLowerCase();
+    if (instr.contains('right')) {
       return const Icon(Icons.arrow_right_alt, size: 32, color: Colors.orange);
-    } else if (instruction.contains('left')) {
+    } else if (instr.contains('left')) {
       return const Icon(Icons.arrow_left, size: 32, color: Colors.orange);
-    } else if (instruction.contains('straight')) {
+    } else if (instr.contains('straight')) {
       return const Icon(Icons.arrow_upward, size: 32, color: Colors.orange);
-    } else if (instruction.contains('back')) {
+    } else if (instr.contains('back')) {
       return const Icon(Icons.arrow_back, size: 32, color: Colors.orange);
     }
-    // default icon
     return const Icon(Icons.directions, size: 32, color: Colors.white);
   }
 
@@ -32,10 +63,12 @@ class DirectionsCard extends StatelessWidget {
     return SizedBox(
       height: 150,
       child: ListView.builder(
-        itemCount: instructions.length,
+        controller: _scrollController,
+        itemCount: widget.steps.length,
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
-          final isActive = index == currentStep;
+          final isActive = index == widget.currentStep;
+          final step = widget.steps[index];
           return Container(
             width: 250,
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -58,29 +91,32 @@ class DirectionsCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  getDirectionIcon(instructions[index]),
-                  const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 180,
-                  ),
-                  child: Text(
-                    instructions[index],
-                    style: TextStyle(
-                      color: isActive ? AppColors.white : theme.textTheme.bodyMedium?.color,
-                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 16,
+                  getDirectionIcon(step.instruction),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 180),
+                    child: Text(
+                      step.instruction,
+                      style: TextStyle(
+                        color: isActive ? Colors.white : theme.textTheme.bodyMedium?.color,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
                 ],
-              )
-
+              ),
             ),
           );
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }

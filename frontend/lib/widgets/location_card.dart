@@ -110,7 +110,9 @@ class LocationInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => fetchAndDisplayRoute(context, alternatives: false, feature:feature),
+                  onPressed: () {
+                    fetchAndDisplayRoute(context, alternatives: false, feature:feature);
+                  },
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Έναρξη'),
                   style: ElevatedButton.styleFrom(
