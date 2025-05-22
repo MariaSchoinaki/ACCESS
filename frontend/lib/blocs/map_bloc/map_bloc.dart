@@ -18,6 +18,7 @@ import '../../models/navigation_step.dart';
 import '../../utils/nearest_step.dart';
 import '../../utils/point_annotation_click_listener.dart';
 import 'package:flutter_compass/flutter_compass.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 part 'map_event.dart';
 part 'map_state.dart';
@@ -31,6 +32,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FlutterTts flutterTts = FlutterTts();
 
   MapBloc() : super(MapState.initial()) {
     on<RequestLocationPermission>(_onRequestLocationPermission);
@@ -55,12 +57,21 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ShareLocationRequested>(_onShareLocation);
     on<LaunchPhoneDialerRequested>(_onLaunchPhoneDialer);
     on<StartNavigationRequested>(_onStartNavigation);
-    on<UpdateNavigationStep>(_onUpdateNavigationStep);
     on<StopNavigationRequested>(_onStopNavigation);
+    on<ToggleVoiceInstructions>((event, emit) {
+      emit(state.copyWith(isVoiceEnabled: !state.isVoiceEnabled));
+    });
+
   }
 
   Future<void> _onRequestLocationPermission(RequestLocationPermission event, Emitter<MapState> emit) async {
     await Permission.locationWhenInUse.request();
+  }
+
+  Future<void> initTTS() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.5);
+    await flutterTts.setPitch(1.0);
   }
 
   Future<void> _onInitializeMap(InitializeMap event, Emitter<MapState> emit) async {
@@ -87,6 +98,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
 
     add(GetCurrentLocation());
+    initTTS();
   }
 
   Future<void> _onGetCurrentLocation(GetCurrentLocation event, Emitter<MapState> emit) async {
@@ -569,6 +581,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     emit(state.copyWith(isNavigating: true, currentStepIndex: 0));
 
     await stopLocationListening();
+    startCompassListener();
+    flutterTts.speak("run boy run");
     await startLocationListening(
       emit: emit,
       onPositionUpdate: (position) {
@@ -584,27 +598,30 @@ class MapBloc extends Bloc<MapEvent, MapState> {
             closestStepIndex = i;
           }
         }
-        if (closestStepIndex != state.currentStepIndex) {
-          emit(state.copyWith(currentStepIndex: closestStepIndex));
-        }
+        _updateNavigationStep(closestStepIndex, emit);
       },
     );
-    startCompassListener();
   }
 
-  Future<void> _onUpdateNavigationStep(UpdateNavigationStep event, Emitter<MapState> emit,) async {
-    if (!state.isNavigating) return;
-      emit(state.copyWith(currentStepIndex: event.currentStepIndex));
+  Future<void> _updateNavigationStep(int newStepIndex, Emitter<MapState> emit) async {
+    if (!state.isNavigating || newStepIndex == state.currentStepIndex) return;
+
+    emit(state.copyWith(currentStepIndex: newStepIndex));
+
+    if (state.isVoiceEnabled && newStepIndex < state.routeSteps.length) {
+      await flutterTts.speak(state.routeSteps[newStepIndex].instruction);
+    }
   }
 
   Future<void> _changeCamera(double heading) async {
     final point = await geolocator.Geolocator.getCurrentPosition();
     final pitch = state.isNavigating ? 60.0 : 0.0;
+    final zoom = state.isNavigating ? 20.0 : 16.0;
     state.mapController?.easeTo(
       mapbox.CameraOptions(
         center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
         bearing: heading,
-        zoom: 20.0,
+        zoom: zoom,
         pitch: pitch,
       ),
       mapbox.MapAnimationOptions(duration: 300),
@@ -618,6 +635,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       _changeCamera(heading);
     });
   }
+
   Future<void> _onStopNavigation(StopNavigationRequested event, Emitter<MapState> emit,) async {
     emit(state.copyWith(
       isNavigating: false,

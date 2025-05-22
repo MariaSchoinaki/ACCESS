@@ -21,6 +21,7 @@ class MapState extends Equatable {
   final List<NavigationStep> routeSteps;
   final bool isNavigating;
   final int currentStepIndex;
+  final bool isVoiceEnabled;
 
 
   // --- Properties for tracking ---
@@ -47,6 +48,7 @@ class MapState extends Equatable {
     this.routeSteps = const [],
     this.isNavigating = false,
     this.currentStepIndex = 0,
+    this.isVoiceEnabled = true,
   });
 
   // Returns the initial state
@@ -69,6 +71,7 @@ class MapState extends Equatable {
     List<NavigationStep>? routeSteps,
     bool? isNavigating,
     int? currentStepIndex,
+    bool? isVoiceEnabled,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -90,6 +93,7 @@ class MapState extends Equatable {
       routeSteps: routeSteps ?? this.routeSteps,
       isNavigating: isNavigating ?? this.isNavigating,
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
+      isVoiceEnabled: isVoiceEnabled ?? this.isVoiceEnabled,
     );
   }
 
@@ -110,6 +114,7 @@ class MapState extends Equatable {
     routeSteps,
     isNavigating,
     currentStepIndex,
+    isVoiceEnabled,
   ];
 }
 

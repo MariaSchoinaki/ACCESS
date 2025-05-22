@@ -33,6 +33,16 @@ class ZoomControls extends StatelessWidget {
 
     return Column(
       children: [
+        if(context.read<MapBloc>().state.isNavigating)
+          FloatingActionButton(
+            heroTag: "speech",
+            mini: true,
+            onPressed: () => context.read<MapBloc>().add(ToggleVoiceInstructions()),
+            backgroundColor: AppColors.grey,
+            foregroundColor: AppColors.white,
+            child: Icon(context.read<MapBloc>().state.isVoiceEnabled ? Icons.volume_up : Icons.volume_off,),
+          ),
+        const SizedBox(height: 10),
         FloatingActionButton(
           heroTag: "location",
           mini: true,

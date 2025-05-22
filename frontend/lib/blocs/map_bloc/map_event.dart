@@ -141,3 +141,5 @@ class UpdateNavigationStep extends MapEvent {
 }
 
 class StopNavigationRequested extends MapEvent {}
+
+class ToggleVoiceInstructions extends MapEvent {}
