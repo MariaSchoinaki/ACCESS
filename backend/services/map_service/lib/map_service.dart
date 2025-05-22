@@ -75,6 +75,10 @@ Future<Response> _routeHandler(Request request) async {
             'lat': step['start_location']?['lat'],
             'lng': step['start_location']?['lng'],
           },
+          'end_location': {
+            'lat': step['end_location']?['lat'],
+            'lng': step['end_location']?['lng'],
+          },
         };
       }).toList();
 

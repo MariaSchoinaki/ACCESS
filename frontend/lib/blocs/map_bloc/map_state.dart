@@ -18,7 +18,9 @@ class MapState extends Equatable {
   /// A map that associates Mapbox IDs with internal IDs. Map<InternalId, MapboxId>
   final Map<String, String> annotationIdMap;
   final Map<String, MapboxFeature> featureMap;
-  final List<String> routeInstructions;
+  final List<NavigationStep> routeSteps;
+  final bool isNavigating;
+  final int currentStepIndex;
 
 
   // --- Properties for tracking ---
@@ -42,7 +44,9 @@ class MapState extends Equatable {
     this.currentTrackedPosition,
     this.trackingStatus = MapTrackingStatus.initial,
     this.errorMessage,
-    this.routeInstructions = const [],
+    this.routeSteps = const [],
+    this.isNavigating = false,
+    this.currentStepIndex = 0,
   });
 
   // Returns the initial state
@@ -62,7 +66,9 @@ class MapState extends Equatable {
     ValueGetter<geolocator.Position?>? currentTrackedPositionGetter,
     MapTrackingStatus? trackingStatus,
     ValueGetter<String?>? errorMessageGetter,
-    List<String>? routeInstructions,
+    List<NavigationStep>? routeSteps,
+    bool? isNavigating,
+    int? currentStepIndex,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -81,7 +87,9 @@ class MapState extends Equatable {
       errorMessage: errorMessageGetter != null
           ? errorMessageGetter()
           : this.errorMessage,
-      routeInstructions: routeInstructions ?? this.routeInstructions,
+      routeSteps: routeSteps ?? this.routeSteps,
+      isNavigating: isNavigating ?? this.isNavigating,
+      currentStepIndex: currentStepIndex ?? this.currentStepIndex,
     );
   }
 
@@ -99,7 +107,9 @@ class MapState extends Equatable {
     currentTrackedPosition,
     trackingStatus,
     errorMessage,
-    routeInstructions,
+    routeSteps,
+    isNavigating,
+    currentStepIndex,
   ];
 }
 

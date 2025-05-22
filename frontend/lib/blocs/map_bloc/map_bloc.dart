@@ -14,7 +14,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/mapbox_feature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../models/navigation_step.dart';
+import '../../utils/nearest_step.dart';
 import '../../utils/point_annotation_click_listener.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 
 part 'map_event.dart';
 part 'map_state.dart';
@@ -51,6 +54,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
     on<ShareLocationRequested>(_onShareLocation);
     on<LaunchPhoneDialerRequested>(_onLaunchPhoneDialer);
+    on<StartNavigationRequested>(_onStartNavigation);
+    on<UpdateNavigationStep>(_onUpdateNavigationStep);
+    on<StopNavigationRequested>(_onStopNavigation);
   }
 
   Future<void> _onRequestLocationPermission(RequestLocationPermission event, Emitter<MapState> emit) async {
@@ -259,49 +265,22 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   Future<void> _onStartTrackingRequested(StartTrackingRequested event, Emitter<MapState> emit) async {
-    final permissionStatus = await Permission.locationWhenInUse.request();
-    if (permissionStatus.isGranted || permissionStatus.isLimited) {
-      emit(state.copyWith(
-        trackingStatus: MapTrackingStatus.loading,
-        trackedRoute: [],
-        currentTrackedPositionGetter: () => null,
-        isTracking: false,
-        errorMessageGetter: () => null,
-      ));
-      await _stopTrackingLogic();
+    emit(state.copyWith(
+      trackedRoute: [],
+      isTracking: true,
+      trackingStatus: MapTrackingStatus.loading,
+    ));
 
-      const locationSettings = geolocator.LocationSettings(
-        accuracy: geolocator.LocationAccuracy.high, distanceFilter: 5,);
-      try {
-        _positionSubscription = _geolocator
-            .getPositionStream(locationSettings: locationSettings)
-            .handleError((error) {
-          print("Error in location stream: $error");
-          add(StopTrackingRequested());
-          emit(state.copyWith(
-              trackingStatus: MapTrackingStatus.error,
-              isTracking: false,
-              errorMessageGetter: () => 'Σφάλμα ροής τοποθεσίας: $error'));
-        })
-            .listen((geolocator.Position position) {
-          add(_LocationUpdated(position));
-        });
-        emit(state.copyWith(
-          isTracking: true, trackingStatus: MapTrackingStatus.tracking,));
-        print("Tracking started...");
-      } catch (e) {
-        print("Error starting location stream: $e");
-        await _stopTrackingLogic();
-        emit(state.copyWith(
-            trackingStatus: MapTrackingStatus.error, isTracking: false,
-            errorMessageGetter: () => 'Αδυναμία έναρξης παρακολούθησης: $e'));
-      }
-    } else {
-      print("Location permission denied for tracking.");
-      emit(state.copyWith(
-          trackingStatus: MapTrackingStatus.error,
-          errorMessageGetter: () => 'Απαιτείται άδεια τοποθεσίας για την έναρξη καταγραφής.'));
-    }
+    await stopLocationListening(); // αν έχει προηγούμενο
+    await startLocationListening(
+      emit: emit,
+      onPositionUpdate: (position) {
+        if (!state.isTracking) return;
+        final updatedRoute = List<geolocator.Position>.from(state.trackedRoute)..add(position);
+        emit(state.copyWith(trackedRoute: updatedRoute, currentTrackedPositionGetter: () => position));
+      },
+    );
+    emit(state.copyWith(trackingStatus: MapTrackingStatus.tracking));
   }
 
   void _onLocationUpdated(_LocationUpdated event, Emitter<MapState> emit) {
@@ -421,13 +400,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       // === Extract instructions from steps ===
       final instructionsList = routeObject['instructions'];
 
-      final routeInstructions = <String>[];
+      final List<NavigationStep> routeSteps = [];
 
       if (instructionsList is List) {
-        for (final instructionEntry in instructionsList) {
-          if (instructionEntry is Map && instructionEntry['instruction'] != null) {
-            routeInstructions.add(instructionEntry['instruction'] as String);
-          }
+        for (final step in instructionsList) {
+          try {
+            routeSteps.add(NavigationStep.fromJson(step as Map<String, dynamic>));
+          } catch (_) {}
         }
       }
 
@@ -474,11 +453,12 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         ),
       );
 
-      print(routeInstructions);
+      print(routeSteps);
       emit(state.copyWith(
         errorMessageGetter: () => null,
-        routeInstructions: routeInstructions,
+        routeSteps: routeSteps,
       ));
+      add(StartNavigationRequested());
     } catch (e) {
       emit(state.copyWith(errorMessageGetter: () => 'Error displaying route: $e'));
     }
@@ -583,6 +563,117 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     } catch (e) {
       emit(ActionFailed("Αποτυχία κλήσης τηλεφώνου"));
     }
+  }
+
+  Future<void> _onStartNavigation(StartNavigationRequested event, Emitter<MapState> emit,) async {
+    emit(state.copyWith(isNavigating: true, currentStepIndex: 0));
+
+    await stopLocationListening();
+    await startLocationListening(
+      emit: emit,
+      onPositionUpdate: (position) {
+        if (!state.isNavigating || state.routeSteps.isEmpty) return;
+
+        int closestStepIndex = 0;
+        double minDistance = double.infinity;
+        for (int i = 0; i < state.routeSteps.length; i++) {
+          final stepPoint = state.routeSteps[i].location;
+          final dist = distanceBetweenPoints(mapbox.Point(coordinates: mapbox.Position(position.longitude, position.latitude)), stepPoint);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestStepIndex = i;
+          }
+        }
+        if (closestStepIndex != state.currentStepIndex) {
+          emit(state.copyWith(currentStepIndex: closestStepIndex));
+        }
+      },
+    );
+    startCompassListener();
+  }
+
+  Future<void> _onUpdateNavigationStep(UpdateNavigationStep event, Emitter<MapState> emit,) async {
+    if (!state.isNavigating) return;
+      emit(state.copyWith(currentStepIndex: event.currentStepIndex));
+  }
+
+  Future<void> _changeCamera(double heading) async {
+    final point = await geolocator.Geolocator.getCurrentPosition();
+    state.mapController?.easeTo(
+      mapbox.CameraOptions(
+        center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
+        bearing: heading,
+        zoom: 20.0,
+        pitch: 60.0,
+      ),
+      mapbox.MapAnimationOptions(duration: 300),
+    );
+  }
+
+  void startCompassListener() {
+    FlutterCompass.events!.listen((event) {
+      final double? heading = event.heading;
+      if (heading == null) return;
+      _changeCamera(heading);
+    });
+  }
+  Future<void> _onStopNavigation(StopNavigationRequested event, Emitter<MapState> emit,) async {
+    emit(state.copyWith(
+      isNavigating: false,
+      routeSteps: [],
+      currentStepIndex: 0,
+    ));
+    const sourceId = 'route-source';
+    const layerId = 'route-layer';
+    await state.mapController?.style.removeStyleLayer(layerId).catchError((_) {});
+    await state.mapController?.style.removeStyleSource(sourceId).catchError((_) {});
+    final point = await geolocator.Geolocator.getCurrentPosition();
+
+    state.mapController?.easeTo(
+      mapbox.CameraOptions(
+        center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
+        bearing: 0,
+        zoom: 16,
+        pitch: 0,
+      ),
+      mapbox.MapAnimationOptions(duration: 1000),
+    );
+  }
+
+
+
+
+  Future<void> startLocationListening({required Function(geolocator.Position) onPositionUpdate, required Emitter<MapState> emit,}) async {
+    final permissionStatus = await Permission.locationWhenInUse.request();
+    if (permissionStatus.isGranted || permissionStatus.isLimited) {
+      const locationSettings = geolocator.LocationSettings(
+        accuracy: geolocator.LocationAccuracy.high,
+        distanceFilter: 5,
+      );
+      try {
+        _positionSubscription = geolocator.Geolocator.getPositionStream(
+          locationSettings: locationSettings,
+        ).handleError((error) {
+          print("Error in location stream: $error");
+          _positionSubscription?.cancel();
+          // Προαιρετικά: emit σφάλμα
+        }).listen((position) {
+          onPositionUpdate(position);
+        });
+        print("Location listening started...");
+      } catch (e) {
+        print("Error starting location stream: $e");
+        _positionSubscription?.cancel();
+      }
+    } else {
+      print("Location permission denied");
+      // Προαιρετικά: emit σφάλμα
+    }
+  }
+
+  Future<void> stopLocationListening() async {
+    await _positionSubscription?.cancel();
+    _positionSubscription = null;
   }
 
 }

@@ -128,3 +128,16 @@ class LaunchPhoneDialerRequested extends MapEvent {
   LaunchPhoneDialerRequested(this.phoneNumber);
 }
 
+// Navigation Events
+class StartNavigationRequested extends MapEvent {
+
+  StartNavigationRequested();
+}
+
+class UpdateNavigationStep extends MapEvent {
+  final int currentStepIndex;
+
+  UpdateNavigationStep(this.currentStepIndex);
+}
+
+class StopNavigationRequested extends MapEvent {}
