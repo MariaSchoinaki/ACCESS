@@ -247,11 +247,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               SafeArea(
                 child: Stack(
                   children: [
-                    // Search bar πάντα πάνω
                     if (routeInstructions.isEmpty)
                       SB.SearchBar(searchController: _searchController),
-
-                    // DirectionsCard εμφανίζεται κάτω όταν υπάρχουν οδηγίες
                     if (routeInstructions.isNotEmpty)
                       Positioned(
                         left: 0,
@@ -259,7 +256,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         top: 0,
                         child: DirectionsCard(
                           steps: routeInstructions,
-                          currentStep: context.read<MapBloc>().state.currentStepIndex,
                         ),
                       ),
                   ],
