@@ -12,7 +12,7 @@ class MapState extends Equatable {
   /// List of main route coordinates displayed on the map
   final List<List<double>> mainRoute;
   /// List of alternative routes (each is a list of coordinates)
-  final List<List<List<double>>> alternativeRoutes;
+  final List<dynamic> alternativeRoutes;
   /// Annotations related to categories (e.g., points of interest, POI)
   final Set<mapbox.PointAnnotation> categoryAnnotations;
   /// A map that associates Mapbox IDs with internal IDs. Map<InternalId, MapboxId>
@@ -78,7 +78,7 @@ class MapState extends Equatable {
     mapbox.MapboxMap? mapController,
     double? zoomLevel,
     List<List<double>>? mainRoute,
-    List<List<List<double>>>? alternativeRoutes,
+    List<dynamic>? alternativeRoutes,
     Set<mapbox.PointAnnotation>? categoryAnnotations,
     Map<String, String>? annotationIdMap,
     Map<String, MapboxFeature>? featureMap,

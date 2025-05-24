@@ -72,8 +72,6 @@ class _AnnotationClickedInternal extends MapEvent {
 /// Clears all category markers from the map
 class ClearCategoryMarkers extends MapEvent {}
 
-/// Fetches route overlays or geometries from the map microservice
-class FetchMapRoutes extends MapEvent {}
 
 /// Event to start tracking the user's location
 class StartTrackingRequested extends MapEvent {}
@@ -100,23 +98,13 @@ class _LocationUpdated extends MapEvent {
   _LocationUpdated(this.newPosition);
 }
 
-class FetchRoute extends MapEvent {
-  final MapboxFeature feature;
-  final bool alternatives;
-
-  FetchRoute(this.feature, this.alternatives);
-
-  @override
-  List<Object> get props => [feature, alternatives];
-}
-
 class DisplayAlternativeRoutesFromJson extends MapEvent {
-  final List<List<List<double>>> routes; // List of routes (each route = list of [lng, lat])
+  final MapboxFeature feature;
 
-  DisplayAlternativeRoutesFromJson(this.routes);
+  DisplayAlternativeRoutesFromJson(this.feature);
 
   @override
-  List<Object?> get props => [routes];
+  List<Object?> get props => [feature];
 }
 
 class ShareLocationRequested extends MapEvent {
