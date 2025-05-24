@@ -1,14 +1,8 @@
-import 'dart:convert';
 import 'package:access/models/metadata.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
-import '../services/map_service.dart';
 import '../utils/displayRoutes.dart';
 import '../utils/metadata_utils.dart';
 
@@ -111,7 +105,7 @@ class LocationInfoCard extends StatelessWidget {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    fetchAndDisplayRoute(context, alternatives: false, feature:feature);
+                    context.read<MapBloc>().add(StartNavigationRequested(feature!, false));
                   },
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Έναρξη'),
