@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
-import '../utils/displayRoutes.dart';
 import '../utils/metadata_utils.dart';
 
 /// Card widget to display location info and fetch/display route(s).
@@ -116,7 +115,7 @@ class LocationInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () => fetchAndDisplayRoute(context, alternatives: true, feature: feature),
+                  onPressed: () => context.read<MapBloc>().add(DisplayAlternativeRoutesFromJson(feature!)),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Οδηγίες'),
                   style: ElevatedButton.styleFrom(
