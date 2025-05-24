@@ -64,7 +64,7 @@ class StartStopTrackingButton extends StatelessWidget {
                 return;
               }
 
-              final double? selectedRating = await _showRatingDialog(
+              final double? selectedRating = await showRatingDialog(
                 context,
                 routeData,
               );
@@ -108,75 +108,74 @@ class StartStopTrackingButton extends StatelessWidget {
       },
     );
   }
-
-  /// --- Dialogue function  ---
-  Future<double?> _showRatingDialog(
-    BuildContext context,
-    List<geolocator.Position> routeData,
-  ) async {
-    return showDialog<double?>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Βαθμολόγησε τη Διαδρομή'),
-          content: const Text('Πόσο προσβάσιμη ήταν η διαδρομή;'),
-          actionsAlignment: MainAxisAlignment.spaceEvenly,
-          actions: <Widget>[
-            _buildRatingButton(
-              dialogContext,
-              'Πολύ Προσβάσιμη',
-              Colors.green,
-              1,
-            ),
-            _buildRatingButton(
-              dialogContext,
-              'Μέτρια Προσβάσιμη',
-              Colors.orange,
-              0.5,
-            ),
-            _buildRatingButton(
-              dialogContext,
-              'Δύσκολα Προσβάσιμη',
-              Colors.red,
-              0,
-            ),
-          ],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+}
+/// --- Dialogue function  ---
+Future<double?> showRatingDialog(
+  BuildContext context,
+  List<geolocator.Position> routeData,
+) async {
+  return showDialog<double?>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        title: const Text('Βαθμολόγησε τη Διαδρομή'),
+        content: const Text('Πόσο προσβάσιμη ήταν η διαδρομή;'),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: <Widget>[
+          _buildRatingButton(
+            dialogContext,
+            'Πολύ Προσβάσιμη',
+            Colors.green,
+            1,
           ),
-        );
-      },
-    );
-  }
-
-  /// Auxiliary widget for scoring buttons
-  Widget _buildRatingButton(
-    BuildContext dialogContext,
-    String tooltip,
-    Color color,
-    double ratingValue,
-  ) {
-    return Tooltip(
-      message: tooltip,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          shape: const CircleBorder(),
-          padding: const EdgeInsets.all(15),
+          _buildRatingButton(
+            dialogContext,
+            'Μέτρια Προσβάσιμη',
+            Colors.orange,
+            0.5,
+          ),
+          _buildRatingButton(
+            dialogContext,
+            'Δύσκολα Προσβάσιμη',
+            Colors.red,
+            0,
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: const SizedBox.shrink(),
-        onPressed: () {
-          Future.delayed(Duration.zero, () {
-            if (Navigator.of(dialogContext).canPop()) {
-              Navigator.pop(
-                dialogContext,
-                ratingValue,
-              ); 
-            }
-          });
-        },
+      );
+    },
+  );
+}
+
+/// Auxiliary widget for scoring buttons
+Widget _buildRatingButton(
+  BuildContext dialogContext,
+  String tooltip,
+  Color color,
+  double ratingValue,
+) {
+  return Tooltip(
+    message: tooltip,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        shape: const CircleBorder(),
+        padding: const EdgeInsets.all(15),
       ),
-    );
-  }
+      child: const SizedBox.shrink(),
+      onPressed: () {
+        Future.delayed(Duration.zero, () {
+          if (Navigator.of(dialogContext).canPop()) {
+            Navigator.pop(
+              dialogContext,
+              ratingValue,
+            );
+          }
+        });
+      },
+    ),
+  );
 }

@@ -4,7 +4,7 @@ extension MapBlocNavigation on MapBloc {
   Future<void> _onStartNavigation(StartNavigationRequested event, Emitter<MapState> emit,) async {
     final responseJson = await _fetchRoute(event.feature, event.alternatives);
     await _displayRoute(responseJson!, emit);
-    emit(state.copyWith(isNavigating: true, currentStepIndex: 0, isCameraFollowing: true, isOffRoute: false));
+    emit(state.copyWith(isNavigating: true, currentStepIndex: 0, isCameraFollowing: true, isOffRoute: false, trackedRoute: []));
 
     await stopLocationListening();
     startCompassListener();
@@ -28,6 +28,7 @@ extension MapBlocNavigation on MapBloc {
   }
 
   Future<void> _onStopNavigation(StopNavigationRequested event, Emitter<MapState> emit,) async {
+    add(ShowRouteRatingDialogRequested(state.trackedRoute));
     emit(state.copyWith(
       isNavigating: false,
       routeSteps: [],
@@ -104,6 +105,25 @@ extension MapBlocNavigation on MapBloc {
       }
     }
 
+    final lastStep = state.routeSteps.last;
+    final destinationDistance = distanceBetweenPoints(currentPosition, lastStep.location);
+
+    const double destinationThreshold = 5.0;
+
+    if (destinationDistance <= destinationThreshold) {
+      print("User reached destination, stopping navigation...");
+
+      add(StopNavigationRequested());
+
+      if (state.isVoiceEnabled) {
+        await flutterTts.speak("You have arrived at your destination.");
+      }
+    }
+
     await _updateNavigationStep(closestStepIndex, emit);
+    final updatedTrackedRoute = List<geolocator.Position>.from(state.trackedRoute)
+      ..add(event.position);
+
+    emit(state.copyWith(trackedRoute: updatedTrackedRoute));
   }
 }

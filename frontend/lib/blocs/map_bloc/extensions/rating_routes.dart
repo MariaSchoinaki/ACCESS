@@ -48,6 +48,7 @@ extension MapBlocRatings on MapBloc {
         isTracking: false,
         trackingStatus: MapTrackingStatus.stopped,
         errorMessageGetter: () => null,
+        lastEvent: null,
       ));
     } catch (e) {
       print("Error saving rated route: $e");
@@ -58,4 +59,9 @@ extension MapBlocRatings on MapBloc {
       ));
     }
   }
+
+  Future<void> _onShowRouteRatingDialogRequested(ShowRouteRatingDialogRequested event, Emitter<MapState> emit,) async {
+    emit(state.copyWith(lastEvent: event));
+  }
+
 }

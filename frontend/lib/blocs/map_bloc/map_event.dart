@@ -147,3 +147,7 @@ class NavigationPositionUpdated extends MapEvent {
 
   NavigationPositionUpdated(this.position, this.feature);
 }
+class ShowRouteRatingDialogRequested extends MapEvent {
+  final List<geolocator.Position> trackedRoute;
+  ShowRouteRatingDialogRequested(this.trackedRoute);
+}

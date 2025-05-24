@@ -216,7 +216,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         },
         // Listener for Mapbloc bugs that do not handle children Widgets
         child: BlocListener<MapBloc, MapState>(
-          listener: (context, mapState){
+          listener: (context, mapState) async {
             if (mapState.trackingStatus == MapTrackingStatus.error && mapState.errorMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
@@ -231,6 +231,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               print("UI Listener: Detected MapAnnotationClicked with ID: ${mapState.mapboxId}");
               feature = mapState.feature;
               context.read<SearchBloc>().add(RetrieveCoordinatesEvent(mapState.mapboxId));
+            }
+            final event = mapState.lastEvent;
+            if (event is ShowRouteRatingDialogRequested) {
+              if (event.trackedRoute.length < 2) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Η διαδρομή είναι πολύ μικρή για βαθμολόγηση.',
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+              final rating = await showRatingDialog(context, event.trackedRoute);
+
+              if (rating != null) {
+                context.read<MapBloc>().add(RateAndSaveRouteRequested(route: event.trackedRoute, rating: rating));
+              }
             }
           },
           // Stack main layout contains the map and overlay widgets

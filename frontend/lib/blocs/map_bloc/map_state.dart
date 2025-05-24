@@ -46,6 +46,7 @@ class MapState extends Equatable {
   final String? errorMessage;
   final bool isCameraFollowing;
   final bool isOffRoute;
+  final MapEvent? lastEvent;
 
   // Constructor with default values
   const MapState({
@@ -68,6 +69,7 @@ class MapState extends Equatable {
     this.showAlternatives = false,
     this.isCameraFollowing = false,
     this.isOffRoute = false,
+    this.lastEvent,
   });
 
   // Returns the initial state
@@ -94,6 +96,7 @@ class MapState extends Equatable {
     bool? showAlternatives,
     bool? isCameraFollowing,
     bool? isOffRoute,
+    MapEvent? lastEvent,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -119,6 +122,8 @@ class MapState extends Equatable {
       showAlternatives: showAlternatives ?? this.showAlternatives,
       isCameraFollowing: isCameraFollowing ?? this.isCameraFollowing,
       isOffRoute: isOffRoute ?? this.isOffRoute,
+      lastEvent: lastEvent ?? this.lastEvent,
+
     );
   }
 
@@ -142,7 +147,8 @@ class MapState extends Equatable {
     isVoiceEnabled,
     showAlternatives,
     isCameraFollowing,
-    isOffRoute
+    isOffRoute,
+    lastEvent,
   ];
 }
 

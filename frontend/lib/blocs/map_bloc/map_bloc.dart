@@ -75,6 +75,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     });
 
     on<NavigationPositionUpdated>(_onNavigationPositionUpdated);
+    on<ShowRouteRatingDialogRequested>(_onShowRouteRatingDialogRequested);
 
   }
 
