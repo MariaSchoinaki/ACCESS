@@ -102,6 +102,7 @@ extension MapBlocDisplay on MapBloc {
       final route = getRoute(routeObject);
       final List<NavigationStep> routeSteps = route!['routeSteps'];
       final fixedLineCoordinates = route['coordinates'];
+      add(RemoveAlternativeRoutes());
       await _addLine(fixedLineCoordinates, 0);
 
       print(routeSteps);
@@ -115,7 +116,7 @@ extension MapBlocDisplay on MapBloc {
 
   }
 
-  Future<void> _onDisplayAlternativeRoutesFromJson(DisplayAlternativeRoutesFromJson event, Emitter<MapState> emit,) async {
+  Future<void> _onDisplayAlternativeRoutes(DisplayAlternativeRoutes event, Emitter<MapState> emit,) async {
     try {
       final map = state.mapController;
       if (map == null) {
@@ -125,6 +126,7 @@ extension MapBlocDisplay on MapBloc {
       final route = await _fetchRoute(event.feature, true);
       final routes = route!['routes'] as List<dynamic>?;
       var alternativeRoutes = [];
+      add(RemoveAlternativeRoutes());
 
       for (int i = 0; i < routes!.length; i++) {
         final route = routes[i];
@@ -145,8 +147,6 @@ extension MapBlocDisplay on MapBloc {
 
     final sourceId = 'alt-route-source-$i';
     final layerId = 'alt-route-layer-$i';
-    await style?.removeStyleLayer(layerId).catchError((_) {});
-    await style?.removeStyleSource(sourceId).catchError((_) {});
 
     final List<int> routeColors = [
       Colors.blue.value,
@@ -187,5 +187,30 @@ extension MapBlocDisplay on MapBloc {
         lineCap: mapbox.LineCap.ROUND,
       ),
     );
+  }
+
+  Future<void> _onRemoveAlternativeRoutes(RemoveAlternativeRoutes event, Emitter<MapState> emit) async {
+    final style = state.mapController?.style;
+    if (style == null) return;
+
+    int i = 0;
+    while (true) {
+      final layerId = 'alt-route-layer-$i';
+      final sourceId = 'alt-route-source-$i';
+      bool removedAnything = false;
+
+      if ((await style.styleLayerExists(layerId))) {
+        await style.removeStyleLayer(layerId);
+        removedAnything = true;
+      }
+
+      if ((await style.styleSourceExists(sourceId))) {
+        await style.removeStyleSource(sourceId);
+        removedAnything = true;
+      }
+
+      if (!removedAnything) break;
+      i++;
+    }
   }
 }

@@ -34,10 +34,7 @@ extension MapBlocNavigation on MapBloc {
       currentStepIndex: 0,
       isCameraFollowing: false,
     ));
-    const sourceId = 'route-source';
-    const layerId = 'route-layer';
-    await state.mapController?.style.removeStyleLayer(layerId).catchError((_) {});
-    await state.mapController?.style.removeStyleSource(sourceId).catchError((_) {});
+    add(RemoveAlternativeRoutes());
     _changeCamera(0, false);
     _compassSubscription.cancel();
   }

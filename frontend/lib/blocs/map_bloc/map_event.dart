@@ -98,14 +98,16 @@ class _LocationUpdated extends MapEvent {
   _LocationUpdated(this.newPosition);
 }
 
-class DisplayAlternativeRoutesFromJson extends MapEvent {
+class DisplayAlternativeRoutes extends MapEvent {
   final MapboxFeature feature;
 
-  DisplayAlternativeRoutesFromJson(this.feature);
+  DisplayAlternativeRoutes(this.feature);
 
   @override
   List<Object?> get props => [feature];
 }
+
+class RemoveAlternativeRoutes extends MapEvent {}
 
 class ShareLocationRequested extends MapEvent {
   final String location;

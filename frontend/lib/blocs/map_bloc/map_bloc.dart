@@ -63,7 +63,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<StopTrackingRequested>(_onStopTrackingRequested);
     on<_LocationUpdated>(_onLocationUpdated);
     on<RateAndSaveRouteRequested>(_onRateAndSaveRouteRequested);
-    on<DisplayAlternativeRoutesFromJson>(_onDisplayAlternativeRoutesFromJson);
+    on<DisplayAlternativeRoutes>(_onDisplayAlternativeRoutes);
+    on<RemoveAlternativeRoutes>(_onRemoveAlternativeRoutes);
 
     on<ShareLocationRequested>(_onShareLocation);
     on<LaunchPhoneDialerRequested>(_onLaunchPhoneDialer);

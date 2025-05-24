@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
         setState(() { location = ''; selectedFeature = null; });
         _searchController.clear();
-
+        context.read<MapBloc>().add(RemoveAlternativeRoutes());
         context.read<MapBloc>().add(DeleteMarker());
         context.read<MapBloc>().add(ClearCategoryMarkers());
       } else {

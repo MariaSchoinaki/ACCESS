@@ -115,7 +115,7 @@ class LocationInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () => context.read<MapBloc>().add(DisplayAlternativeRoutesFromJson(feature!)),
+                  onPressed: () => context.read<MapBloc>().add(DisplayAlternativeRoutes(feature!)),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Οδηγίες'),
                   style: ElevatedButton.styleFrom(
