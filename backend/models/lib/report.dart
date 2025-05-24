@@ -8,6 +8,8 @@ class Report {
   final String imageUrl;
   final String accessibility;
   final String description;
+  final String userId;
+  final String userEmail;
 
   Report({
     required this.id,
@@ -19,6 +21,8 @@ class Report {
     required this.imageUrl,
     required this.accessibility,
     required this.description,
+    required this.userId,
+    required this.userEmail,
   });
 
   factory Report.fromFirestore(Map<String, dynamic> doc) {
@@ -47,6 +51,8 @@ class Report {
       imageUrl: fields['imageUrl']?['stringValue'] ?? '',
       accessibility: fields['accessibility']?['stringValue'] ?? 'Unknown',
       description: fields['description']?['stringValue'] ?? '',
+      userId: fields['userId']?['stringValue'] ?? '',
+      userEmail: fields['userEmail']?['stringValue'] ?? '',
     );
   }
 
@@ -54,6 +60,7 @@ class Report {
   String toString() {
     return 'Report(id: $id, timestamp: $timestamp, location: ($latitude, $longitude), '
         'type: $obstacleType, locationDescription: $locationDescription, '
-        'accessibility: $accessibility, description: $description)';
+        'accessibility: $accessibility, description: $description, '
+        'userId: $userId, userEmail: $userEmail)';
   }
 }

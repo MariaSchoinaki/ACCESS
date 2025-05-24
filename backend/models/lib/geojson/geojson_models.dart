@@ -52,5 +52,11 @@ class GeoJsonGeometry {
     }
     throw UnimplementedError('Unsupported geometry type: $type');
   }
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'coordinates': coordinates,
+    };
+  }
 }
 
