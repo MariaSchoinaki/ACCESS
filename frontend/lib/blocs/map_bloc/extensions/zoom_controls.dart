@@ -78,10 +78,7 @@ extension MapBlocZoom on MapBloc {
     await startLocationListening(
       onPositionUpdate: (position) {
         if (!state.isTracking) return;
-        final updatedRoute = List<geolocator.Position>.from(state.trackedRoute)
-          ..add(position);
-        emit(state.copyWith(trackedRoute: updatedRoute,
-            currentTrackedPositionGetter: () => position));
+        add(_LocationUpdated(position));
       },
     );
     emit(state.copyWith(trackingStatus: MapTrackingStatus.tracking));
