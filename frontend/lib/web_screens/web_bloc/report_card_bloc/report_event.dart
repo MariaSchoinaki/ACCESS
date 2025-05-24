@@ -14,6 +14,7 @@ class SubmitReport extends ReportEvent {
   final List<double>? coordinates;
   final String locationDescription;
   final bool needsUpdate;
+  final bool needsImprove;
   final String obstacleType;
   final DateTime timestamp;
   final String userEmail;
@@ -27,6 +28,7 @@ class SubmitReport extends ReportEvent {
     required this.coordinates,
     required this.locationDescription,
     required this.needsUpdate,
+    required this.needsImprove,
     required this.obstacleType,
     required this.timestamp,
     required this.userEmail,
@@ -42,6 +44,7 @@ class SubmitReport extends ReportEvent {
     coordinates,
     locationDescription,
     needsUpdate,
+    needsImprove,
     obstacleType,
     timestamp,
     userEmail,
