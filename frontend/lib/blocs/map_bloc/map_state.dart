@@ -17,19 +17,35 @@ class MapState extends Equatable {
   final Set<mapbox.PointAnnotation> categoryAnnotations;
   /// A map that associates Mapbox IDs with internal IDs. Map<InternalId, MapboxId>
   final Map<String, String> annotationIdMap;
+  /// A map that associates Mapbox IDs with MapboxFeature objects. Map<MapboxId, MapboxFeature>
   final Map<String, MapboxFeature> featureMap;
+
+  // --- Properties for navigation ---
+  /// List of navigation steps for the current route
   final List<NavigationStep> routeSteps;
+  /// Whether the user is currently navigating
   final bool isNavigating;
+  /// The index of the current navigation step
   final int currentStepIndex;
+  /// Whether voice instructions are enabled
   final bool isVoiceEnabled;
+
+  final bool showAlternatives;
 
 
   // --- Properties for tracking ---
+  /// Whether the user is currently tracking its location
   final bool isTracking;
+  /// List of tracked route coordinates
   final List<geolocator.Position> trackedRoute;
+  /// The current tracked position
   final geolocator.Position? currentTrackedPosition;
+  /// The current status of tracking
   final MapTrackingStatus trackingStatus;
+  /// Error message if tracking fails
   final String? errorMessage;
+  final bool isCameraFollowing;
+  final bool isOffRoute;
 
   // Constructor with default values
   const MapState({
@@ -49,6 +65,9 @@ class MapState extends Equatable {
     this.isNavigating = false,
     this.currentStepIndex = 0,
     this.isVoiceEnabled = true,
+    this.showAlternatives = false,
+    this.isCameraFollowing = false,
+    this.isOffRoute = false,
   });
 
   // Returns the initial state
@@ -72,6 +91,9 @@ class MapState extends Equatable {
     bool? isNavigating,
     int? currentStepIndex,
     bool? isVoiceEnabled,
+    bool? showAlternatives,
+    bool? isCameraFollowing,
+    bool? isOffRoute,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -94,6 +116,9 @@ class MapState extends Equatable {
       isNavigating: isNavigating ?? this.isNavigating,
       currentStepIndex: currentStepIndex ?? this.currentStepIndex,
       isVoiceEnabled: isVoiceEnabled ?? this.isVoiceEnabled,
+      showAlternatives: showAlternatives ?? this.showAlternatives,
+      isCameraFollowing: isCameraFollowing ?? this.isCameraFollowing,
+      isOffRoute: isOffRoute ?? this.isOffRoute,
     );
   }
 
@@ -115,6 +140,9 @@ class MapState extends Equatable {
     isNavigating,
     currentStepIndex,
     isVoiceEnabled,
+    showAlternatives,
+    isCameraFollowing,
+    isOffRoute
   ];
 }
 

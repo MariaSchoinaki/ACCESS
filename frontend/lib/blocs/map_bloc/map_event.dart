@@ -100,13 +100,14 @@ class _LocationUpdated extends MapEvent {
   _LocationUpdated(this.newPosition);
 }
 
-class DisplayRouteFromJson extends MapEvent {
-  final Map<String, dynamic> routeJson;
+class FetchRoute extends MapEvent {
+  final MapboxFeature feature;
+  final bool alternatives;
 
-  DisplayRouteFromJson(this.routeJson);
+  FetchRoute(this.feature, this.alternatives);
 
   @override
-  List<Object> get props => [routeJson];
+  List<Object> get props => [feature, alternatives];
 }
 
 class DisplayAlternativeRoutesFromJson extends MapEvent {
@@ -130,8 +131,13 @@ class LaunchPhoneDialerRequested extends MapEvent {
 
 // Navigation Events
 class StartNavigationRequested extends MapEvent {
+  final MapboxFeature feature;
+  final bool alternatives;
 
-  StartNavigationRequested();
+  StartNavigationRequested(this.feature, this.alternatives);
+
+  @override
+  List<Object> get props => [feature, alternatives];
 }
 
 class UpdateNavigationStep extends MapEvent {
@@ -147,6 +153,7 @@ class ToggleVoiceInstructions extends MapEvent {}
 
 class NavigationPositionUpdated extends MapEvent {
   final geolocator.Position position;
+  final MapboxFeature feature;
 
-  NavigationPositionUpdated(this.position);
+  NavigationPositionUpdated(this.position, this.feature);
 }

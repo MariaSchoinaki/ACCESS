@@ -15,6 +15,7 @@ import '../../models/mapbox_feature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/navigation_step.dart';
+import '../../services/map_service.dart';
 import '../../utils/nearest_step.dart';
 import '../../utils/point_annotation_click_listener.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -29,6 +30,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   late mapbox.PointAnnotationManager? _categoryAnnotationManager;
   late List<mapbox.PointAnnotation?> createdAnnotations;
   StreamSubscription<geolocator.Position>? _positionSubscription;
+  late StreamSubscription<CompassEvent> _compassSubscription;
 
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -52,7 +54,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<StopTrackingRequested>(_onStopTrackingRequested);
     on<_LocationUpdated>(_onLocationUpdated);
     on<RateAndSaveRouteRequested>(_onRateAndSaveRouteRequested);
-    on<DisplayRouteFromJson>(_onDisplayRouteFromJson);
     on<DisplayAlternativeRoutesFromJson>(_onDisplayAlternativeRoutesFromJson);
 
     on<ShareLocationRequested>(_onShareLocation);
@@ -385,7 +386,62 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     return super.close();
   }
 
-  Future<void> _onDisplayRouteFromJson(DisplayRouteFromJson event, Emitter<MapState> emit) async {
+  Future<Map<String, dynamic>?> _fetchRoute(MapboxFeature feature, bool alternatives) async {
+
+    if (feature == null) {
+      print("Attempted to navigate but feature was null.");
+      return null;
+    }
+
+    try {
+      final position = await geolocator.Geolocator.getCurrentPosition(
+        desiredAccuracy: geolocator.LocationAccuracy.high,
+      ).timeout(const Duration(seconds: 10));
+
+      final mapService = MapService();
+
+      // Call the API with `alternatives` query param
+      final responseJson = await mapService.getRoutesJson(
+        fromLat: position.latitude,
+        fromLng: position.longitude,
+        toLat: feature.latitude,
+        toLng: feature.longitude,
+        alternatives: alternatives,
+      );
+
+      print("Response JSON: $responseJson");
+      if (alternatives) {
+        // Extract all routes
+        final List<List<List<double>>> alternativeRoutes = [];
+
+        final routes = responseJson['routes'] as List<dynamic>?;
+
+
+        if (routes != null) {
+          for (var route in routes) {
+            final coordinates = route['coordinates'] as List<dynamic>?;
+            if (coordinates != null) {
+              alternativeRoutes.add(
+                coordinates.map<List<double>>((point) {
+                  if (point is List && point.length >= 2) {
+                    return [point[0].toDouble(), point[1].toDouble()];
+                  } else {
+                    throw Exception('Unexpected point format: $point');
+                  }
+                }).toList(),
+              );
+            }
+          }
+        }
+      }
+      return responseJson;
+    } catch (e) {
+      print("Navigation error: $e");
+    }
+
+  }
+
+  Future<void> _displayRoute(Map<String, dynamic> responseJson, Emitter<MapState> emit) async {
     try {
       final map = state.mapController;
       if (map == null) {
@@ -393,8 +449,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         return;
       }
 
-      final routeObject = event.routeJson['route'];
-      print(jsonEncode(event.routeJson));
+      final routeObject = responseJson['route'];
+      print(jsonEncode(routeObject));
 
       if (routeObject == null || routeObject['coordinates'] == null || routeObject['coordinates'] is! List) {
         emit(state.copyWith(errorMessageGetter: () => 'Route data is invalid'));
@@ -472,10 +528,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         errorMessageGetter: () => null,
         routeSteps: routeSteps,
       ));
-      add(StartNavigationRequested());
     } catch (e) {
       emit(state.copyWith(errorMessageGetter: () => 'Error displaying route: $e'));
     }
+
   }
 
   Future<void> _onDisplayAlternativeRoutesFromJson(DisplayAlternativeRoutesFromJson event, Emitter<MapState> emit,) async {
@@ -580,12 +636,14 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   Future<void> _onStartNavigation(StartNavigationRequested event, Emitter<MapState> emit,) async {
-    emit(state.copyWith(isNavigating: true, currentStepIndex: 0));
+    final responseJson = await _fetchRoute(event.feature, event.alternatives);
+    await _displayRoute(responseJson!, emit);
+    emit(state.copyWith(isNavigating: true, currentStepIndex: 0, isCameraFollowing: true, isOffRoute: false));
 
     await stopLocationListening();
     startCompassListener();
     flutterTts.speak("run boy run");
-    await startLocationListening(onPositionUpdate: (position) => add(NavigationPositionUpdated(position)));
+    await startLocationListening(onPositionUpdate: (position) => add(NavigationPositionUpdated(position, event.feature)));
   }
 
 
@@ -603,14 +661,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
-  Future<void> _changeCamera(double heading) async {
+  Future<void> _changeCamera(double heading, bool? followMode) async {
     final point = await geolocator.Geolocator.getCurrentPosition();
-    final pitch = state.isNavigating ? 60.0 : 0.0;
-    final zoom = state.isNavigating ? 20.0 : 16.0;
+    final bool isFollowing = followMode ?? state.isCameraFollowing;
+    final pitch = state.isNavigating && isFollowing ? 60.0 : 0.0;
+    final zoom = state.isNavigating && isFollowing? 20.0 : 16.0;
     state.mapController?.easeTo(
       mapbox.CameraOptions(
         center: mapbox.Point(coordinates: mapbox.Position(point.longitude, point.latitude)),
-        bearing: heading,
+        bearing: isFollowing ? heading : 0,
         zoom: zoom,
         pitch: pitch,
       ),
@@ -619,10 +678,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   void startCompassListener() {
-    FlutterCompass.events!.listen((event) {
+    _compassSubscription = FlutterCompass.events!.listen((event) {
       final double? heading = event.heading;
-      if (heading == null) return;
-      _changeCamera(heading);
+      if (heading == null || !state.isCameraFollowing) return;
+      _changeCamera(heading, true);
     });
   }
 
@@ -631,35 +690,83 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       isNavigating: false,
       routeSteps: [],
       currentStepIndex: 0,
+      isCameraFollowing: false,
     ));
     const sourceId = 'route-source';
     const layerId = 'route-layer';
     await state.mapController?.style.removeStyleLayer(layerId).catchError((_) {});
     await state.mapController?.style.removeStyleSource(sourceId).catchError((_) {});
-    final point = await geolocator.Geolocator.getCurrentPosition();
-    _changeCamera(point.heading);
+    _changeCamera(0, false);
+    _compassSubscription.cancel();
   }
 
 
-  Future<void> _onNavigationPositionUpdated(NavigationPositionUpdated event, Emitter<MapState> emit) async {
-      if (!state.isNavigating || state.routeSteps.isEmpty) return;
+  Future<void> _onNavigationPositionUpdated(NavigationPositionUpdated event, Emitter<MapState> emit,) async {
+    if (!state.isNavigating || state.routeSteps.isEmpty) return;
 
-      int closestStepIndex = 0;
-      double minDistance = double.infinity;
+    final currentPosition = mapbox.Point(
+      coordinates: mapbox.Position(
+        event.position.longitude,
+        event.position.latitude,
+      ),
+    );
 
-      for (int i = 0; i < state.routeSteps.length; i++) {
-        final stepPoint = state.routeSteps[i].location;
-        final dist = distanceBetweenPoints(
-          mapbox.Point(coordinates: mapbox.Position(event.position.longitude, event.position.latitude)),
-          stepPoint,
-        );
+    int closestStepIndex = 0;
+    double minDistance = double.infinity;
 
-        if (dist < minDistance) {
-          minDistance = dist;
-          closestStepIndex = i;
+    for (int i = 0; i < state.routeSteps.length; i++) {
+      final stepPoint = state.routeSteps[i].location;
+      final dist = distanceBetweenPoints(currentPosition, stepPoint);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestStepIndex = i;
+      }
+    }
+
+    const double offRouteThreshold = 10.0;
+    if (minDistance > offRouteThreshold) {
+      if(!state.isOffRoute) {
+        emit(state.copyWith(isOffRoute: true));
+        print("User is off-route! $minDistance meters away");
+
+        final responsejson = await _fetchRoute(event.feature, false);
+
+        if (responsejson != null) {
+          const sourceId = 'route-source';
+          const layerId = 'route-layer';
+          await state.mapController?.style
+              .removeStyleLayer(layerId)
+              .catchError((_) {});
+          await state.mapController?.style
+              .removeStyleSource(sourceId)
+              .catchError((_) {});
+          await _displayRoute(responsejson, emit);
+
+          final instruction = "You have left your course. Return to "
+              "${state.routeSteps[closestStepIndex].instruction}";
+
+          if (state.isVoiceEnabled) {
+            await flutterTts.speak(instruction);
+          }
+        } else {
+          print("Αδυναμία εύρεσης νέας διαδρομής.");
+          if (state.isVoiceEnabled) {
+            await flutterTts.speak(
+                "Inability to find a new route. Try to go back to the previous direction.");
+          }
         }
       }
-      _updateNavigationStep(closestStepIndex, emit);
+      return;
+    }else{
+      if (state.isOffRoute) {
+        emit(state.copyWith(isOffRoute: false));
+        if (state.isVoiceEnabled) {
+          await flutterTts.speak("welcome back bitches");
+        }
+      }
+    }
+
+    await _updateNavigationStep(closestStepIndex, emit);
   }
 
 
