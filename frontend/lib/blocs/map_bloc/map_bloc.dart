@@ -123,10 +123,26 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       final point = mapbox.Point(
           coordinates: mapbox.Position(position.longitude, position.latitude));
 
-      state.mapController?.flyTo(
-        mapbox.CameraOptions(center: point, zoom: 16.0),
-        mapbox.MapAnimationOptions(duration: 1000),
-      );
+      if (state.isNavigating) {
+        final bool nowFollowing = !state.isCameraFollowing;
+
+        if (nowFollowing) {
+          startCompassListener();
+          _changeCamera(0, true);
+        } else {
+          _compassSubscription.cancel();
+          _changeCamera(0, false);
+        }
+
+        emit(state.copyWith(isCameraFollowing: nowFollowing));
+      } else {
+        state.mapController?.flyTo(
+          mapbox.CameraOptions(center: point, zoom: 16.0),
+          mapbox.MapAnimationOptions(duration: 1000),
+        );
+      }
+
+
       emit(state.copyWith(zoomLevel: 16.0));
     } catch (e) {
       print("Error getting current location: $e");
