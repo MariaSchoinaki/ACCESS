@@ -7,6 +7,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 ///Bloc Imports
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/favourites_bloc/favourites_cubit.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 
@@ -252,56 +253,68 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               }
             }
           },
-          // Stack main layout contains the map and overlay widgets
-          child: Stack(
-            children: [
-              MainMapArea(
-                searchController: _searchController,
-                initialCameraOptions: initialCameraOptions,
-                styleUri: "mapbox://styles/el03/cm9vbhxcb005901si1bp370nc",
-                onMapTap: (gestureContext) => _onTap(gestureContext, context),
-                onMapLongTap: (gestureContext) => _onLongTap(gestureContext, context),
-              ),
+          child: BlocListener<FavoritesCubit, FavoritesState>(
+            listener: (context, state) {
+              if (state is FavoritesLoaded) {
+                final mapBloc = context.read<MapBloc>();
+                if (mapBloc.state.isMapReady) {
+                  mapBloc.add(RenderFavoriteAnnotations(state.favorites));
+                } else {
+                  mapBloc.pendingEvents.add(RenderFavoriteAnnotations(state.favorites));
+                }
+              }
+            },
+            // Stack main layout contains the map and overlay widgets
+            child: Stack(
+              children: [
+                MainMapArea(
+                  searchController: _searchController,
+                  initialCameraOptions: initialCameraOptions,
+                  styleUri: "mapbox://styles/el03/cm9vbhxcb005901si1bp370nc",
+                  onMapTap: (gestureContext) => _onTap(gestureContext, context),
+                  onMapLongTap: (gestureContext) => _onLongTap(gestureContext, context),
+                ),
 
-              SafeArea(
-                child: Stack(
-                  children: [
-                    if (routeInstructions.isEmpty)
-                      SB.SearchBar(searchController: _searchController),
-                    if (routeInstructions.isNotEmpty)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 0,
-                        child: DirectionsCard(
-                          steps: routeInstructions,
+                SafeArea(
+                  child: Stack(
+                    children: [
+                      if (routeInstructions.isEmpty)
+                        SB.SearchBar(searchController: _searchController),
+                      if (routeInstructions.isNotEmpty)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          child: DirectionsCard(
+                            steps: routeInstructions,
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              /// Widgets
-              /// Location Info Card
-              if (location.isNotEmpty && selectedFeature != null)
-                if(routeInstructions.isEmpty)
-                  Positioned(
-                    left: 0, right: 0, bottom: -10,
-                    child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
+                    ],
                   ),
-                if(routeInstructions.isNotEmpty)
-                  NavigationInfoBar(title: selectedFeature!.name),
-              /// Zoom Controls
-              if(location.isEmpty || routeInstructions.isNotEmpty)
-                Positioned(
-                  right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
-                  child: const ZoomControls(),
                 ),
-              /// Start/Stop Tracking Button
-              Positioned(
-                right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
-                child: const StartStopTrackingButton(),
-              )
-            ],
+                /// Widgets
+                /// Location Info Card
+                if (location.isNotEmpty && selectedFeature != null)
+                  if(routeInstructions.isEmpty)
+                    Positioned(
+                      left: 0, right: 0, bottom: -10,
+                      child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
+                    ),
+                  if(routeInstructions.isNotEmpty)
+                    NavigationInfoBar(title: selectedFeature!.name),
+                /// Zoom Controls
+                if(location.isEmpty || routeInstructions.isNotEmpty)
+                  Positioned(
+                    right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
+                    child: const ZoomControls(),
+                  ),
+                /// Start/Stop Tracking Button
+                Positioned(
+                  right: 16, bottom: (location.isNotEmpty) ? 220 : 20,
+                  child: const StartStopTrackingButton(),
+                )
+              ],
+            ),
           ),
         ),
       ),

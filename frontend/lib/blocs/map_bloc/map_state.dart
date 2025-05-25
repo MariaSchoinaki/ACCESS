@@ -47,6 +47,7 @@ class MapState extends Equatable {
   final bool isCameraFollowing;
   final bool isOffRoute;
   final MapEvent? lastEvent;
+  final bool isMapReady;
 
   // Constructor with default values
   const MapState({
@@ -70,6 +71,7 @@ class MapState extends Equatable {
     this.isCameraFollowing = false,
     this.isOffRoute = false,
     this.lastEvent,
+    this.isMapReady = false,
   });
 
   // Returns the initial state
@@ -97,6 +99,7 @@ class MapState extends Equatable {
     bool? isCameraFollowing,
     bool? isOffRoute,
     MapEvent? lastEvent,
+    bool? isMapReady,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -123,7 +126,7 @@ class MapState extends Equatable {
       isCameraFollowing: isCameraFollowing ?? this.isCameraFollowing,
       isOffRoute: isOffRoute ?? this.isOffRoute,
       lastEvent: lastEvent ?? this.lastEvent,
-
+      isMapReady: isMapReady ?? this.isMapReady,
     );
   }
 
@@ -149,6 +152,7 @@ class MapState extends Equatable {
     isCameraFollowing,
     isOffRoute,
     lastEvent,
+    isMapReady,
   ];
 }
 

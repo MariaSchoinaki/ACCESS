@@ -151,3 +151,7 @@ class ShowRouteRatingDialogRequested extends MapEvent {
   final List<geolocator.Position> trackedRoute;
   ShowRouteRatingDialogRequested(this.trackedRoute);
 }
+class RenderFavoriteAnnotations extends MapEvent {
+  final Map<String, dynamic> favorites;
+  RenderFavoriteAnnotations(this.favorites);
+}

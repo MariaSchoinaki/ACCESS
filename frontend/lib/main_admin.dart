@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'admin/admin_auth_gate.dart';
 import 'firebase_options.dart';
+import 'package:access/theme/app_theme.dart' as AppTheme;
 
 
 /// Main entry point of the application

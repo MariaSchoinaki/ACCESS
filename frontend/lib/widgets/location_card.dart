@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/map_bloc/map_bloc.dart';
 import '../models/mapbox_feature.dart';
 import '../utils/metadata_utils.dart';
+import 'favourites_button.dart';
 
 /// Card widget to display location info and fetch/display route(s).
 class LocationInfoCard extends StatelessWidget {
@@ -38,9 +39,19 @@ class LocationInfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            feature?.name ?? 'Άγνωστη Τοποθεσία',
-            style: theme.textTheme.titleLarge,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  feature?.name ?? 'Άγνωστη Τοποθεσία',
+                  style: theme.textTheme.titleLarge,
+                ),
+              ),
+              FavoriteStarButton(
+                feature: feature!
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

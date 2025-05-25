@@ -36,6 +36,7 @@ part 'extensions/little_actions.dart';
 class MapBloc extends Bloc<MapEvent, MapState> {
   late mapbox.PointAnnotationManager? _annotationManager;
   late mapbox.PointAnnotationManager? _categoryAnnotationManager;
+  late mapbox.PointAnnotationManager? _favoritesAnnotationManager;
   late List<mapbox.PointAnnotation?> createdAnnotations;
   StreamSubscription<geolocator.Position>? _positionSubscription;
   late StreamSubscription<CompassEvent> _compassSubscription;
@@ -43,6 +44,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<MapEvent> pendingEvents = [];
   final FlutterTts flutterTts = FlutterTts();
   final mapService = MapService();
 
@@ -57,6 +59,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<DeleteMarker>(_onDeleteMarker);
     on<AddCategoryMarkers>(_onAddCategoryMarkers);
     on<_AnnotationClickedInternal>(_onAnnotationClickedInternal);
+    on<RenderFavoriteAnnotations>(_onRenderFavoriteAnnotations);
     on<ClearCategoryMarkers>(_onClearCategoryMarkers);
 
     on<StartTrackingRequested>(_onStartTrackingRequested);
@@ -91,9 +94,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
 
   Future<void> _onInitializeMap(InitializeMap event, Emitter<MapState> emit) async {
     emit(state.copyWith(mapController: event.mapController));
-    _annotationManager = await state.mapController?.annotations.createPointAnnotationManager(id: 'tapped-layer');
-    _categoryAnnotationManager = await state.mapController?.annotations.createPointAnnotationManager(id: 'categories-layer');
-
+    _annotationManager = await state.mapController?.annotations
+        .createPointAnnotationManager(id: 'tapped-layer');
+    _categoryAnnotationManager = await state.mapController?.annotations
+        .createPointAnnotationManager(id: 'categories-layer');
+    _favoritesAnnotationManager = await state.mapController?.annotations
+        .createPointAnnotationManager(id: 'favorites-layer');
+    for (var e in pendingEvents) {
+      add(e); // ή handleEvent(e)
+    }
+    pendingEvents.clear();
     if (_categoryAnnotationManager != null) {
       _categoryAnnotationManager!.addOnPointAnnotationClickListener(
           PointAnnotationClickListener(
@@ -111,7 +121,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
               }));
       print("[MapBloc] Annotation click listener added.");
     }
-
+    emit(state.copyWith(isMapReady: true));
     add(GetCurrentLocation());
     initTTS();
   }
