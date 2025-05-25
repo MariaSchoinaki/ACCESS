@@ -34,6 +34,7 @@ extension MapBlocNavigation on MapBloc {
       routeSteps: [],
       currentStepIndex: 0,
       isCameraFollowing: false,
+      lastEvent: null
     ));
     add(RemoveAlternativeRoutes());
     _changeCamera(0, false);
