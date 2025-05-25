@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_links/app_links.dart'; // Import το πακέτο app_links
 import 'blocs/favourites_bloc/favourites_cubit.dart';
+import 'blocs/location_review_cubit/location_review_cubit.dart';
 import 'blocs/map_bloc/map_bloc.dart';
 import 'blocs/my_account_bloc/my_account_bloc.dart';
 import 'blocs/search_bloc/search_bloc.dart';
@@ -66,6 +67,9 @@ Future<void> main() async {
         ),
         BlocProvider(
           create: (_) => FavoritesCubit(),
+        ),
+        BlocProvider(
+          create: (_) => LocationCommentsCubit(),
         ),
       ],
       child: const MyApp(),
