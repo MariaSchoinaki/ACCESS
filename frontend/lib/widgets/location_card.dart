@@ -1,25 +1,41 @@
 import 'package:access/models/metadata.dart';
+import 'package:access/widgets/publish_comment_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/location_review_cubit/location_review_cubit.dart';
 import '../blocs/map_bloc/map_bloc.dart';
+import '../models/comment.dart';
 import '../models/mapbox_feature.dart';
 import '../utils/metadata_utils.dart';
 import 'favourites_button.dart';
 
-/// Card widget to display location info and fetch/display route(s).
-class LocationInfoCard extends StatelessWidget {
+class LocationInfoCard extends StatefulWidget {
   final MapboxFeature? feature;
   final MapboxFeature? feature2;
 
   const LocationInfoCard({super.key, required this.feature, this.feature2});
 
   @override
-  Widget build(BuildContext context) {
-    if (feature == null) return const SizedBox.shrink();
-    ParsedMetadata? metadata;
-    if (feature2 != null) {
-      metadata = createMetaData(feature2!.metadata);
+  State<LocationInfoCard> createState() => _LocationInfoCardState();
+}
+
+class _LocationInfoCardState extends State<LocationInfoCard> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.feature != null) {
+      context.read<LocationCommentsCubit>().fetchComments(widget.feature!.id);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.feature == null) return const SizedBox.shrink();
+    ParsedMetadata? metadata;
+    if (widget.feature2 != null) {
+      metadata = createMetaData(widget.feature2!.metadata);
+    }
+
     final theme = Theme.of(context);
 
     return Container(
@@ -44,29 +60,27 @@ class LocationInfoCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  feature?.name ?? 'Άγνωστη Τοποθεσία',
+                  widget.feature?.name ?? 'Άγνωστη Τοποθεσία',
                   style: theme.textTheme.titleLarge,
                 ),
               ),
-              FavoriteStarButton(
-                feature: feature!
-              ),
+              FavoriteStarButton(feature: widget.feature!),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            feature?.fullAddress ?? 'Δεν βρέθηκε διεύθυνση',
+            widget.feature?.fullAddress ?? 'Δεν βρέθηκε διεύθυνση',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 4),
-          if (feature?.poiCategory != null &&
-              feature!.poiCategory.isNotEmpty &&
-              !(feature!.poiCategory.length == 1 &&
-                  feature!.poiCategory.first == 'address'))
+          if (widget.feature?.poiCategory != null &&
+              widget.feature!.poiCategory.isNotEmpty &&
+              !(widget.feature!.poiCategory.length == 1 &&
+                  widget.feature!.poiCategory.first == 'address'))
             Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
-                'Κατηγορίες: ${feature!.poiCategory.join(', ')}',
+                'Κατηγορίες: ${widget.feature!.poiCategory.join(', ')}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontStyle: FontStyle.italic,
                   color: theme.hintColor,
@@ -78,21 +92,21 @@ class LocationInfoCard extends StatelessWidget {
             children: [
               Text('Προσβασιμότητα: ', style: theme.textTheme.bodyMedium),
               Icon(
-                feature?.accessibleFriendly ?? false
+                widget.feature?.accessibleFriendly ?? false
                     ? Icons.accessible_forward
                     : Icons.not_accessible,
-                color: feature?.accessibleFriendly ?? false
+                color: widget.feature?.accessibleFriendly ?? false
                     ? Colors.green.shade700
                     : Colors.red.shade700,
                 size: 20,
               ),
               const SizedBox(width: 4),
               Text(
-                feature?.accessibleFriendly ?? false
+                widget.feature?.accessibleFriendly ?? false
                     ? 'Προσβάσιμο'
                     : 'Μη Προσβάσιμο',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: feature?.accessibleFriendly ?? false
+                  color: widget.feature?.accessibleFriendly ?? false
                       ? Colors.green.shade700
                       : Colors.red.shade700,
                   fontWeight: FontWeight.bold,
@@ -102,7 +116,7 @@ class LocationInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Lat: ${feature?.latitude.toStringAsFixed(5) ?? 'N/A'}   Lon: ${feature?.longitude.toStringAsFixed(5) ?? 'N/A'}',
+            'Lat: ${widget.feature?.latitude.toStringAsFixed(5) ?? 'N/A'}   Lon: ${widget.feature?.longitude.toStringAsFixed(5) ?? 'N/A'}',
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.grey.shade700,
             ),
@@ -111,11 +125,10 @@ class LocationInfoCard extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    context.read<MapBloc>().add(StartNavigationRequested(feature!, false));
+                    context.read<MapBloc>().add(StartNavigationRequested(widget.feature!, false));
                   },
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: const Text('Έναρξη'),
@@ -126,7 +139,7 @@ class LocationInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () => context.read<MapBloc>().add(DisplayAlternativeRoutes(feature!)),
+                  onPressed: () => context.read<MapBloc>().add(DisplayAlternativeRoutes(widget.feature!)),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text('Οδηγίες'),
                   style: ElevatedButton.styleFrom(
@@ -135,22 +148,40 @@ class LocationInfoCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                if (feature2 != null)
-                  if(metadata?.phone != null)
-                    ElevatedButton.icon(
-                      onPressed: () => context.read<MapBloc>().add(LaunchPhoneDialerRequested(metadata?.phone)),
-                      icon: const Icon(Icons.call, size: 18),
-                      label: const Text('Κλήση'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        textStyle: theme.textTheme.labelMedium,
-                      ),
+                if (widget.feature2 != null && metadata?.phone != null)
+                  ElevatedButton.icon(
+                    onPressed: () => context.read<MapBloc>().add(LaunchPhoneDialerRequested(metadata?.phone)),
+                    icon: const Icon(Icons.call, size: 18),
+                    label: const Text('Κλήση'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      textStyle: theme.textTheme.labelMedium,
                     ),
+                  ),
                 const SizedBox(width: 10),
                 ElevatedButton.icon(
-                  onPressed: () => context.read<MapBloc>().add(ShareLocationRequested(feature!.id)),
+                  onPressed: () => context.read<MapBloc>().add(ShareLocationRequested(widget.feature!.id)),
                   icon: const Icon(Icons.share, size: 18),
                   label: const Text('Μοίρασε'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    textStyle: theme.textTheme.labelMedium,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final result = await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (_) => PublishCommentModal(locationId: widget.feature!.id),
+                    );
+                    if (result == true) {
+                      context.read<LocationCommentsCubit>().fetchComments(widget.feature!.id);
+                    }
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Δημοσίευση'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     textStyle: theme.textTheme.labelMedium,
@@ -160,11 +191,82 @@ class LocationInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (feature2 != null)
-            buildMetadataFromList(feature2?.metadata),
+          if (widget.feature2 != null)
+            buildMetadataFromList(widget.feature2?.metadata),
+          const SizedBox(height: 12),
+          BlocBuilder<LocationCommentsCubit, LocationCommentsState>(
+            builder: (context, state) {
+              if (state is LocationCommentsLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is LocationCommentsLoaded) {
+                final comments = state.comments;
+                if (comments.isEmpty) {
+                  return Text('Δεν υπάρχουν σχόλια');
+                }
+                return Column(
+                  children: comments.map((c) => _buildCommentItem(c, context)).toList(),
+                );
+              }
+              if (state is LocationCommentsError) {
+                return Text('Σφάλμα: ${state.error}');
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildCommentItem(Comment comment, BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    comment.userId,
+                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(comment.text ?? ''),
+                  if (comment.photoUrl != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Image.network(
+                        comment.photoUrl!,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _formatTimestamp(comment.timestamp),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inMinutes < 1) return 'Τώρα';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} λεπτά πριν';
+    if (diff.inHours < 24) return '${diff.inHours} ώρες πριν';
+    return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+  }
 }
