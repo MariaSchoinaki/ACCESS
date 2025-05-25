@@ -296,11 +296,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 /// Location Info Card
                 if (location.isNotEmpty && selectedFeature != null)
                   if(routeInstructions.isEmpty)
-                    Positioned(
-                      left: 0, right: 0, bottom: -10,
-                      child: LocationInfoCard(feature: selectedFeature, feature2: feature,),
+                    DraggableScrollableSheet(
+                      initialChildSize: 0.3,
+                      minChildSize: 0.2,
+                      maxChildSize: 0.8,
+                      builder: (context, scrollController) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          child: SingleChildScrollView(
+                            controller: scrollController,
+                            child: LocationInfoCard(
+                              feature: selectedFeature,
+                              feature2: feature,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  if(routeInstructions.isNotEmpty)
+                if(routeInstructions.isNotEmpty)
                     NavigationInfoBar(title: selectedFeature!.name),
                 /// Zoom Controls
                 if(location.isEmpty || routeInstructions.isNotEmpty)
