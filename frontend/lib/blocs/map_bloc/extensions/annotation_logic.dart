@@ -47,7 +47,7 @@ extension MapBlocAnnotations on MapBloc {
           geometry: point,
           iconSize: 0.4,
           image: imageData,
-          iconAnchor: mapbox.IconAnchor.BOTTOM_LEFT,
+          iconAnchor: mapbox.IconAnchor.BOTTOM,
           textField: feature.name,
           textSize: 10,
           textMaxWidth: 15,
@@ -68,6 +68,8 @@ extension MapBlocAnnotations on MapBloc {
       final Map<String, MapboxFeature> featureMap = {};
       if (createdAnnotations.length == event.features.length) {
         for (int i = 0; i < createdAnnotations.length; i++) {
+          print("Annotation ID: ${createdAnnotations[i]!.id}");
+          print("Feature ID: ${event.features[i].id}");
           final internalId = createdAnnotations[i]!.id;
           final String correctMapboxId = event.features[i].id;
           final MapboxFeature feature = event.features[i];
@@ -116,4 +118,38 @@ extension MapBlocAnnotations on MapBloc {
     await _categoryAnnotationManager?.deleteAll();
     emit(state.copyWith(categoryAnnotations: {}));
   }
+
+  Future<void> _onRenderFavoriteAnnotations(RenderFavoriteAnnotations event, Emitter<MapState> emit) async {
+    while (_favoritesAnnotationManager == null) {
+      if (state.mapController == null) {
+        await Future.delayed(Duration(milliseconds: 100));
+        continue;
+      }
+      _favoritesAnnotationManager = await state.mapController!.annotations
+          .createPointAnnotationManager(id: 'favorites-layer');
+    }
+    if (_favoritesAnnotationManager == null) return;
+
+
+    final bytes = await rootBundle.load('assets/images/star.png');
+    final imageData = bytes.buffer.asUint8List();
+    List<mapbox.PointAnnotationOptions> optionsList = [];
+
+    final annotations = event.favorites.entries.map((entry) {
+      final data = entry.value as Map<String, dynamic>;
+      final lat = data['location']['lat'] as double;
+      final lng = data['location']['lng'] as double;
+
+      return mapbox.PointAnnotationOptions(
+        geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+        iconSize: 0.1,
+        image: imageData,
+        iconAnchor: mapbox.IconAnchor.CENTER,
+      );
+    }).toList();
+
+    await _favoritesAnnotationManager!.deleteAll();
+    await _favoritesAnnotationManager!.createMulti(annotations);
+  }
+
 }

@@ -4,9 +4,12 @@ import 'package:access/screens/sign_up_screen.dart';
 import 'package:access/services/search_service.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_links/app_links.dart'; // Import το πακέτο app_links
+import 'blocs/favourites_bloc/favourites_cubit.dart';
 import 'blocs/map_bloc/map_bloc.dart';
 import 'blocs/my_account_bloc/my_account_bloc.dart';
 import 'blocs/search_bloc/search_bloc.dart';
@@ -60,6 +63,9 @@ Future<void> main() async {
         ),
         BlocProvider<SearchBloc>(
           create: (_) => SearchBloc(searchService: SearchService()),
+        ),
+        BlocProvider(
+          create: (_) => FavoritesCubit(),
         ),
       ],
       child: const MyApp(),
