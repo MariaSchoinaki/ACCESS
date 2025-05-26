@@ -21,6 +21,8 @@ import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import '../theme/app_colors.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 
 
@@ -157,6 +159,15 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('el'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/home',
       routes: {
         '/home': (context) => const HomePage(),
