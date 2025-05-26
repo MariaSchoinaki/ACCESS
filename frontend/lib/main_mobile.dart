@@ -1,14 +1,17 @@
 import 'package:access/screens/login_screen.dart';
 import 'package:access/screens/myaccount_screen.dart';
 import 'package:access/screens/sign_up_screen.dart';
+import 'package:access/services/notification_service.dart';
 import 'package:access/services/search_service.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:app_links/app_links.dart'; // Import το πακέτο app_links
+import 'package:geolocator/geolocator.dart';
 import 'blocs/favourites_bloc/favourites_cubit.dart';
 import 'blocs/location_review_cubit/location_review_cubit.dart';
 import 'blocs/map_bloc/map_bloc.dart';
@@ -18,6 +21,8 @@ import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
+
 
 /// Main entry point for the application
 ///
@@ -52,6 +57,24 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  final notificationService = NotificationService();
+  await notificationService.init();
+
+
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('📲 [Opened from notification]');
+    handleNotificationNavigation(message);
+  });
+
+  FirebaseMessaging.instance.getInitialMessage().then((message) {
+    if (message != null) {
+      print('📦 [Terminated → opened from notification]');
+      handleNotificationNavigation(message);
+    }
+  });
+
   // Launch the application with BLoC provider
   runApp(
     MultiBlocProvider(
@@ -76,6 +99,9 @@ Future<void> main() async {
     ),
   );
 }
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -125,6 +151,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Mapbox Search App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
