@@ -22,12 +22,13 @@ class FirestoreRest {
   }
 
   /// Returns a valid OAuth token for Firestore requests, creating one if necessary.
-  Future<String> _getToken() async {
+  Future<String> getToken(String scope) async {
     if (_token != null && _expiry != null && _expiry!.isAfter(DateTime.now())) return _token!;
     final now = DateTime.now().toUtc();
     final jwt = JWT({
       'iss': clientEmail,
-      'scope': 'https://www.googleapis.com/auth/datastore',
+      'sub': clientEmail,
+      'scope': scope,
       'aud': 'https://oauth2.googleapis.com/token',
       'iat': now.millisecondsSinceEpoch ~/ 1000,
       'exp': now.add(Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000,
@@ -52,7 +53,7 @@ class FirestoreRest {
 
   /// Low-level: Returns the raw list of documents from a Firestore collection.
   Future<List<Map<String, dynamic>>> listDocs(String path) async {
-    final t = await _getToken();
+    final t = await getToken('https://www.googleapis.com/auth/datastore');
     final url = Uri.parse(
       'https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/$path',
     );
@@ -80,7 +81,7 @@ class FirestoreRest {
 
   /// Updates a document (PATCH). Use updateMaskFields to only update specific fields if needed.
   Future<void> patchDoc(String path, String docId, Map<String, dynamic> fields, {List<String>? updateMaskFields}) async {
-    final t = await _getToken();
+    final t = await getToken('https://www.googleapis.com/auth/datastore');
     String urlStr = 'https://firestore.googleapis.com/v1/projects/$projectId'
         '/databases/(default)/documents/$path/$docId';
     if (updateMaskFields != null && updateMaskFields.isNotEmpty) {
@@ -103,7 +104,7 @@ class FirestoreRest {
 
   /// Retrieves a single document by collection path and document ID.
   Future<Map<String, dynamic>> getDoc(String path, String docId) async {
-    final t = await _getToken();
+    final t = await getToken('https://www.googleapis.com/auth/datastore');
     final url = Uri.parse(
       'https://firestore.googleapis.com/v1/projects/$projectId'
           '/databases/(default)/documents/$path/$docId',
