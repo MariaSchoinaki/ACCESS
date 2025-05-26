@@ -32,7 +32,10 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
       Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
     } else {
       _popStateSubscription = html.window.onPopState.listen((event) {
-        html.window.history.pushState(null, '', '/webhome');
+
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       });
     }
   }
@@ -91,12 +94,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                               leading: const Icon(Icons.person),
                               title: const Text('Προφίλ'),
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ProfileScreen(),
-                                  ),
-                                );
+                                Navigator.pushNamed(context, '/profile');
                               },
                             ),
                             ListTile(

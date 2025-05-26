@@ -12,7 +12,7 @@ import 'package:access/theme/app_theme.dart' as AppTheme;
 // Bloc imports
 import 'package:access/web_screens/web_bloc/web_login_screen/login_bloc.dart';
 import 'blocs/search_bloc/search_bloc.dart';
-
+import 'package:url_strategy/url_strategy.dart';
 // Screens
 import 'web_screens/login_screen.dart';
 import 'web_screens/signup_screen.dart';
@@ -24,7 +24,7 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+  setPathUrlStrategy();
   runApp(const WebApp());
 }
 
