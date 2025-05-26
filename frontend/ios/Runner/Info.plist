@@ -59,5 +59,18 @@
         <string>http</string>
         <string>https</string>
     </array>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>location</string>
+      <string>fetch</string>
+    </array>
+
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Χρειαζόμαστε την τοποθεσία σου για ειδοποιήσεις βασισμένες στο location.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Χρειαζόμαστε την τοποθεσία σου για να λειτουργεί η εφαρμογή σωστά.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Χρειαζόμαστε την τοποθεσία σου ακόμα και όταν η εφαρμογή τρέχει στο background.</string>
+
 </dict>
 </plist>
