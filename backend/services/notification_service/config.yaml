@@ -1,0 +1,4 @@
+service_name: notification_service
+port: 8089
+features:
+  - notification

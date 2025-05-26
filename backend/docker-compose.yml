@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   gateway:
-    image: schoin/access_gateway:latest
+    image: eleni/access_gateway:latest
     ports:
       - "9090:9090"
     networks:
@@ -10,9 +10,10 @@ services:
     depends_on:
       - search_service
       - map_service
+      - notification_service
 
   map_service:
-    image: schoin/access_map_service:latest
+    image: eleni/access_map_service:latest
     ports:
       - "8081:8081"
     networks:
@@ -22,7 +23,7 @@ services:
       - google_maps_key
 
   search_service:
-    image: schoin/access_search_service:latest
+    image: eleni/access_search_service:latest
     ports:
       - "8080:8080"
     networks:
@@ -31,7 +32,7 @@ services:
       - mapbox_token
 
   update_service:
-    image: schoin/access_update_service:latest
+    image: eleni/access_update_service:latest
     volumes:
       - ./data/roads.geojson:/app/data/roads.geojson
     ports:
@@ -39,17 +40,30 @@ services:
     networks:
       - internal
     secrets:
-      - firebase_conf.json
+      - firebase_conf1.json
     environment:
-      FIREBASE_CONF: /run/secrets/firebase_conf.json
+      FIREBASE_CONF1.JSON: /run/secrets/firebase_conf1.json
       GEOJSON_PATH: /app/data/roads.geojson
+
+  notification_service:
+    image: eleni/access_notification_service:latest
+    ports:
+      - "8089:8089"
+    networks:
+      - internal
+    secrets:
+      - firebase_conf2.json
+    environment:
+      FIREBASE_CONF2.JSON: /run/secrets/firebase_conf2.json
 
 secrets:
   mapbox_token:
     external: true
   google_maps_key:
     external: true
-  firebase_conf.json:
+  firebase_conf1.json:
+    external: true
+  firebase_conf2.json:
     external: true
 
 networks:

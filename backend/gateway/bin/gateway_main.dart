@@ -15,6 +15,7 @@ final Dio dio = Dio(BaseOptions(
 // Docker service names
 const String searchServiceUrl = 'http://search_service:8080';
 const String mapServiceUrl = 'http://map_service:8081';
+const String notificationServiceUrl = 'http://notification_service:8089';
 
 Future<void> main() async {
   final router = Router();
@@ -35,6 +36,11 @@ Future<void> main() async {
   // Proxy /map to map service
   router.all('/map<ignored|.*>', (req) =>
       _proxy(req, mapServiceUrl, stripPrefix: '/map'));
+
+  router.all('/notify<ignored|.*>', (req) =>
+      _proxy(req, notificationServiceUrl, stripPrefix: '/notify'));
+  router.all('/send<ignored|.*>', (req) =>
+      _proxy(req, notificationServiceUrl, stripPrefix: '/send'));
 
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
@@ -61,7 +67,6 @@ shelf.Middleware corsMiddleware() {
         return shelf.Response.ok('', headers: headers);
       }
 
-      // Αλλιώς περνάμε το request στον επόμενο handler και προσθέτουμε headers
       final response = await innerHandler(request);
       return response.change(headers: headers);
     };
@@ -74,21 +79,24 @@ Future<shelf.Response> _proxy(
     String targetBaseUrl, {
       required String stripPrefix,
     }) async {
-  final originalPath = request.url.path;
 
-  // Strip the prefix (e.g., "/map" or "/search")
-  final strippedPath = originalPath.startsWith(stripPrefix.replaceFirst('/', ''))
-      ? originalPath.substring(stripPrefix.length)
-      : originalPath;
+  String normalizeStrip(String prefix) {
+    return prefix.startsWith('/') ? prefix.substring(1) : prefix;
+  }
 
-  final normalizedPath = strippedPath.startsWith('/')
-      ? strippedPath
-      : '/$strippedPath';
+  final strippedPrefix = normalizeStrip(stripPrefix);
+  final pathSegments = request.url.pathSegments;
+
+  final remainingSegments = pathSegments.length > 1 && pathSegments[0] == strippedPrefix
+      ? pathSegments.sublist(1)
+      : pathSegments;
+
+  final normalizedPath = '/' + remainingSegments.join('/');
 
   final query = request.url.query.isNotEmpty ? '?${request.url.query}' : '';
   final targetUri = Uri.parse('$targetBaseUrl$normalizedPath$query');
 
-  print('[GATEWAY] Forwarding ${request.method} /$originalPath → $targetUri');
+  print('[GATEWAY] Forwarding ${request.method} /${request.url.path} → $targetUri');
 
   try {
     final response = await dio.request(
