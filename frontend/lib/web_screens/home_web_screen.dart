@@ -32,7 +32,9 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
       Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
     } else {
       _popStateSubscription = html.window.onPopState.listen((event) {
-
+        if (ModalRoute.of(context)?.settings.name == '/webhome') {
+          return;
+        }
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
@@ -70,8 +72,10 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(title: const Text("Accessible City"),
-            automaticallyImplyLeading: false),
+          appBar: AppBar(
+            title: const Text("Accessible City"),
+            automaticallyImplyLeading: false,
+          ),
           body: BlocBuilder<HomeWebBloc, HomeWebState>(
             builder: (context, state) {
               return Row(
@@ -143,12 +147,24 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                 }
                               },
                             ),
+                            ListTile(
+                              leading: const Icon(Icons.exit_to_app),
+                              title: const Text('Αποσύνδεση'),
+                              onTap: () {
+                                html.window.localStorage.remove('authToken');
+                                html.window.history.replaceState(null, '', '/login');
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/login',
+                                        (route) => false
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-
                   // Search bar
 
                   // Map content

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:access/web_screens/web_bloc/web_login_screen/login_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +15,25 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
+  StreamSubscription<html.PopStateEvent>? _popStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _popStateSubscription = html.window.onPopState.listen((event) {
+      if (html.window.localStorage['authToken'] == null) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _popStateSubscription?.cancel();
+    super.dispose();
+  }
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
@@ -29,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         backgroundColor: Theme.of(context).primaryColor,
+        automaticallyImplyLeading: false,
       ),
       body: BlocConsumer<LoginBloc, LoginState>(
         listener: (context, state) {
