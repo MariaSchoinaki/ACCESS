@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'map_event.dart';
-import 'map_state.dart';
+import 'package:equatable/equatable.dart';
+
+part 'map_event.dart';
+part 'map_state.dart';
 
 class MapBloc extends Bloc<MapEvent, MapState> {
   MapBloc() : super(const MapInitial()) {

@@ -1,8 +1,6 @@
 import 'dart:html' as html;
 import 'dart:ui_web' as ui;
-import 'package:access/web_screens/web_bloc/map_bloc/map_event.dart';
-import 'package:access/web_screens/web_bloc/map_bloc/map_state.dart';
-import 'package:access/web_screens/web_bloc/map_bloc/map_bloc.dart';
+import 'package:access/web_screens/web_bloc/web_map_bloc/map_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,7 +88,7 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
         } else if (state is MapError) {
           return Center(child: Text('Σφάλμα φόρτωσης χάρτη: ${state.message}'));
         }
-        return const SizedBox.shrink(); // Initial or unknown state
+        return const SizedBox.shrink();
       },
     );
   }

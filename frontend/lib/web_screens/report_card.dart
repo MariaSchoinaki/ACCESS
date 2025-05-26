@@ -1,8 +1,9 @@
-import 'package:access/web_screens/web_bloc/report_card_bloc/report_bloc.dart';
+import 'package:access/web_screens/web_bloc/web_report_card_bloc/report_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:access/theme/app_colors.dart';
 
 class ReportCard extends StatefulWidget {
   const ReportCard({Key? key}) : super(key: key);
@@ -41,25 +42,48 @@ class _ReportCardState extends State<ReportCard> {
     super.dispose();
   }
 
-  Future<void> _pickStartDate() async {
+  Future<DateTime?> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: _startDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary, // header background + active date
+              onPrimary: Colors.white,     // text on primary color
+              onSurface: Colors.black,     // default text color
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+              ),
+            ),
+            dialogTheme: DialogTheme(
+              backgroundColor: AppColors.background,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+    return picked;
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await _pickDate();
     if (picked != null) {
       setState(() => _startDate = picked);
     }
   }
 
   Future<void> _pickEndDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate ?? DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
+    final picked = await _pickDate();
     if (picked != null) {
       setState(() => _endDate = picked);
     }
@@ -67,6 +91,10 @@ class _ReportCardState extends State<ReportCard> {
 
   void _submitForm() {
     final location = _locationController.text.trim();
+
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email ?? "Άγνωστο email";
+    final userId = user?.uid ?? "Άγνωστο ID";
 
     if (_startDate == null || _endDate == null || _selectedProjectType == null || location.isEmpty || selectedCoordinates?[0] == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,8 +114,8 @@ class _ReportCardState extends State<ReportCard> {
           needsUpdate: true,
           needsImprove: true,
           timestamp: DateTime.now(),
-          userEmail: "dimos@dimos.gr",
-          userId: "tttt",
+          userEmail: email,
+          userId: userId,
         ),
       );
     }
@@ -125,6 +153,7 @@ class _ReportCardState extends State<ReportCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocListener<SearchBloc, SearchState>(
       listener: _handleSearchResult,
       child: BlocListener<ReportBloc, ReportState>(
@@ -132,7 +161,7 @@ class _ReportCardState extends State<ReportCard> {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))],
           ),
@@ -140,10 +169,10 @@ class _ReportCardState extends State<ReportCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Αναφορά έργου δήμου:", style: Theme.of(context).textTheme.titleLarge),
+                Text("Αναφορά έργου δήμου:", style: theme.textTheme.titleLarge),
                 const SizedBox(height: 20),
 
-                const Text("Τοποθεσία έργου"),
+                const Text("Τοποθεσία έργου", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _locationController,
@@ -184,32 +213,68 @@ class _ReportCardState extends State<ReportCard> {
                 ),
 
                 const SizedBox(height: 16),
-                const Text("Περίοδος εκτέλεσης έργου"),
+                const Text("Περίοδος εκτέλεσης έργου", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
+                        style: ButtonStyle(
+                          side: WidgetStateProperty.resolveWith<BorderSide>((states){
+                            if (states.contains(WidgetState.hovered)) {
+                              return BorderSide(color: AppColors.grey, width: 1); // hover stroke
+                            }
+                            return BorderSide(color: AppColors.grey, width: 1);
+                          }),
+                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states){
+                            if (states.contains(WidgetState.hovered)) {
+                              return AppColors.primary; // hover text color
+                            }
+                            return AppColors.blackAccent[700]!;
+                          }),
+                          overlayColor: WidgetStateProperty.all(AppColors.primary.withOpacity(0.1)), // ripple hover
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
                         onPressed: _pickStartDate,
                         child: Text(_startDate != null
                             ? "Από: ${_startDate!.day}/${_startDate!.month}/${_startDate!.year}"
-                            : "Επιλέξτε ημερομηνία έναρξης"),
+                            : "Ημερομηνία έναρξης", style: TextStyle(fontSize:14)),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
+                        style: ButtonStyle(
+                          side: WidgetStateProperty.resolveWith<BorderSide>((states){
+                            if (states.contains(WidgetState.hovered)) {
+                              return BorderSide(color: AppColors.grey, width: 1); // hover stroke
+                            }
+                            return BorderSide(color: AppColors.grey, width: 1);
+                          }),
+                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states){
+                            if (states.contains(WidgetState.hovered)) {
+                              return AppColors.primary; // hover text color
+                            }
+                            return AppColors.blackAccent[700]!;
+                          }),
+                          overlayColor: WidgetStateProperty.all(AppColors.primary.withOpacity(0.1)), // ripple hover
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
                         onPressed: _pickEndDate,
                         child: Text(_endDate != null
                             ? "Έως: ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}"
-                            : "Επιλέξτε ημερομηνία λήξης"),
+                            : "Ημερομηνία λήξης", style: TextStyle(fontSize:14)),
                       ),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 16),
-                const Text("Τύπος έργου"),
+                const Text("Τύπος έργου", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: _selectedProjectType,
@@ -223,7 +288,7 @@ class _ReportCardState extends State<ReportCard> {
                 ),
 
                 const SizedBox(height: 16),
-                const Text("Αναφορά έργου (προαιρετικά)"),
+                const Text("Αναφορά έργου (προαιρετικά)", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _damageReportController,
@@ -235,7 +300,7 @@ class _ReportCardState extends State<ReportCard> {
                 ),
 
                 const SizedBox(height: 20),
-                const Text("Βαθμός Δυσκολίας"),
+                const Text("Βαθμός Δυσκολίας", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: _accessibility,
@@ -255,6 +320,17 @@ class _ReportCardState extends State<ReportCard> {
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text("Κλείσιμο"),
+                      style: ButtonStyle(
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                          if (states.contains(WidgetState.hovered)) {
+                            return Colors.red; // χρώμα κειμένου στο hover
+                          }
+                          return AppColors.black; // κανονικό χρώμα κειμένου
+                        }),
+                        textStyle: WidgetStateProperty.all(
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     BlocBuilder<ReportBloc, ReportState>(

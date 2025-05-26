@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:html' as html;
 
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -12,11 +13,11 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final User? currentUser = FirebaseAuth.instance.currentUser;
 
-    //if (currentUser == null) {
-    //  return const Scaffold(
-    //    body: Center(child: Text("Δεν είστε συνδεδεμένος.")),
-    //  );
-    //}
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: Text("Δεν είστε συνδεδεμένος.")),
+      );
+    }
 
     // Power BI embed – Web only (iframe inject)
     final powerBiUrl = 'https://app.powerbi.com/view?r=YOUR_PUBLIC_REPORT_ID';
@@ -35,6 +36,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Το Προφίλ μου'),
+          automaticallyImplyLeading: false
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

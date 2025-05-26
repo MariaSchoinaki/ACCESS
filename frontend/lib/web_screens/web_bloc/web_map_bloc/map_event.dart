@@ -1,5 +1,4 @@
-// map_event.dart
-import 'package:equatable/equatable.dart';
+part of 'map_bloc.dart';
 
 abstract class MapEvent extends Equatable {
   const MapEvent();

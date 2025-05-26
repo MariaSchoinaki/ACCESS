@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'home_web_bloc.dart';
 
 class HomeWebState extends Equatable {
   final bool isReportDialogOpen;

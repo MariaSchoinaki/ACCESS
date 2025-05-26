@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'home_web_event.dart';
-import 'home_web_state.dart';
+import 'package:equatable/equatable.dart';
+
+part 'home_web_event.dart';
+part 'home_web_state.dart';
 
 class HomeWebBloc extends Bloc<HomeWebEvent, HomeWebState> {
   HomeWebBloc() : super(const HomeWebState(isReportDialogOpen: false)) {

@@ -79,7 +79,19 @@ class AppColors {
     900: Color(0xFF000000),
   });
 
-
+  static const MaterialColor creamAccent = MaterialColor(0xFFFFF9F3, {
+    50: Color(0xFFFFFFFF),  // καθαρό λευκό
+    100: Color(0xFFFFFCF9), // σχεδόν λευκό με υποψία warmth
+    200: Color(0xFFFFF9F3), // base
+    300: Color(0xFFFFE9D9), // πιο “βανίλια”
+    400: Color(0xFFFFDBBF), // πολύ light ροδακινί
+    500: Color(0xFFFFCFA3), // ανοιχτό apricot
+    600: Color(0xFFFFBE88), // ζεστό ροδακινί
+    700: Color(0xFFE6A671), // πιο muted
+    800: Color(0xFFCC8F5D), // καραμελέ
+    900: Color(0xFFB3774A), // σκούρο caramel peach
+  });
+  static const Color cream = Color(0xFFFFE9D9);
   static const Color white = Colors.white;
   static const Color black = Colors.black87;
   static const Color grey = Color(0xFF4E5153);

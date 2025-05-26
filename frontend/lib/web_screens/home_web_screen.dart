@@ -1,19 +1,17 @@
+import 'dart:async';
 import 'package:access/services/search_service.dart';
 import 'package:access/web_screens/profile_screen.dart';
 import 'package:access/web_screens/report_card.dart';
-import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_bloc.dart';
-import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_event.dart';
-import 'package:access/web_screens/web_bloc/home_web_bloc/home_web_state.dart';
-import 'package:access/web_screens/web_bloc/map_bloc/map_event.dart';
-import 'package:access/web_screens/web_bloc/map_bloc/map_bloc.dart';
-import 'package:access/web_screens/web_bloc/report_card_bloc/report_bloc.dart';
+import 'package:access/web_screens/web_bloc/web_home_bloc/home_web_bloc.dart';
+import 'package:access/web_screens/web_bloc/web_map_bloc/map_bloc.dart';
+import 'package:access/web_screens/web_bloc/web_report_card_bloc/report_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import '../blocs/search_bloc/search_bloc.dart';
-
+import 'package:access/theme/app_colors.dart';
 import 'map.dart';
 
 class HomeWebScreen extends StatefulWidget {
@@ -24,7 +22,26 @@ class HomeWebScreen extends StatefulWidget {
 }
 
 class _HomeWebScreenState extends State<HomeWebScreen> {
-  final TextEditingController _searchController = TextEditingController();
+  StreamSubscription<html.PopStateEvent>? _popStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    final authToken = html.window.localStorage['authToken'];
+    if (authToken == null) {
+      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
+    } else {
+      _popStateSubscription = html.window.onPopState.listen((event) {
+        html.window.history.pushState(null, '', '/webhome');
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _popStateSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +67,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(title: const Text("Accessible City")),
+          appBar: AppBar(title: const Text("Accessible City"),
+            automaticallyImplyLeading: false),
           body: BlocBuilder<HomeWebBloc, HomeWebState>(
             builder: (context, state) {
               return Row(
@@ -58,14 +76,14 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                   // Sidebar
                   ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: MediaQuery
-                          .of(context)
-                          .size
-                          .height,
+                      minHeight: MediaQuery.of(context).size.height,
                     ),
                     child: IntrinsicWidth(
                       child: Container(
-                        color: Colors.grey[200],
+                        decoration: BoxDecoration(
+                          color: AppColors.creamAccent[100],
+                          border: Border.all(color: AppColors.cream, width: 2),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -76,7 +94,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => const ProfileScreen()),
+                                    builder: (context) => const ProfileScreen(),
+                                  ),
                                 );
                               },
                             ),
@@ -85,14 +104,24 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                               title: const Text("Προσθήκη έργου"),
                               onTap: () {
                                 if (!state.isReportDialogOpen) {
-                                  context.read<HomeWebBloc>().add(OpenReportDialog());
-                                  html.document.getElementById('map-iframe')?.style.pointerEvents = 'none';
+                                  context.read<HomeWebBloc>().add(
+                                    OpenReportDialog(),
+                                  );
+                                  html
+                                      .document
+                                      .getElementById('map-iframe')
+                                      ?.style
+                                      .pointerEvents = 'none';
                                   showDialog(
                                     context: context,
                                     barrierDismissible: true,
                                     builder: (context) {
                                       return Dialog(
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                         child: BlocProvider(
                                           create: (_) => ReportBloc(),
                                           child: const SizedBox(
@@ -104,8 +133,14 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                       );
                                     },
                                   ).then((_) {
-                                    html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
-                                    context.read<HomeWebBloc>().add(CloseReportDialog());
+                                    html
+                                        .document
+                                        .getElementById('map-iframe')
+                                        ?.style
+                                        .pointerEvents = 'auto';
+                                    context.read<HomeWebBloc>().add(
+                                      CloseReportDialog(),
+                                    );
                                   });
                                 }
                               },
@@ -118,7 +153,6 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
 
                   // Search bar
 
-
                   // Map content
                   Expanded(
                     child: Center(
@@ -126,8 +160,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                         width: 800,
                         height: 600,
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.blueAccent),
+                          color: AppColors.white,
+                          border: Border.all(color: AppColors.secondary),
                         ),
                         child: BlocProvider(
                           create: (_) => MapBloc()..add(const LoadMap()),
