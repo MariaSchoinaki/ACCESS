@@ -33,6 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         backgroundColor: Theme.of(context).primaryColor,
         iconTheme: IconThemeData(color: colors.onPrimary),
+        automaticallyImplyLeading: false,
       ),
       body: BlocConsumer<SignupBloc, SignupState>(
         listener: (context, state) {

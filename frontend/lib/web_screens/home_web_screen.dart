@@ -32,7 +32,12 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
       Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
     } else {
       _popStateSubscription = html.window.onPopState.listen((event) {
-        html.window.history.pushState(null, '', '/webhome');
+        if (ModalRoute.of(context)?.settings.name == '/webhome') {
+          return;
+        }
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
       });
     }
   }
@@ -67,8 +72,10 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
           }
         },
         child: Scaffold(
-          appBar: AppBar(title: const Text("Accessible City"),
-            automaticallyImplyLeading: false),
+          appBar: AppBar(
+            title: const Text("Accessible City"),
+            automaticallyImplyLeading: false,
+          ),
           body: BlocBuilder<HomeWebBloc, HomeWebState>(
             builder: (context, state) {
               return Row(
@@ -91,12 +98,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                               leading: const Icon(Icons.person),
                               title: const Text('Προφίλ'),
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ProfileScreen(),
-                                  ),
-                                );
+                                Navigator.pushNamed(context, '/profile');
                               },
                             ),
                             ListTile(
@@ -145,12 +147,24 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                 }
                               },
                             ),
+                            ListTile(
+                              leading: const Icon(Icons.exit_to_app),
+                              title: const Text('Αποσύνδεση'),
+                              onTap: () {
+                                html.window.localStorage.remove('authToken');
+                                html.window.history.replaceState(null, '', '/login');
+                                Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    '/login',
+                                        (route) => false
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-
                   // Search bar
 
                   // Map content

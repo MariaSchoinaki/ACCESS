@@ -12,11 +12,12 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final User? currentUser = FirebaseAuth.instance.currentUser;
+    final authToken = html.window.localStorage['authToken'];
 
-    if (currentUser == null) {
-      return const Scaffold(
-        body: Center(child: Text("Δεν είστε συνδεδεμένος.")),
-      );
+
+    if (currentUser == null || authToken == null) {
+      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     // Power BI embed – Web only (iframe inject)
