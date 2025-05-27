@@ -23,7 +23,7 @@ class FirestoreRest {
 
   /// Returns a valid OAuth token for Firestore requests, creating one if necessary.
   Future<String> getToken(String scope) async {
-    if (_token != null && _expiry != null && _expiry!.isAfter(DateTime.now())) return _token!;
+    //if (_token != null && _expiry != null && _expiry!.isAfter(DateTime.now())) return _token!;
     final now = DateTime.now().toUtc();
     final jwt = JWT({
       'iss': clientEmail,
