@@ -5,8 +5,6 @@ import 'package:access/services/notification_service.dart';
 import 'package:access/services/search_service.dart';
 import 'package:access/theme/app_theme.dart' as AppTheme;
 import 'package:access/utils/auth_gate.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,7 +18,8 @@ import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
+import '../theme/app_colors.dart';
 
 /// Main entry point for the application
 ///
@@ -152,6 +151,15 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('el'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/home',
       routes: {
         '/home': (context) => const HomePage(),

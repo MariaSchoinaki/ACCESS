@@ -8,6 +8,11 @@ ThemeData lightTheme = ThemeData(
   primaryColor: AppColors.primaryAccent.shade200, // Specific primary color
   hintColor: AppColors.grey, // Color for hint text in input fields
   scaffoldBackgroundColor: AppColors.background,
+  textSelectionTheme: TextSelectionThemeData(
+    cursorColor: AppColors.primaryAccent,
+    selectionColor: AppColors.primaryAccent.withOpacity(0.5),
+    selectionHandleColor: AppColors.primaryAccent,
+  ),
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.background, // Background color of AppBar
     foregroundColor: AppColors.textPrimary, // Text color of AppBar title and actions
@@ -64,6 +69,11 @@ ThemeData darkTheme = ThemeData(
   primaryColor: AppColors.primaryAccent.shade200,
   hintColor: AppColors.white,
   scaffoldBackgroundColor: AppColors.backgroundDark,
+  textSelectionTheme: TextSelectionThemeData(
+    cursorColor: AppColors.primaryAccent,
+    selectionColor: AppColors.primaryAccent.withOpacity(0.5),
+    selectionHandleColor: AppColors.primaryAccent,
+  ),
   appBarTheme: const AppBarTheme(
     backgroundColor: AppColors.black,
     foregroundColor: AppColors.white,
