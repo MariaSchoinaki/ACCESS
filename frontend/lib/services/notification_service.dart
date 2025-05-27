@@ -8,59 +8,83 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../main_mobile.dart';
 
+/// This class is responsible for handling all notification-related tasks in the application,
+/// including setting up notification channels, listening for incoming FCM messages,
+/// displaying local notifications, handling notification clicks, and sending location
+/// data to the backend. It implements the singleton pattern to ensure that only one
+/// instance of this service exists throughout the app's lifecycle.
 class NotificationService {
+  /// Used for making HTTP requests to the backend.
   final Dio _dio;
+  /// Plugin for displaying local notifications on the device.
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  /// Instance for interacting with Firebase Cloud Messaging.
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  /// Private static instance of NotificationService, used for the singleton pattern.
+  static NotificationService? _instance;
 
-  NotificationService({String? baseUrl, Dio? dioClient})
-      : _dio = dioClient ??
-      Dio(
-        BaseOptions(
-          baseUrl: _resolveBaseUrl(baseUrl),
-          headers: {'Content-Type': 'application/json'},
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        ),
-      ) {
-    print('\x1B[32m[NotificationService] Base URL: ${_dio.options
-        .baseUrl}\x1B[0m');
+  /// Factory constructor ensures that only one instance of NotificationService exists.
+  /// If _instance is null, it creates a new instance via _internal; otherwise, it returns the existing one.
+  factory NotificationService({Dio? dioClient, String? baseUrl}) {
+    _instance ??= NotificationService._internal(dioClient: dioClient, baseUrl: baseUrl);
+    return _instance!;
   }
 
+  /// Private internal constructor used by the factory. It initializes the _dio instance.
+  NotificationService._internal({Dio? dioClient, String? baseUrl}) : _dio = dioClient ?? Dio() {
+    _init(baseUrl);
+  }
+
+  /// Initializes the Dio client's base URL and headers.
+  void _init(String? baseUrl) {
+    _dio.options = BaseOptions(
+      baseUrl: _resolveBaseUrl(baseUrl),
+      headers: {'Content-Type': 'application/json'},
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    );
+  }
+
+  /// Public static getter to access the singleton instance of NotificationService.
+  /// If _instance is null, it creates a new instance (using the default constructor,
+  /// which in turn calls the factory). This ensures lazy initialization.
+  static NotificationService get instance {
+    _instance ??= NotificationService();
+    return _instance!;
+  }
+
+  /// Resolves the base URL for the Dio client, prioritizing environment variables
+  /// and then the provided override URL or a default URL.
   static String _resolveBaseUrl(String? overrideUrl) {
     const envUrl = String.fromEnvironment('SEARCH_API_URL');
     return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
   }
 
+  /// Asynchronous method to initialize notification channels, background geolocation,
+  /// and Firebase Messaging listeners.
   Future<void> init() async {
-    if (await Permission.notification.isDenied) {
-      await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
-
     await setupNotificationChannel();
 
-    // Fired whenever a location is recorded
+    /// --- Background Geolocation Listeners ---
+
+    /// Fired whenever a location is recorded by the background geolocation plugin.
     bg.BackgroundGeolocation.onLocation((bg.Location location) {
       print('[location] - $location');
       _sendLocationToBackend(location);
     });
 
-    // Fired whenever the plugin changes motion-state (stationary->moving and vice-versa)
+    /// Fired whenever the plugin changes motion-state (stationary->moving and vice-versa)
     bg.BackgroundGeolocation.onMotionChange((bg.Location location) {
       print('[motionchange] - $location');
     });
 
-    // Fired whenever the state of location-services changes.  Always fired at boot
+    /// Fired whenever the state of location-services changes.  Always fired at boot
+    /// (e.g., GPS enabled/disabled)
     bg.BackgroundGeolocation.onProviderChange((bg.ProviderChangeEvent event) {
       print('[providerchange] - $event');
     });
 
-    ////
-    // 2.  Configure the plugin
-    //
+    /// --- Background Geolocation Configuration and Start ---
     bg.BackgroundGeolocation.ready(bg.Config(
         desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
         distanceFilter: 10.0,
@@ -77,12 +101,15 @@ class NotificationService {
       }
     });
 
+    /// --- Firebase Messaging Listeners ---
+    /// Listens for incoming messages when the app is in the foreground.
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('📱 [Foreground] Message received: ${message.data}');
       if (message.notification != null) {
         final notification = message.notification!;
         final android = message.notification!.android;
 
+        /// Displays a local notification using the flutter_local_notifications plugin.
         flutterLocalNotificationsPlugin.show(
           notification.hashCode,
           notification.title,
@@ -98,12 +125,48 @@ class NotificationService {
             ),
           ),
         );
+
+        /// Shows an AlertDialog using the global navigatorKey when a foreground
+        /// notification is received. This ensures the dialog is displayed on top
+        /// of the current UI.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          handleNotificationNavigation(message);
+        });
+      }
+    });
+
+    /// Listens for when the user taps on a notification that opened the app
+    /// from the background.
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('📲 [Opened from notification]');
+      handleNotificationNavigation(message);
+    });
+
+    /// Gets the initial message if the app was opened from a terminated state
+    /// by clicking on a notification.
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      if (message != null) {
+        print('📦 [Terminated → opened from notification]');
+        handleNotificationNavigation(message);
       }
     });
   }
 
+  /// Sets up the Android notification channel for your app.
+  Future<void> setupNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'access_notifications',
+      'Access Notifications',
+      description: 'Channel for Access app notifications',
+      importance: Importance.high,
+    );
 
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
 
+  /// Sends the device's location data to backend API.
   Future<void> _sendLocationToBackend(bg.Location location) async {
     try {
       final fcmToken = await FirebaseMessaging.instance.getToken();
@@ -114,7 +177,6 @@ class NotificationService {
         'latitude': location.coords.latitude,
         'longitude': location.coords.longitude,
         'timestamp': location.timestamp,
-        // πρόσθεσε ό,τι άλλο θες
       };
 
       final response = await _dio.post('/notify', data: data);
@@ -129,51 +191,20 @@ class NotificationService {
     }
   }
 
-
-
-  Future<void> setupNotificationChannel() async {
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'access_notifications', // το ίδιο ID που θα βάλεις στο backend payload
-      'Access Notifications',
-      description: 'Channel for Access app notifications',
-      importance: Importance.high,
-    );
-
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-  }
-
 }
+
+/// This function is marked as the entry point for background isolate execution
+/// when a Firebase Messaging background message is received. However, in the
+/// provided code, it only logs the message data and doesn't perform any UI-related tasks
+/// directly, as those need to be handled in the main isolate.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("🔙 [Background] Message data: ${message.data}");
-  final notification = message.notification;
-  final android = notification?.android;
-
-  if (notification != null && android != null) {
-    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'access_notifications',
-      'Access',
-      channelDescription: 'Default notification channel',
-      importance: Importance.max,
-      priority: Priority.high,
-      icon: 'logo',
-    );
-
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
-
-    await flutterLocalNotificationsPlugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      platformDetails,
-    );
-  }
 }
 
+/// Handles the navigation or UI display (in this case, an AlertDialog) when a
+/// notification is tapped by the user or received in the foreground. It checks
+/// for a 'route' key in the message data to perform navigation; otherwise, it shows a generic AlertDialog.
 void handleNotificationNavigation(RemoteMessage message) {
   final data = message.data;
   final notification = message.notification;
@@ -190,7 +221,7 @@ void handleNotificationNavigation(RemoteMessage message) {
       ],
     ),
   );
-
+  //TODO: implement navigation logic to the report
   /*
     final route = data['route'];
     if (route != null) {

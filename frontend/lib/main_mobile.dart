@@ -10,8 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:app_links/app_links.dart'; // Import το πακέτο app_links
-import 'package:geolocator/geolocator.dart';
+import 'package:app_links/app_links.dart';
 import 'blocs/favourites_bloc/favourites_cubit.dart';
 import 'blocs/location_review_cubit/location_review_cubit.dart';
 import 'blocs/map_bloc/map_bloc.dart';
@@ -21,7 +20,6 @@ import 'screens/home_screen.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:flutter_background_geolocation/flutter_background_geolocation.dart' as bg;
 
 
 /// Main entry point for the application
@@ -51,29 +49,22 @@ Future<void> main() async {
   }
   MapboxOptions.setAccessToken(ACCESS_TOKEN);
 
-  // Initialize Firebase services
-  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize Firebase for the application. This sets up the connection to your Firebase project.
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // Instantiate the NotificationService. This will trigger the factory constructor
+  // and ensure the singleton instance (_instance) is initialized.
+  NotificationService();
 
+  // Access the singleton instance of NotificationService and call its initialization method.
+  // This is where you set up notification channels and listeners.
+  await NotificationService.instance.init();
 
+  // Set the handler for background Firebase Messaging events. This function
+  // (_firebaseMessagingBackgroundHandler) will be executed in a separate isolate
+  // when the app is in the background or terminated and receives a message.
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  final notificationService = NotificationService();
-  await notificationService.init();
-
-
-  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('📲 [Opened from notification]');
-    handleNotificationNavigation(message);
-  });
-
-  FirebaseMessaging.instance.getInitialMessage().then((message) {
-    if (message != null) {
-      print('📦 [Terminated → opened from notification]');
-      handleNotificationNavigation(message);
-    }
-  });
 
   // Launch the application with BLoC provider
   runApp(
@@ -99,6 +90,10 @@ Future<void> main() async {
     ),
   );
 }
+/// Creates a global key that can be used to access the Navigator state
+/// from anywhere in the application. This is particularly useful for
+/// performing navigation from outside the typical widget build context,
+/// such as within notification handlers or background processes.
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 
