@@ -251,6 +251,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               if (rating != null) {
                 context.read<MapBloc>().add(RateAndSaveRouteRequested(route: event.trackedRoute, rating: rating));
               }
+              context.read<MapBloc>().add(ShowedMessage());
             }
           },
           child: BlocListener<FavoritesCubit, FavoritesState>(

@@ -76,6 +76,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<ToggleVoiceInstructions>((event, emit) {
       emit(state.copyWith(isVoiceEnabled: !state.isVoiceEnabled));
     });
+    on<ShowedMessage>((event, emit){
+      emit(state.copyWith(lastEvent: event));
+    });
 
     on<NavigationPositionUpdated>(_onNavigationPositionUpdated);
     on<ShowRouteRatingDialogRequested>(_onShowRouteRatingDialogRequested);
@@ -87,7 +90,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   }
 
   Future<void> initTTS() async {
-    await flutterTts.setLanguage("en-US");
+    await flutterTts.setLanguage("el-GR");
     await flutterTts.setSpeechRate(0.5);
     await flutterTts.setPitch(1.0);
   }

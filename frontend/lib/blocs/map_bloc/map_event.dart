@@ -155,3 +155,4 @@ class RenderFavoriteAnnotations extends MapEvent {
   final Map<String, dynamic> favorites;
   RenderFavoriteAnnotations(this.favorites);
 }
+class ShowedMessage extends MapEvent {}
