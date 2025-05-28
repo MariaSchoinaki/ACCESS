@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:access/web_screens/web_bloc/web_signup_bloc/signup_bloc.dart';
 import 'package:access/theme/app_colors.dart';
 
-
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
@@ -14,7 +13,41 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController dimosNameController = TextEditingController();
+  final TextEditingController dimosTKController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  void _updateState() => setState(() {});
+
+  @override
+  void initState() {
+    super.initState();
+    emailController.addListener(_updateState);
+    passwordController.addListener(_updateState);
+    dimosNameController.addListener(_updateState);
+    dimosTKController.addListener(_updateState);
+    confirmPasswordController.addListener(_updateState);
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    dimosNameController.dispose();
+    dimosTKController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  bool get _areFieldsValid =>
+      emailController.text.isNotEmpty &&
+          passwordController.text.isNotEmpty &&
+          confirmPasswordController.text.isNotEmpty &&
+          dimosNameController.text.isNotEmpty &&
+          dimosTKController.text.isNotEmpty &&
+          passwordController.text == confirmPasswordController.text;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +71,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: BlocConsumer<SignupBloc, SignupState>(
         listener: (context, state) {
           if (state is SignupSuccess) {
-            Navigator.pushReplacementNamed(context, '/webhome');
+            Navigator.pushNamedAndRemoveUntil(
+                context, '/webhome', (route) => false);
           } else if (state is SignupFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -54,70 +88,118 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Email Field
                 TextField(
-                  controller: emailController,
-                  style: textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: Theme.of(context).textTheme.labelLarge,
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: colors.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: colors.primary),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: passwordController,
-                  obscureText: _obscurePassword,
-                  style: textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    labelText: 'Κωδικός',
-                    labelStyle: Theme.of(context).textTheme.labelLarge,
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: colors.outline),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: colors.primary),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Theme.of(context).primaryColor,
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email *',
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: colors.outline),
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: colors.primary),
+                      ),
                     ),
-                  ),
+            ),
+                    const SizedBox(height: 20),
+
+                    // Password Field
+                    TextField(
+                      controller: passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Κωδικός *',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color:  AppColors.primary,
+                          ),
+                          onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Confirm Password Field
+                    TextField(
+                      controller: confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Επιβεβαίωση Κωδικού *',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: () => setState(
+                                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Municipality Name
+                    TextField(
+                      controller: dimosNameController,
+                      decoration: InputDecoration(
+                        labelText: 'Όνομα Δήμου *',
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Postal Code
+                    TextField(
+                      controller: dimosTKController,
+                      decoration: InputDecoration(
+                        labelText: 'Ταχυδρομικός Κώδικας *',
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+                if (passwordController.text.isNotEmpty &&
+                confirmPasswordController.text.isNotEmpty &&
+                passwordController.text != confirmPasswordController.text)
+                Text(
+                  'Οι κωδικοί δεν ταιριάζουν',
+                  style: TextStyle(color: colors.error),
                 ),
-                const SizedBox(height: 30),
+
+                const SizedBox(height: 20),
+
+                // Submit Button
                 state is SignupLoading
-                    ? CircularProgressIndicator(color: Theme.of(context).primaryColor)
+                    ? CircularProgressIndicator(color: colors.primary)
                     : ElevatedButton(
-                  onPressed: () {
+                  onPressed: _areFieldsValid
+                      ? () {
                     context.read<SignupBloc>().add(SignupRequested(
                       email: emailController.text,
                       password: passwordController.text,
+                      confirmPassword: confirmPasswordController.text,
+                      dimosName: dimosNameController.text,
+                      dimosTK: dimosTKController.text,
                     ));
-                  },
-                  child: Text(
-                    'Εγγραφη',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.black,
-                    ),
+                  }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _areFieldsValid
+                        ? AppColors.primary
+                        : AppColors.black.withOpacity(0.12),
                   ),
+                  child: Text('Εγγραφή'),
                 ),
+
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Έχεις ήδη λογαριασμό; Σύνδεση',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.black,
-                    ),
-                  ),
+                  child: Text('Έχεις ήδη λογαριασμό; Σύνδεση'),
                 ),
               ],
             ),
