@@ -3,6 +3,7 @@ FROM dart:stable AS builder
 WORKDIR /app
 
 COPY services/map_service/pubspec.* ./
+COPY data/ data/
 COPY models/ ../models/
 
 RUN dart pub get
