@@ -53,6 +53,7 @@ Future<Response> handleSearchRequest(Request request) async {
     final response = await dioBackend.get(
       url,
       queryParameters: {
+        'language': 'el',
         'session_token': sessionToken,
         'access_token': mapboxToken,
       },

@@ -8,7 +8,6 @@ extension MapBlocNavigation on MapBloc {
 
     await stopLocationListening();
     startCompassListener();
-    flutterTts.speak("run boy run");
     await startLocationListening(onPositionUpdate: (position) => add(NavigationPositionUpdated(position, event.feature)));
   }
 
@@ -82,7 +81,7 @@ extension MapBlocNavigation on MapBloc {
               .catchError((_) {});
           await _displayRoute(responsejson, emit);
 
-          final instruction = "You have left your course. Return to "
+          final instruction = "Έχετε αφήσει την πορεία σας. Επιστρέφω σε"
               "${state.routeSteps[closestStepIndex].instruction}";
 
           if (state.isVoiceEnabled) {
@@ -92,7 +91,7 @@ extension MapBlocNavigation on MapBloc {
           print("Αδυναμία εύρεσης νέας διαδρομής.");
           if (state.isVoiceEnabled) {
             await flutterTts.speak(
-                "Inability to find a new route. Try to go back to the previous direction.");
+                "Αδυναμία να βρεθεί μια νέα διαδρομή. Προσπαθήστε να επιστρέψετε στην προηγούμενη κατεύθυνση.");
           }
         }
       }
@@ -101,7 +100,7 @@ extension MapBlocNavigation on MapBloc {
       if (state.isOffRoute) {
         emit(state.copyWith(isOffRoute: false));
         if (state.isVoiceEnabled) {
-          await flutterTts.speak("welcome back bitches");
+          await flutterTts.speak("");
         }
       }
     }
@@ -117,7 +116,7 @@ extension MapBlocNavigation on MapBloc {
       add(StopNavigationRequested());
 
       if (state.isVoiceEnabled) {
-        await flutterTts.speak("You have arrived at your destination.");
+        await flutterTts.speak("Έχετε φτάσει στον προορισμό σας.");
       }
     }
 
