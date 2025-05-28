@@ -26,3 +26,11 @@ class MapError extends MapState {
   @override
   List<Object> get props => [message];
 }
+
+class MapClustersLoaded extends MapState {
+  final List<List<dynamic>> clusters;
+  const MapClustersLoaded(this.clusters);
+
+  @override
+  List<Object> get props => [clusters];
+}

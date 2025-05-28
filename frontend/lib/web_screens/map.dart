@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
-
 class MapBoxIframeView extends StatefulWidget {
   const MapBoxIframeView({super.key});
 
@@ -45,15 +43,49 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
         <script>
           let pressTimer;
           const LONG_PRESS_DELAY = 1000;
+          let clusterMarkers = [];
     
-          // Message listener για εντολές από το Flutter
+          function addClusterMarkers(clusters) {
+            clusterMarkers.forEach(marker => marker.remove());
+            clusterMarkers = [];
+          
+            clusters.forEach((cluster, clusterIndex) => {
+              const reports = cluster;
+              if (reports.length > 0) {
+                const firstReport = reports[0];
+                const marker = new mapboxgl.Marker({
+                  color: '#FF0000',
+                  scale: 0.8
+                })
+                  .setLngLat([firstReport.longitude, firstReport.latitude])
+                  .addTo(map);
+          
+                marker.getElement().dataset.clusterIndex = clusterIndex;
+                marker.getElement().dataset.reports = JSON.stringify(reports);
+          
+                marker.getElement().addEventListener('click', () => {
+                  const reports = JSON.parse(marker.getElement().dataset.reports);
+                  window.parent.postMessage({
+                    type: 'clusterMarkerClick',
+                    clusterIndex: clusterIndex,
+                    reports: reports
+                  }, '*');
+                });
+          
+                clusterMarkers.push(marker);
+              }
+            });
+          }
+    
           window.addEventListener('message', (e) => {
-            if(e.data.type === 'executeCode') {
+            if (e.data.type === 'executeCode') {
               try {
                 new Function(e.data.code)();
               } catch (error) {
                 console.error('Error executing code:', error);
               }
+            } else if (e.data.type === 'addClusterMarkers') {
+              addClusterMarkers(e.data.clusters);
             }
           });
     
@@ -78,23 +110,10 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
           map.on('mouseup', () => clearTimeout(pressTimer));
           map.on('mouseout', () => clearTimeout(pressTimer));
     
-          // Long-press detection για touch devices
-          map.on('touchstart', (e) => {
-            pressTimer = setTimeout(() => {
-              e.preventDefault();
-              window.parent.postMessage({
-                type: 'mapLongPress',
-                coordinates: [e.lngLat.lng, e.lngLat.lat]
-              }, '*');
-            }, LONG_PRESS_DELAY);
-          });
-    
-          map.on('touchend', () => clearTimeout(pressTimer));
-          map.on('touchcancel', () => clearTimeout(pressTimer));
-    
           map.on('load', () => {
             map.resize();
             map.setMinZoom(10);
+            window.parent.postMessage({ type: 'mapLoaded' }, '*');
           });
         </script>
       </body>
@@ -126,7 +145,7 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
         if (state is MapLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is MapLoaded) {
-          _registerMap(); // Register once loaded
+          _registerMap();
           return const HtmlElementView(viewType: 'mapbox-view');
         } else if (state is MapError) {
           return Center(child: Text('Σφάλμα φόρτωσης χάρτη: ${state.message}'));

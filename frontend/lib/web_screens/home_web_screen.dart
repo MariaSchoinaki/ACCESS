@@ -7,7 +7,9 @@ import 'package:access/web_screens/web_bloc/web_report_card_bloc/report_bloc.dar
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:convert';
 import 'dart:html' as html;
+import 'package:http/http.dart' as http;
 import '../blocs/search_bloc/search_bloc.dart';
 import 'package:access/theme/app_colors.dart';
 import 'map.dart';
@@ -21,10 +23,13 @@ class HomeWebScreen extends StatefulWidget {
 
 class _HomeWebScreenState extends State<HomeWebScreen> {
   StreamSubscription<html.PopStateEvent>? _popStateSubscription;
+  List<dynamic> clusters = [];
+  bool _isMapLoaded = false;
 
   @override
   void initState() {
     super.initState();
+    _loadClusters();
     final authToken = html.window.localStorage['authToken'];
     if (authToken == null) {
       Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
@@ -45,10 +50,77 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
           final coords = List<double>.from(event.data['coordinates']);
           _handleLongPress(coords);
         }
+        else if (event.data['type'] == 'mapLoaded') {
+          setState(() {
+            _isMapLoaded = true;
+          });
+          if (clusters.isNotEmpty) {
+            _sendClustersToMap();
+          }
+        }
+        else if (event.data['type'] == 'clusterMarkerClick') {
+          _showClusterReports(event.data['reports']);
+        }
       } catch (e) {
         print('Error handling map event: $e');
       }
     });
+  }
+
+  Future<void> _loadClusters() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:9090/setreport'));
+      if (response.statusCode == 200) {
+        setState(() {
+          clusters = json.decode(response.body);
+        });
+
+        if (_isMapLoaded) {
+          _sendClustersToMap();
+        }
+      }
+    } catch (e) {
+      print('Σφάλμα φόρτωσης clusters: $e');
+    }
+  }
+
+  void _sendClustersToMap() {
+    final iframe = html.document.getElementById('map-iframe') as html.IFrameElement?;
+    if (iframe?.contentWindow != null) {
+      iframe!.contentWindow!.postMessage({
+        'type': 'addClusterMarkers',
+        'clusters': clusters,
+      }, '*');
+    }
+  }
+
+  void _showClusterReports(List<dynamic> reports) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Αναφορές (${reports.length})'),
+        content: SizedBox(
+          width: 500,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: reports.length,
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              return ListTile(
+                title: Text(report['locationDescription']),
+                subtitle: Text('${report['timestamp']}\nΣυντεταγμένες: ${report['latitude']}, ${report['longitude']}'),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Κλείσιμο'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -69,7 +141,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: MultiBlocProvider( 
+            child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: BlocProvider.of<SearchBloc>(context)),
                 BlocProvider(create: (_) => ReportBloc()),
@@ -85,6 +157,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
       ).then((_) {
         html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
         context.read<HomeWebBloc>().add(CloseReportDialog());
+        _loadClusters();
       });
     }
   }
@@ -173,7 +246,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                     },
                                   ).then((_) {
                                     html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
-                                    context.read<HomeWebBloc>().add(CloseReportDialog(),);
+                                    context.read<HomeWebBloc>().add(CloseReportDialog());
+                                    _loadClusters();
                                   });
                                 }
                               },
@@ -183,8 +257,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                               title: const Text('Αποσύνδεση'),
                               onTap: () {
                                 html.window.localStorage.remove('authToken');
-                                html.window.history.replaceState(null, '', '/login',);
-                                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
+                                html.window.history.replaceState(null, '', '/login');
+                                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
                               },
                             ),
                           ],

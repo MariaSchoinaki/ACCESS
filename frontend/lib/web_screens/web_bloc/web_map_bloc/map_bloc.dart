@@ -17,8 +17,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       }
     });
 
-
-
     on<AddCustomMarker>((event, emit) {
       if (event.coordinates.length != 2) {
         emit(MapError("Invalid coordinates"));
@@ -36,6 +34,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         'type': 'executeCode',
         'code': markerJs
       }, '*');
+    });
+
+    on<LoadClusters>((event, emit) {
+      emit(MapClustersLoaded(event.clusters));
     });
   }
 }
