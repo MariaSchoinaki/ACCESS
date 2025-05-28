@@ -16,6 +16,7 @@ final Dio dio = Dio(BaseOptions(
 const String searchServiceUrl = 'http://search_service:8080';
 const String mapServiceUrl = 'http://map_service:8081';
 const String notificationServiceUrl = 'http://notification_service:8089';
+const String reportSyncServiceUrl = 'http://report_sync_service:8083';
 
 Future<void> main() async {
   final router = Router();
@@ -25,7 +26,7 @@ Future<void> main() async {
     return shelf.Response.ok('Gateway OK');
   });
 
-  // no stripPrefix here
+  // Proxy to search service
   router.all('/search<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
   router.all('/retrieve<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
   router.all('/getname<ignored|.*>', (req) => _proxy(req, searchServiceUrl, stripPrefix: ''));
@@ -37,10 +38,21 @@ Future<void> main() async {
   router.all('/map<ignored|.*>', (req) =>
       _proxy(req, mapServiceUrl, stripPrefix: '/map'));
 
+  // Proxy to notification service
   router.all('/notify<ignored|.*>', (req) =>
       _proxy(req, notificationServiceUrl, stripPrefix: '/notify'));
   router.all('/send<ignored|.*>', (req) =>
       _proxy(req, notificationServiceUrl, stripPrefix: '/send'));
+
+  // ----
+  // >>> ADD PROXY TO REPORT SYNC SERVICE <<<
+  // ----
+  router.all('/stats<ignored|.*>', (req) =>
+      _proxy(req, reportSyncServiceUrl, stripPrefix: '')); // sends /stats... as-is
+  router.all('/reports-by-tk<ignored|.*>', (req) =>
+      _proxy(req, reportSyncServiceUrl, stripPrefix: '')); // sends /reports-by-tk... as-is
+
+  print('> Proxy /stats and /reports-by-tk to $reportSyncServiceUrl');
 
   final handler = const shelf.Pipeline()
       .addMiddleware(shelf.logRequests())
@@ -73,6 +85,10 @@ shelf.Middleware corsMiddleware() {
   };
 }
 
+// ------ UTIL FOR PREFIX NORMALIZATION ------
+String _normalizeStrip(String prefix) {
+  return prefix.startsWith('/') ? prefix.substring(1) : prefix;
+}
 
 Future<shelf.Response> _proxy(
     shelf.Request request,
@@ -80,14 +96,12 @@ Future<shelf.Response> _proxy(
       required String stripPrefix,
     }) async {
 
-  String normalizeStrip(String prefix) {
-    return prefix.startsWith('/') ? prefix.substring(1) : prefix;
-  }
-
-  final strippedPrefix = normalizeStrip(stripPrefix);
+  // Normalize prefix (empty or leading '/')
+  final strippedPrefix = _normalizeStrip(stripPrefix);
   final pathSegments = request.url.pathSegments;
 
-  final remainingSegments = pathSegments.length > 1 && pathSegments[0] == strippedPrefix
+  // Remove prefix if present
+  final remainingSegments = (strippedPrefix.isNotEmpty && pathSegments.isNotEmpty && pathSegments[0] == strippedPrefix)
       ? pathSegments.sublist(1)
       : pathSegments;
 
