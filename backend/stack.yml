@@ -58,6 +58,22 @@ services:
     networks:
       - internal
 
+  report_sync_service:
+    image: report_sync_service
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.2'
+    ports:
+      - "8083:8083"
+    networks:
+      - internal
+
   notification_service:
     image: notification_service
     deploy:

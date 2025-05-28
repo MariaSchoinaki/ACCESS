@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   gateway:
-    image: eleni/access_gateway:latest
+    image: schoin/access_gateway:latest
     ports:
       - "9090:9090"
     networks:
@@ -10,10 +10,20 @@ services:
     depends_on:
       - search_service
       - map_service
+      - report_sync_service
       - notification_service
 
+  search_service:
+    image: schoin/access_search_service:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - internal
+    secrets:
+      - mapbox_token
+
   map_service:
-    image: eleni/access_map_service:latest
+    image: schoin/access_map_service:latest
     ports:
       - "8081:8081"
     networks:
@@ -22,17 +32,8 @@ services:
       - mapbox_token
       - google_maps_key
 
-  search_service:
-    image: eleni/access_search_service:latest
-    ports:
-      - "8080:8080"
-    networks:
-      - internal
-    secrets:
-      - mapbox_token
-
   update_service:
-    image: eleni/access_update_service:latest
+    image: schoin/access_update_service:latest
     volumes:
       - ./data/roads.geojson:/app/data/roads.geojson
     ports:
@@ -45,8 +46,22 @@ services:
       FIREBASE_CONF1.JSON: /run/secrets/firebase_conf1.json
       GEOJSON_PATH: /app/data/roads.geojson
 
+  report_sync_service:
+    image: schoin/access_report_sync_service:latest
+    volumes:
+      - ./data/postalcode.csv:/app/data/postalcode.csv
+    ports:
+      - "8083:8083"
+    networks:
+      - internal
+    secrets:
+      - firebase_conf3.json
+    environment:
+      FIREBASE_CONF3.JSON: /run/secrets/firebase_conf3.json
+      POSTAL_PATH: /app/data/postalcode.csv
+
   notification_service:
-    image: eleni/access_notification_service:latest
+    image: schoin/access_notification_service:latest
     ports:
       - "8089:8089"
     networks:
@@ -64,6 +79,8 @@ secrets:
   firebase_conf1.json:
     external: true
   firebase_conf2.json:
+    external: true
+  firebase_conf3.json:
     external: true
 
 networks:
