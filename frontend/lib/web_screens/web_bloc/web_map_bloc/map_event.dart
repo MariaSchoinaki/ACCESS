@@ -10,3 +10,8 @@ abstract class MapEvent extends Equatable {
 class LoadMap extends MapEvent {
   const LoadMap();
 }
+
+class AddCustomMarker extends MapEvent {
+  final List<double> coordinates;
+  const AddCustomMarker(this.coordinates);
+}

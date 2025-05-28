@@ -43,6 +43,20 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
       <body>
         <div id="map"></div>
         <script>
+          let pressTimer;
+          const LONG_PRESS_DELAY = 1000;
+    
+          // Message listener για εντολές από το Flutter
+          window.addEventListener('message', (e) => {
+            if(e.data.type === 'executeCode') {
+              try {
+                new Function(e.data.code)();
+              } catch (error) {
+                console.error('Error executing code:', error);
+              }
+            }
+          });
+    
           mapboxgl.accessToken = "$accessToken";
           const map = new mapboxgl.Map({
             container: 'map',
@@ -50,8 +64,38 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
             center: [23.7275, 37.9838],
             zoom: 12
           });
-          map.on('load', () => map.resize());
-          map.setMinZoom(10);
+    
+          // Long-press detection για mouse
+          map.on('mousedown', (e) => {
+            pressTimer = setTimeout(() => {
+              window.parent.postMessage({
+                type: 'mapLongPress',
+                coordinates: [e.lngLat.lng, e.lngLat.lat]
+              }, '*');
+            }, LONG_PRESS_DELAY);
+          });
+    
+          map.on('mouseup', () => clearTimeout(pressTimer));
+          map.on('mouseout', () => clearTimeout(pressTimer));
+    
+          // Long-press detection για touch devices
+          map.on('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+              e.preventDefault();
+              window.parent.postMessage({
+                type: 'mapLongPress',
+                coordinates: [e.lngLat.lng, e.lngLat.lat]
+              }, '*');
+            }, LONG_PRESS_DELAY);
+          });
+    
+          map.on('touchend', () => clearTimeout(pressTimer));
+          map.on('touchcancel', () => clearTimeout(pressTimer));
+    
+          map.on('load', () => {
+            map.resize();
+            map.setMinZoom(10);
+          });
         </script>
       </body>
     </html>
@@ -77,7 +121,6 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
     if (!kIsWeb) {
       return const Center(child: Text('Χάρτης διαθέσιμος μόνο στο Web.'));
     }
-
     return BlocBuilder<MapBloc, MapState>(
       builder: (context, state) {
         if (state is MapLoading) {

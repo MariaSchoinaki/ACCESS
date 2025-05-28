@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:access/services/search_service.dart';
-import 'package:access/web_screens/profile_screen.dart';
 import 'package:access/web_screens/report_card.dart';
 import 'package:access/web_screens/web_bloc/web_home_bloc/home_web_bloc.dart';
 import 'package:access/web_screens/web_bloc/web_map_bloc/map_bloc.dart';
@@ -8,7 +7,6 @@ import 'package:access/web_screens/web_bloc/web_report_card_bloc/report_bloc.dar
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
-// ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import '../blocs/search_bloc/search_bloc.dart';
 import 'package:access/theme/app_colors.dart';
@@ -40,12 +38,55 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
         }
       });
     }
+
+    html.window.onMessage.listen((event) {
+      try {
+        if (event.data['type'] == 'mapLongPress') {
+          final coords = List<double>.from(event.data['coordinates']);
+          _handleLongPress(coords);
+        }
+      } catch (e) {
+        print('Error handling map event: $e');
+      }
+    });
   }
 
   @override
   void dispose() {
     _popStateSubscription?.cancel();
     super.dispose();
+  }
+
+  void _handleLongPress(List<double> coordinates) {
+    html.document.getElementById('map-iframe')?.style.pointerEvents = 'none';
+    if (!context.read<HomeWebBloc>().state.isReportDialogOpen) {
+      context.read<HomeWebBloc>().add(OpenReportDialog());
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: MultiBlocProvider( 
+              providers: [
+                BlocProvider.value(value: BlocProvider.of<SearchBloc>(context)),
+                BlocProvider(create: (_) => ReportBloc()),
+              ],
+              child: SizedBox(
+                height: 500,
+                width: 500,
+                child: ReportCard(coordinates: coordinates),
+              ),
+            ),
+          );
+        },
+      ).then((_) {
+        html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+        context.read<HomeWebBloc>().add(CloseReportDialog());
+      });
+    }
   }
 
   @override
@@ -109,11 +150,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                   context.read<HomeWebBloc>().add(
                                     OpenReportDialog(),
                                   );
-                                  html
-                                      .document
-                                      .getElementById('map-iframe')
-                                      ?.style
-                                      .pointerEvents = 'none';
+                                  html.document.getElementById('map-iframe')?.style.pointerEvents = 'none';
                                   showDialog(
                                     context: context,
                                     barrierDismissible: true,
@@ -135,14 +172,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                       );
                                     },
                                   ).then((_) {
-                                    html
-                                        .document
-                                        .getElementById('map-iframe')
-                                        ?.style
-                                        .pointerEvents = 'auto';
-                                    context.read<HomeWebBloc>().add(
-                                      CloseReportDialog(),
-                                    );
+                                    html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+                                    context.read<HomeWebBloc>().add(CloseReportDialog(),);
                                   });
                                 }
                               },
@@ -152,12 +183,8 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                               title: const Text('Αποσύνδεση'),
                               onTap: () {
                                 html.window.localStorage.remove('authToken');
-                                html.window.history.replaceState(null, '', '/login');
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    '/login',
-                                        (route) => false
-                                );
+                                html.window.history.replaceState(null, '', '/login',);
+                                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
                               },
                             ),
                           ],
