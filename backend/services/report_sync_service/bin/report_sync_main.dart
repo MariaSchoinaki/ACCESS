@@ -1,10 +1,96 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math';
 import 'package:access_models/firebase/rest.dart';
 import 'package:access_models/municipality_mapping.dart';
+import 'package:access_models/report.dart';
 import '../lib/report_sync_service.dart';
 
 late MunicipalityMapping municipalityMapping; // for handler access
+
+// -------- Added from cluster_reports.dart --------
+double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+  const R = 6371000; // Earth radius in meters
+  final dLat = _toRadians(lat2 - lat1);
+  final dLon = _toRadians(lon2 - lon1);
+  final a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(_toRadians(lat1)) * cos(_toRadians(lat2)) *
+          sin(dLon / 2) * sin(dLon / 2);
+  final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  return R * c;
+}
+
+double _toRadians(double degree) => degree * pi / 180;
+
+List<List<Report>> clusterReports(List<Report> reports) {
+  final List<List<Report>> clusters = [];
+
+  for (var report in reports) {
+    bool addedToCluster = false;
+
+    for (var cluster in clusters) {
+      for (var existing in cluster) {
+        final distance = haversineDistance(
+          report.latitude,
+          report.longitude,
+          existing.latitude,
+          existing.longitude,
+        );
+
+        final timeDiff = report.timestamp.difference(existing.timestamp).inDays;
+
+        if (distance < 15 && timeDiff.abs() <= 3) {
+          cluster.add(report);
+          addedToCluster = true;
+          break;
+        }
+      }
+      if (addedToCluster) break;
+    }
+
+    if (!addedToCluster) {
+      clusters.add([report]);
+    }
+  }
+
+  return clusters;
+}
+
+Future<void> handleClusterReports(HttpRequest request, FirestoreRest rest) async {
+  try {
+    final userReports = await rest.fetchCollectionDocuments('reports');
+    final municipalReports = await rest.fetchCollectionDocuments('municipal_reports');
+    final allReports = [...userReports, ...municipalReports];
+
+    final reportObjects = allReports.map((r) => Report.fromFirestore(r)).toList();
+    final clusters = clusterReports(reportObjects);
+
+    // Convert clusters to JSON-serializable format
+    final clustersJson = clusters.map((cluster) {
+      return cluster.map((report) {
+        return {
+          'id': report.id,
+          'locationDescription': report.locationDescription,
+          'latitude': report.latitude,
+          'longitude': report.longitude,
+          'timestamp': report.timestamp.toIso8601String(),
+          // Add other report fields as needed
+        };
+      }).toList();
+    }).toList();
+
+    request.response
+      ..headers.contentType = ContentType.json
+      ..headers.add('Access-Control-Allow-Origin', '*')
+      ..write(jsonEncode(clustersJson))
+      ..close();
+  } catch (e) {
+    request.response
+      ..statusCode = HttpStatus.internalServerError
+      ..write(jsonEncode({'error': e.toString()}))
+      ..close();
+  }
+}
 
 Future<void> main(List<String> args) async {
   //final saPath = '../firebase_conf.json';
@@ -39,11 +125,13 @@ Future<void> main(List<String> args) async {
       await handleStats(request, statsService);
     } else if (request.uri.path == '/reports-by-tk') {
       await handleMunicipalityReports(request, statsService);
-    } else if (request.uri.path == '/health') { // <-- ΠΡΟΣΘΕΣΕ ΑΥΤΟ!
+    } else if (request.uri.path == '/health') {
       request.response
         ..statusCode = HttpStatus.ok
         ..write('OK')
         ..close();
+    } else if (request.uri.path == '/setreport') {
+      await handleClusterReports(request, rest);
     } else {
       request.response
         ..statusCode = HttpStatus.notFound

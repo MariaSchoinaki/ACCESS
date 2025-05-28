@@ -51,6 +51,8 @@ Future<void> main() async {
       _proxy(req, reportSyncServiceUrl, stripPrefix: '')); // sends /stats... as-is
   router.all('/reports-by-tk<ignored|.*>', (req) =>
       _proxy(req, reportSyncServiceUrl, stripPrefix: '')); // sends /reports-by-tk... as-is
+  router.all('/setreport<ignored|.*>', (req) =>
+      _proxy(req, reportSyncServiceUrl, stripPrefix: ''));
 
   print('> Proxy /stats and /reports-by-tk to $reportSyncServiceUrl');
 
