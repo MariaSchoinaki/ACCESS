@@ -156,7 +156,8 @@ class AccessibilityUpdaterService {
 
   /// Updates road accessibility based on obstacle reports
   Future<void> runReports({double a = 0.9}) async {
-    final geojsonPath = '../../../data/roads.geojson';
+    //final geojsonPath = '../../../data/roads.geojson';
+    final geojsonPath = Platform.environment['GEOJSON_PATH'] ?? 'data/roads.geojson';
     print('[STEP] Loading road geojson...');
     final geojson = await loadGeoJson(geojsonPath);
     print('[STEP] Geojson loaded with ${geojson.features.length} features.');

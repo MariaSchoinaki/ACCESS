@@ -32,9 +32,8 @@ List<List<Report>> clusterReports(List<Report> reports) {
         );
 
         final timeDiff = report.timestamp.difference(existing.timestamp).inDays;
-        final sameType = report.obstacleType == existing.obstacleType;
 
-        if (distance < 15 && timeDiff.abs() <= 3 && sameType) {
+        if (distance < 15 && timeDiff.abs() <= 3) {
           cluster.add(report);
           addedToCluster = true;
           break;

@@ -33,8 +33,8 @@ void main() async {
 Future<void> runBothUpdates(AccessibilityUpdaterService updater) async {
   try {
     // Only process rated_routes and reports with needsUpdate == true
-    //await updater.runRatings(alpha: 0.5); // Update from user ratings (routes)
-    //await updater.runReports(alpha: 0.9); // Update from obstacle reports
+    await updater.runRatings(a: 0.5); // Update from user ratings (routes)
+    await updater.runReports(a: 0.9); // Update from obstacle reports
     print('✅ Both ratings and reports accessibility updates completed.');
   } catch (e, st) {
     print('❌ Error during updates: $e\n$st');
