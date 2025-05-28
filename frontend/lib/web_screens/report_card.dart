@@ -4,15 +4,34 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:access/theme/app_colors.dart';
+import 'package:access/blocs/search_bloc/search_bloc.dart' as search;
+
 
 class ReportCard extends StatefulWidget {
-  const ReportCard({Key? key}) : super(key: key);
+  final List<double>? coordinates;
+  const ReportCard({Key? key, this.coordinates}) : super(key: key);
 
   @override
   State<ReportCard> createState() => _ReportCardState();
 }
 
 class _ReportCardState extends State<ReportCard> {
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCoordinates = widget.coordinates;
+
+    if (widget.coordinates != null) {
+      _locationController.text =
+      "Συντεταγμένες: ${widget.coordinates![0].toStringAsFixed(5)}, ${widget.coordinates![1].toStringAsFixed(5)}";
+
+      BlocProvider.of<SearchBloc>(context).add(
+        search.RetrieveNameFromCoordinatesEvent(widget.coordinates![0], widget.coordinates![1]),
+      );
+    }
+  }
+
   final TextEditingController _damageReportController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   List<double>? selectedCoordinates;
@@ -52,9 +71,9 @@ class _ReportCardState extends State<ReportCard> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.primary, // header background + active date
-              onPrimary: Colors.white,     // text on primary color
-              onSurface: Colors.black,     // default text color
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
@@ -132,8 +151,10 @@ class _ReportCardState extends State<ReportCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Σφάλμα αναζήτησης: ${state.message}")),
       );
-    }
-    else if (state is CoordinatesLoaded){
+    } else if (state is CoordinatesNameLoaded) {
+      final loadedState = state as CoordinatesNameLoaded;
+      _locationController.text = loadedState.address;
+    } else if (state is CoordinatesLoaded) {
       selectedCoordinates = [state.feature.longitude, state.feature.latitude];
     }
   }
@@ -171,7 +192,6 @@ class _ReportCardState extends State<ReportCard> {
               children: [
                 Text("Αναφορά έργου δήμου:", style: theme.textTheme.titleLarge),
                 const SizedBox(height: 20),
-
                 const Text("Τοποθεσία έργου", style: TextStyle(fontSize:16)),
                 const SizedBox(height: 6),
                 TextField(
@@ -323,9 +343,9 @@ class _ReportCardState extends State<ReportCard> {
                       style: ButtonStyle(
                         foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
                           if (states.contains(WidgetState.hovered)) {
-                            return Colors.red; // χρώμα κειμένου στο hover
+                            return Colors.red;
                           }
-                          return AppColors.black; // κανονικό χρώμα κειμένου
+                          return AppColors.black;
                         }),
                         textStyle: WidgetStateProperty.all(
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w600),

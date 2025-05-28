@@ -17,12 +17,16 @@ class CategoryFilterButton extends StatelessWidget {
   /// This value is passed to the [FilterByCategoryPressed] event.
   final String categoryKey;
 
+  /// Optional icon to display next to the label.
+  final IconData? icon;
+
   /// Creates a CategoryFilterButton.
   const CategoryFilterButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.categoryKey,
-  }) : super(key: key);
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +37,7 @@ class CategoryFilterButton extends StatelessWidget {
         // Use the same styling as the original buttons
         backgroundColor: theme.cardColor,
         foregroundColor: theme.appBarTheme.foregroundColor,
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
         // You might want to adjust padding or other style properties here if needed
       ),
       onPressed: () async {
@@ -56,7 +61,16 @@ class CategoryFilterButton extends StatelessWidget {
         context.read<SearchBloc>().add(FilterByCategoryPressed(categoryKey, bbox: bboxString));
       },
       // Use the provided label for the button's text
-      child: Text(label),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 18),
+            const SizedBox(width: 6),
+          ],
+          Text(label),
+        ],
+      ),
     );
   }
 }

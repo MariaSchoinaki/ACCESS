@@ -1,6 +1,6 @@
 import 'package:access_models/report.dart';
 import 'package:access_models/firebase/rest.dart';
-import '../lib/cluster_reports.dart';
+import '../../report_sync_service/lib/cluster_reports.dart';
 
 Future<void> main() async {
   final rest = FirestoreRest.fromServiceAccount('firebase_conf.json');

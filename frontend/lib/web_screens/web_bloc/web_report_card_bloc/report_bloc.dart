@@ -36,3 +36,9 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     }
   }
 }
+
+class CoordinatesNameLoaded extends ReportState {
+  final String address;
+
+  CoordinatesNameLoaded(this.address);
+}

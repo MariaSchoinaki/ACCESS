@@ -194,12 +194,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ? AppColors.primary
                         : AppColors.black.withOpacity(0.12),
                   ),
-                  child: Text('Εγγραφή'),
+                  child: Text('Εγγραφή',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.black,
+                    ),
+                  ),
                 ),
 
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Έχεις ήδη λογαριασμό; Σύνδεση'),
+                  child: Text('Έχεις ήδη λογαριασμό; Σύνδεση',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.black,
+                    ),
+                  ),
                 ),
               ],
             ),
