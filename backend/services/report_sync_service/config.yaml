@@ -1,0 +1,5 @@
+service_name: report_sync_service
+port: 8083
+features:
+  - statistics
+  - municipalities
