@@ -145,23 +145,33 @@ Future<double> getRouteAccessibilityScore(
       return 0.5;
     }
 
+    // Βελτιστοποίηση: Χτύπα όλα τα segments παράλληλα, με timeout fallback
+    final segmentScores = await Future.wait(
+      matchedSegments.map((segId) async {
+        double score;
+        try {
+          score = await getAccessibilityScoreForSegment(segId, rest).timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              print('[WARN] Timeout on segment $segId. Using default 0.5');
+              return 0.5;
+            },
+          );
+        } catch (e) {
+          print('[WARN] Error fetching score for $segId: $e');
+          score = 0.5;
+        }
+
+        final length = getSegmentLength(segId, geojson);
+        return {'score': score, 'length': length};
+      }),
+    );
+
     double weightedSum = 0;
     double totalLength = 0;
-
-    for (final segId in matchedSegments) {
-      // Fetch score
-      double score;
-      try {
-        score = await getAccessibilityScoreForSegment(segId, rest);
-      } catch (e) {
-        score = 0.5;
-      }
-
-      // Fetch segment length
-      final length = getSegmentLength(segId, geojson);
-
-      weightedSum += score * length;
-      totalLength += length;
+    for (final entry in segmentScores) {
+      weightedSum += (entry['score']! * entry['length']!)!;
+      totalLength += entry['length']!;
     }
 
     final weightedAvg = totalLength > 0 ? weightedSum / totalLength : 0.5;
