@@ -232,10 +232,6 @@ class _LocationInfoCardState extends State<LocationInfoCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    comment.userId,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                  ),
                   const SizedBox(height: 4),
                   Text(comment.text ?? ''),
                   if (comment.photoUrl != null)

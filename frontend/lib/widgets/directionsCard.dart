@@ -105,14 +105,14 @@ class _DirectionsCardState extends State<DirectionsCard> {
 
   Widget getDirectionIcon(String instruction) {
     final instr = instruction.toLowerCase();
-    if (instr.contains('right')) {
-      return const Icon(Icons.arrow_right_alt, size: 32, color: Colors.orange);
-    } else if (instr.contains('left')) {
-      return const Icon(Icons.arrow_left, size: 32, color: Colors.orange);
-    } else if (instr.contains('straight')) {
-      return const Icon(Icons.arrow_upward, size: 32, color: Colors.orange);
-    } else if (instr.contains('back')) {
-      return const Icon(Icons.arrow_back, size: 32, color: Colors.orange);
+    if (instr.contains('δεξιά') || instr.contains('δεξια')) {
+      return const Icon(Icons.arrow_circle_right_outlined, size: 32, color: Colors.orange);
+    } else if (instr.contains('αριστερά') || instr.contains('αριστερα')) {
+      return const Icon(Icons.arrow_circle_left_outlined, size: 32, color: Colors.orange);
+    } else if (instr.contains('ευθεία') || instr.contains('ευθεια')) {
+      return const Icon(Icons.arrow_circle_up_outlined, size: 32, color: Colors.orange);
+    } else if (instr.contains('πίσω') || instr.contains('πισω')) {
+      return const Icon(Icons.arrow_circle_down_outlined, size: 32, color: Colors.orange);
     }
     return const Icon(Icons.directions, size: 32, color: Colors.white);
   }

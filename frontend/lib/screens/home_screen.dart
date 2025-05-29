@@ -58,6 +58,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   MapboxFeature? feature;
   List<NavigationStep> routeInstructions = [];
   bool isNavigating = true;
+  double sheetExtent = 0.3;
 
   /// Controller for the search text of the search text, passes on [Mainmaparea].
   final TextEditingController _searchController = TextEditingController();
@@ -302,6 +303,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       minChildSize: 0.2,
                       maxChildSize: 0.8,
                       builder: (context, scrollController) {
+                        scrollController.addListener(() {
+                          final extent = scrollController.position.extentInside /
+                              scrollController.position.viewportDimension;
+                          if (sheetExtent != extent) {
+                            setState(() {
+                              sheetExtent = extent;
+                            });
+                          }
+                        });
                         return Container(
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
@@ -318,18 +328,49 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       },
                     ),
                 if(routeInstructions.isNotEmpty)
-                    NavigationInfoBar(title: selectedFeature!.name),
+                  DraggableScrollableSheet(
+                    initialChildSize: 0.3,
+                    minChildSize: 0.2,
+                    maxChildSize: 0.8,
+                    builder: (context, scrollController) {
+                      scrollController.addListener(() {
+                        final extent = scrollController.position.extentInside /
+                            scrollController.position.viewportDimension;
+                        if (sheetExtent != extent) {
+                          setState(() {
+                            sheetExtent = extent;
+                          });
+                        }
+                      });
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          child: NavigationInfoBar(title: selectedFeature!.name),
+                        ),
+                      );
+                    },
+                  ),
                 /// Zoom Controls
-                if(location.isEmpty || routeInstructions.isNotEmpty)
+                if(location.isEmpty || routeInstructions.isNotEmpty || sheetExtent < 0.5)
                   Positioned(
                     right: 16, bottom: (location.isNotEmpty) ? 250 : 80,
-                    child: const ZoomControls(),
+                    child: Opacity(
+                      opacity: (sheetExtent < 0.5) ? 1.0 : 0.0,
+                      child: const ZoomControls(),
+                    ),
                   ),
-                /// Start/Stop Tracking Button
-                Positioned(
-                  right: 16, bottom: (location.isNotEmpty) ? 220 : 20,
-                  child: const StartStopTrackingButton(),
-                )
+                  /// Start/Stop Tracking Button
+                  Positioned(
+                    right: 16, bottom: (location.isNotEmpty) ? 190 : 20,
+                    child: Opacity(
+                      opacity: (sheetExtent < 0.5) ? 1.0 : 0.0,
+                      child: const StartStopTrackingButton(),
+                    ),
+                  )
               ],
             ),
           ),
