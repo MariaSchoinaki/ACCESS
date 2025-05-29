@@ -156,3 +156,11 @@ class RenderFavoriteAnnotations extends MapEvent {
   RenderFavoriteAnnotations(this.favorites);
 }
 class ShowedMessage extends MapEvent {}
+
+class LoadClusters extends MapEvent {}
+class ClusterMarkerClicked extends MapEvent {
+  final List<Map<String, dynamic>> reports;
+
+  ClusterMarkerClicked(this.reports);
+}
+class HideClusterReports extends MapEvent {}

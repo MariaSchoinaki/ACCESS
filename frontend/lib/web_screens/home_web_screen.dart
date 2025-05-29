@@ -23,6 +23,7 @@ class HomeWebScreen extends StatefulWidget {
 
 class _HomeWebScreenState extends State<HomeWebScreen> {
   StreamSubscription<html.PopStateEvent>? _popStateSubscription;
+  StreamSubscription<html.MessageEvent>? _messageSubscription; // Νέο subscription
   List<dynamic> clusters = [];
   bool _isMapLoaded = false;
 
@@ -44,22 +45,27 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
       });
     }
 
-    html.window.onMessage.listen((event) {
+    _messageSubscription = html.window.onMessage.listen((event) {
       try {
         if (event.data['type'] == 'mapLongPress') {
           final coords = List<double>.from(event.data['coordinates']);
           _handleLongPress(coords);
         }
         else if (event.data['type'] == 'mapLoaded') {
-          setState(() {
-            _isMapLoaded = true;
-          });
+          if (mounted) {
+            setState(() {
+              _isMapLoaded = true;
+            });
+          }
           if (clusters.isNotEmpty) {
             _sendClustersToMap();
           }
         }
         else if (event.data['type'] == 'clusterMarkerClick') {
           _showClusterReports(event.data['reports']);
+        }
+        else if (event.data['type'] == 'reportMarkerClick') {
+          _showReportDetails(event.data['report']);
         }
       } catch (e) {
         print('Error handling map event: $e');
@@ -71,16 +77,47 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
     try {
       final response = await http.get(Uri.parse('http://localhost:9090/setreport'));
       if (response.statusCode == 200) {
-        setState(() {
-          clusters = json.decode(response.body);
-        });
+        final rawClusters = json.decode(response.body);
 
-        if (_isMapLoaded) {
-          _sendClustersToMap();
+        final processedClusters = rawClusters.map((cluster) {
+          return cluster.map((report) {
+            return {
+              'id': report['id'],
+              'timestamp': _formatTimestamp(report['timestamp']),
+              'latitude': report['latitude'],
+              'longitude': report['longitude'],
+              'obstacleType': report['obstacleType'],
+              'locationDescription': report['locationDescription'],
+              'imageUrl': report['imageUrl'],
+              'accessibility': report['accessibility'],
+              'description': report['description'],
+              'userId': report['userId'],
+              'userEmail': report['userEmail'],
+            };
+          }).toList();
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            clusters = processedClusters;
+          });
+
+          if (_isMapLoaded) {
+            _sendClustersToMap();
+          }
         }
       }
     } catch (e) {
       print('Σφάλμα φόρτωσης clusters: $e');
+    }
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+    } catch (e) {
+      return timestamp;
     }
   }
 
@@ -95,6 +132,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
   }
 
   void _showClusterReports(List<dynamic> reports) {
+    html.document.getElementById('map-iframe')?.style.pointerEvents = 'none';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -109,6 +147,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
               return ListTile(
                 title: Text(report['locationDescription']),
                 subtitle: Text('${report['timestamp']}\nΣυντεταγμένες: ${report['latitude']}, ${report['longitude']}'),
+                onTap: () => _showReportDetails(report),
               );
             },
           ),
@@ -116,8 +155,95 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Κλείσιμο'),
+            child: Text('Κλείσιμο',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.black,
+              ),
+            ),
           )
+        ],
+      ),
+    ).then((_) {
+      if (mounted) {
+        html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+        context.read<HomeWebBloc>().add(CloseReportDialog());
+        _loadClusters();
+      }
+    });
+  }
+
+  void _showReportDetails(dynamic report) {
+    html.document.getElementById('map-iframe')?.style.pointerEvents = 'none';
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: AlertDialog(
+            title: Text(report['obstacleType'] ?? 'Άγνωστος τύπος'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (report['imageUrl'] != null && report['imageUrl'].isNotEmpty)
+                    AspectRatio(
+                      aspectRatio: 16/9,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          report['imageUrl'],
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    report['description'] ?? 'Δεν υπάρχει περιγραφή',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoRow(Icons.location_on, report['locationDescription']),
+                  _buildInfoRow(Icons.access_time, report['timestamp']),
+                  _buildInfoRow(Icons.accessible, report['accessibility']),
+                  if (report['userEmail'] != null)
+                    _buildInfoRow(Icons.person, report['userEmail']),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Κλείσιμο',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).then((_) {
+      if (mounted) {
+        html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
         ],
       ),
     );
@@ -126,6 +252,7 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
   @override
   void dispose() {
     _popStateSubscription?.cancel();
+    _messageSubscription?.cancel();
     super.dispose();
   }
 
@@ -155,9 +282,11 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
           );
         },
       ).then((_) {
-        html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
-        context.read<HomeWebBloc>().add(CloseReportDialog());
-        _loadClusters();
+        if (mounted) {
+          html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+          context.read<HomeWebBloc>().add(CloseReportDialog());
+          _loadClusters();
+        }
       });
     }
   }
@@ -245,9 +374,12 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                                       );
                                     },
                                   ).then((_) {
-                                    html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
-                                    context.read<HomeWebBloc>().add(CloseReportDialog());
-                                    _loadClusters();
+                                    // Έλεγχος αν το widget είναι ακόμα mounted
+                                    if (mounted) {
+                                      html.document.getElementById('map-iframe')?.style.pointerEvents = 'auto';
+                                      context.read<HomeWebBloc>().add(CloseReportDialog());
+                                      _loadClusters();
+                                    }
                                   });
                                 }
                               },
@@ -266,8 +398,6 @@ class _HomeWebScreenState extends State<HomeWebScreen> {
                       ),
                     ),
                   ),
-                  // Search bar
-
                   // Map content
                   Expanded(
                     child: Center(

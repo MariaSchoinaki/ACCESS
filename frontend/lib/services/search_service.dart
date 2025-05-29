@@ -39,7 +39,7 @@ class SearchService {
   SearchService({String? baseUrl, Dio? dioClient}) {
     final String envUrl = const String.fromEnvironment('SEARCH_API_URL');
     final String resolvedUrl = (envUrl.isNotEmpty ? envUrl : baseUrl) ??
-        'http://ip:9090';
+        'http://192.168.1.15:9090';
 
     print('\x1B[32m SearchService using base URL: $resolvedUrl\x1B[0m');
 

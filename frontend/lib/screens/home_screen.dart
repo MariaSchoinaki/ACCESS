@@ -12,7 +12,8 @@ import '../blocs/map_bloc/map_bloc.dart';
 import '../blocs/search_bloc/search_bloc.dart';
 
 import '../models/mapbox_feature.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../utils/bbox.dart';
 import '../utils/nearFeatures.dart';
 ///Services Imports
@@ -167,6 +168,104 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  Widget _buildClusterReportsDialog(BuildContext context, List<Map<String, dynamic>> reports) {
+    return AlertDialog(
+      title: Text('Αναφορές (${reports.length})'),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: reports.length,
+          itemBuilder: (context, index) {
+            final report = reports[index];
+            return ListTile(
+              title: Text(report['locationDescription'] ?? 'Χωρίς περιγραφή'),
+              subtitle: Text('${report['timestamp']}\nΣυντεταγμένες: ${report['latitude']}, ${report['longitude']}'),
+              onTap: () => _showReportDetails(context, report),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            context.read<MapBloc>().add(HideClusterReports());
+          },
+          child: Text('Κλείσιμο'),
+        )
+      ],
+    );
+  }
+
+  void _showReportDetails(BuildContext context, Map<String, dynamic> report) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: AlertDialog(
+            title: Text(report['obstacleType'] ?? 'Άγνωστος τύπος'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (report['imageUrl'] != null && report['imageUrl'].isNotEmpty)
+                    AspectRatio(
+                      aspectRatio: 16/9,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          report['imageUrl'],
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Text(
+                    report['description'] ?? 'Δεν υπάρχει περιγραφή',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildInfoRow(Icons.location_on, report['locationDescription']),
+                  _buildInfoRow(Icons.access_time, report['timestamp']),
+                  _buildInfoRow(Icons.accessible, report['accessibility']),
+                  if (report['userEmail'] != null)
+                    _buildInfoRow(Icons.person, report['userEmail']),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Κλείσιμο'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
+
   @override
   /// Builds HomePage's main UI structure.
   ///
@@ -219,6 +318,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         // Listener for Mapbloc bugs that do not handle children Widgets
         child: BlocListener<MapBloc, MapState>(
           listener: (context, mapState) async {
+
+            if (mapState.showClusterReports && mapState.clusterReports != null) {
+              _showClusterReports(context, mapState.clusterReports!);
+
+              context.read<MapBloc>().add(HideClusterReports());
+            }
+
             if (mapState.trackingStatus == MapTrackingStatus.error && mapState.errorMessage != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(mapState.errorMessage!), backgroundColor: Colors.red)
@@ -388,6 +494,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MapBloc>().add(LoadClusters());
+    });
+  }
+
+  void _showClusterReports(BuildContext context, List<Map<String, dynamic>> reports) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Αναφορές (${reports.length})'),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: reports.length,
+            itemBuilder: (context, index) {
+              final report = reports[index];
+              return ListTile(
+                title: Text(report['locationDescription'] ?? 'Χωρίς περιγραφή'),
+                subtitle: Text('${report['timestamp']}\nΣυντεταγμένες: ${report['latitude']}, ${report['longitude']}'),
+                onTap: () => _showReportDetails(context, report),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Κλείσιμο'),
+          )
+        ],
+      ),
+    );
   }
 
   @override

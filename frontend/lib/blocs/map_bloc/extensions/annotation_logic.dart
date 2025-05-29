@@ -152,4 +152,130 @@ extension MapBlocAnnotations on MapBloc {
     await _favoritesAnnotationManager!.createMulti(annotations);
   }
 
+  Future<void> _onLoadClusters(LoadClusters event, Emitter<MapState> emit) async {
+    try {
+      final url = 'http://10.0.2.2:9090/setreport';
+      final response = await http.get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final dynamic rawData = json.decode(response.body);
+        final clusters = _processClusters(rawData);
+
+        if (clusters.isNotEmpty) {
+          emit(state.copyWith(clusters: clusters));
+          _addClusterMarkers(clusters);
+        } else {
+          debugPrint('Δεν βρέθηκαν clusters');
+        }
+      } else {
+        debugPrint('Σφάλμα server: ${response.statusCode}');
+      }
+    } on SocketException catch (e) {
+      debugPrint('Σφάλμα δικτύου: $e');
+    } on TimeoutException catch (_) {
+      debugPrint('Timeout - Ο server δεν απάντησε');
+    } catch (e) {
+      debugPrint('Γενικό σφάλμα: $e');
+    }
+  }
+
+  List<List<Map<String, dynamic>>> _processClusters(dynamic rawClusters) {
+    try {
+      final List clustersList = rawClusters as List;
+      return clustersList.map<List<Map<String, dynamic>>>((dynamic cluster) {
+
+        final List reportsList = cluster as List;
+        return reportsList.map<Map<String, dynamic>>((dynamic report) {
+
+          final Map<String, dynamic> reportMap = report as Map<String, dynamic>;
+
+          return {
+            'id': reportMap['id'] as String? ?? '',
+            'timestamp': _formatTimestamp(reportMap['timestamp'] as String? ?? ''),
+            'latitude': (reportMap['latitude'] as num?)?.toDouble() ?? 0.0,
+            'longitude': (reportMap['longitude'] as num?)?.toDouble() ?? 0.0,
+            'obstacleType': reportMap['obstacleType'] as String? ?? '',
+            'locationDescription': reportMap['locationDescription'] as String? ?? '',
+            'imageUrl': reportMap['imageUrl'] as String? ?? '',
+            'accessibility': reportMap['accessibility'] as String? ?? '',
+            'description': reportMap['description'] as String? ?? '',
+            'userId': reportMap['userId'] as String? ?? '',
+            'userEmail': reportMap['userEmail'] as String? ?? '',
+          };
+        }).toList();
+      }).toList();
+    } catch (e) {
+      debugPrint('Σφάλμα επεξεργασίας clusters: $e');
+      return [];
+    }
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+    } catch (e) {
+      return timestamp;
+    }
+  }
+
+  Future<void> _addClusterMarkers(List<List<Map<String, dynamic>>> clusters) async {
+    if (_clusterAnnotationManager == null) {
+      if (state.mapController == null) return;
+
+      _clusterAnnotationManager = await state.mapController!.annotations
+          .createPointAnnotationManager(id: 'clusters-layer');
+    }
+
+    if (_clusterAnnotationManager == null) return;
+
+    final bytes = await rootBundle.load('assets/images/report_pin.png');
+    final imageData = bytes.buffer.asUint8List();
+
+    List<mapbox.PointAnnotationOptions> optionsList = [];
+    for (var cluster in clusters) {
+      if (cluster.isNotEmpty) {
+        final firstReport = cluster[0];
+        optionsList.add(
+          mapbox.PointAnnotationOptions(
+            geometry: mapbox.Point(
+              coordinates: mapbox.Position(
+                firstReport['longitude'] as double,
+                firstReport['latitude'] as double,
+              ),
+            ),
+            iconSize: 0.5,
+            image: imageData,
+            iconAnchor: mapbox.IconAnchor.BOTTOM,
+          ),
+        );
+      }
+    }
+
+    await _clusterAnnotationManager!.deleteAll();
+    final annotations = await _clusterAnnotationManager!.createMulti(optionsList);
+
+    _clusterAnnotationManager!.addOnPointAnnotationClickListener((annotation) {
+      final clusterIndex = annotations.indexOf(annotation);
+      if (clusterIndex >= 0 && clusterIndex < clusters.length) {
+        add(ClusterMarkerClicked(clusters[clusterIndex]));
+      }
+    } as mapbox.OnPointAnnotationClickListener);
+  }
+
+  void _onClusterMarkerClicked(ClusterMarkerClicked event, Emitter<MapState> emit) {
+    emit(state.copyWith(
+      showClusterReports: true,
+      clusterReports: event.reports,
+    ));
+  }
+
+  void _onHideClusterReports(HideClusterReports event, Emitter<MapState> emit) {
+    emit(state.copyWith(
+      showClusterReports: false,
+      clusterReports: null,
+    ));
+  }
+
 }

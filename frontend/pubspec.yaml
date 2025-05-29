@@ -81,7 +81,7 @@ flutter_icons:
   ios: true                      # Generate iOS icons
   image_path: "assets/images/logo.png" # Source image
   pin: "assets/images/pin.png"   # Map marker icon
-
+  report_pin: "assets/images/report_pin"
 # Flutter-specific configuration
 flutter:
   uses-material-design: true     # Enable Material icons
