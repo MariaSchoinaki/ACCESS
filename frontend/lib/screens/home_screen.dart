@@ -15,6 +15,7 @@ import '../models/mapbox_feature.dart';
 
 import '../utils/bbox.dart';
 import '../utils/nearFeatures.dart';
+import '../utils/nearest_step.dart';
 ///Services Imports
 
 ///Widget and Theme Imports
@@ -106,7 +107,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
 
     try {
+      
       final screenPoint = gestureContext.touchPosition;
+      if (context.read<MapBloc>().state.featureMap.isNotEmpty) {
+        await Future.delayed(Duration(milliseconds: 500));
+        if (context.read<MapBloc>().state is MapAnnotationClicked){
+          return;
+        }
+      }
       final features = await queryNearbyFeatures(screenPoint, 5, context); // 5 pixel radius
 
       if (features.isNotEmpty) {

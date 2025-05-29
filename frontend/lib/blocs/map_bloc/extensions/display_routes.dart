@@ -95,43 +95,8 @@ extension MapBlocDisplay on MapBloc {
     };
   }
 
-  Future<void> _displayRoute(
-    Map<String, dynamic> responseJson,
-    Emitter<MapState> emit,
-  ) async {
-    try {
-      final map = state.mapController;
-      if (map == null) {
-        emit(
-          state.copyWith(errorMessageGetter: () => 'Map controller not ready'),
-        );
-        return;
-      }
 
-      final routeObject = responseJson['route'];
-      final route = getRoute(routeObject);
-      final List<NavigationStep> routeSteps = route!['routeSteps'];
-      final fixedLineCoordinates = route['coordinates'];
-      final accessibilityScore = route['accessibilityScore'];
-      final colorHex = route['color'];
-      await _remove();
-      await _addLine(fixedLineCoordinates, 0, null);
-
-      print(routeSteps);
-      emit(
-        state.copyWith(errorMessageGetter: () => null, routeSteps: routeSteps),
-      );
-    } catch (e) {
-      emit(
-        state.copyWith(errorMessageGetter: () => 'Error displaying route: $e'),
-      );
-    }
-  }
-
-  Future<void> _onDisplayAlternativeRoutes(
-    DisplayAlternativeRoutes event,
-    Emitter<MapState> emit,
-  ) async {
+  Future<void> _onDisplayAlternativeRoutes(DisplayAlternativeRoutes event, Emitter<MapState> emit,) async {
     try {
       final map = state.mapController;
       if (map == null) {
@@ -204,7 +169,6 @@ extension MapBlocDisplay on MapBloc {
       await style?.addSource(
       mapbox.GeoJsonSource(id: sourceId, data: jsonEncode(geojson)),
     );
-    print(makeColor(accessibilityScore!).toARGB32());
     await style?.addLayer(
       mapbox.LineLayer(
         id: layerId,
@@ -252,7 +216,7 @@ extension MapBlocDisplay on MapBloc {
   }
 
   Color makeColor(double accessibilityScore) {
-    if (accessibilityScore == null) return Colors.blue;
+    if (accessibilityScore == 0) return Colors.blue;
     if (accessibilityScore < 0.4) return Colors.red;
     if (accessibilityScore < 0.7) return Colors.yellow;
     if (accessibilityScore >= 0.7) return Colors.green;

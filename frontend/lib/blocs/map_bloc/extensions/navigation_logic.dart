@@ -2,9 +2,15 @@ part of '../map_bloc.dart';
 
 extension MapBlocNavigation on MapBloc {
   Future<void> _onStartNavigation(StartNavigationRequested event, Emitter<MapState> emit,) async {
+    print("got inn");
     final responseJson = await _fetchRoute(event.feature, event.alternatives);
-    await _displayRoute(responseJson!, emit);
-    emit(state.copyWith(isNavigating: true, currentStepIndex: 0, isCameraFollowing: true, isOffRoute: false, trackedRoute: []));
+    final routeObject = responseJson?['route'];
+    final route = getRoute(routeObject);
+    final List<NavigationStep> routeSteps = route!['routeSteps'];
+    await _remove();
+    final fixedLineCoordinates = route['coordinates'];
+    await _addLine(fixedLineCoordinates, 0, 0);
+    emit(state.copyWith(isNavigating: true, currentStepIndex: 0, isCameraFollowing: true, isOffRoute: false, trackedRoute: [], routeSteps: routeSteps));
 
     await stopLocationListening();
     startCompassListener();
@@ -79,8 +85,12 @@ extension MapBlocNavigation on MapBloc {
           await state.mapController?.style
               .removeStyleSource(sourceId)
               .catchError((_) {});
-          await _displayRoute(responsejson, emit);
-
+          final routeObject = responsejson['route'];
+          final route = getRoute(routeObject);
+          final List<NavigationStep> routeSteps = route!['routeSteps'];
+          await _remove();
+          final fixedLineCoordinates = route['coordinates'];
+          await _addLine(fixedLineCoordinates, 0, 0);
           final instruction = "Έχετε αφήσει την πορεία σας. Επιστρέφω σε"
               "${state.routeSteps[closestStepIndex].instruction}";
 
