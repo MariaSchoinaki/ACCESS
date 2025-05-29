@@ -51,6 +51,8 @@ class MapState extends Equatable {
   final List<List<Map<String, dynamic>>> clusters;
   final bool showClusterReports;
   final List<Map<String, dynamic>>? clusterReports;
+  final Map<String, int> clusterAnnotationIdMap;
+
 
 
   // Constructor with default values
@@ -79,6 +81,7 @@ class MapState extends Equatable {
     this.clusters = const [],
     this.showClusterReports = false,
     this.clusterReports,
+    this.clusterAnnotationIdMap = const {},
   });
 
   // Returns the initial state
@@ -110,6 +113,7 @@ class MapState extends Equatable {
     List<List<Map<String, dynamic>>>? clusters,
     bool? showClusterReports,
     List<Map<String, dynamic>>? clusterReports,
+    Map<String, int>? clusterAnnotationIdMap,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -140,6 +144,7 @@ class MapState extends Equatable {
       clusters: clusters ?? this.clusters,
       showClusterReports: showClusterReports ?? this.showClusterReports,
       clusterReports: clusterReports ?? this.clusterReports,
+      clusterAnnotationIdMap: clusterAnnotationIdMap ?? this.clusterAnnotationIdMap,
     );
   }
 
@@ -166,6 +171,10 @@ class MapState extends Equatable {
     isOffRoute,
     lastEvent,
     isMapReady,
+    clusters,
+    showClusterReports,
+    clusterReports,
+    clusterAnnotationIdMap,
   ];
 }
 
@@ -202,3 +211,25 @@ class ActionFailed extends MapState {
   ActionFailed(this.message);
 }
 
+class ClusterAnnotationClicked extends MapState {
+  /// The unique identifier (e.g., Mapbox ID) of the clicked annotation.
+  final List<Map<String, dynamic>> clusterId;
+
+  ClusterAnnotationClicked(this.clusterId, MapState previousState) : super(
+    mapController: previousState.mapController,
+    zoomLevel: previousState.zoomLevel,
+    trackedRoute: previousState.trackedRoute,
+    isTracking: previousState.isTracking,
+    trackingStatus: previousState.trackingStatus,
+    currentTrackedPosition: previousState.currentTrackedPosition,
+    categoryAnnotations: previousState.categoryAnnotations,
+    annotationIdMap: previousState.annotationIdMap,
+    featureMap: previousState.featureMap,
+    mainRoute: previousState.mainRoute,
+    alternativeRoutes: previousState.alternativeRoutes,
+    errorMessage: previousState.errorMessage,
+  );
+
+  @override
+  List<Object?> get props => [clusterId];
+}

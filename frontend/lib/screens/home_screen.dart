@@ -110,6 +110,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       
       final screenPoint = gestureContext.touchPosition;
+      final state = context.read<MapBloc>().state;
+      await Future.delayed(Duration(milliseconds: 1000));
+      if (state.lastEvent is ClusterMarkerClicked) {
+        print("yeahhh");
+        return;
+      }
       if (context.read<MapBloc>().state.featureMap.isNotEmpty) {
         await Future.delayed(Duration(milliseconds: 500));
         if (context.read<MapBloc>().state is MapAnnotationClicked){

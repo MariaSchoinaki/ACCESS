@@ -154,7 +154,7 @@ extension MapBlocAnnotations on MapBloc {
 
   Future<void> _onLoadClusters(LoadClusters event, Emitter<MapState> emit) async {
     try {
-      final url = 'http://10.0.2.2:9090/setreport';
+      final url = 'http://192.168.1.69:9090/setreport';
       final response = await http.get(Uri.parse(url))
           .timeout(const Duration(seconds: 10));
 
@@ -163,8 +163,8 @@ extension MapBlocAnnotations on MapBloc {
         final clusters = _processClusters(rawData);
 
         if (clusters.isNotEmpty) {
-          emit(state.copyWith(clusters: clusters));
-          _addClusterMarkers(clusters);
+          final idmap = await _addClusterMarkers(clusters);
+          emit(state.copyWith(clusters: clusters, clusterAnnotationIdMap: idmap));
         } else {
           debugPrint('Δεν βρέθηκαν clusters');
         }
@@ -220,15 +220,15 @@ extension MapBlocAnnotations on MapBloc {
     }
   }
 
-  Future<void> _addClusterMarkers(List<List<Map<String, dynamic>>> clusters) async {
+  Future<Map<String, int>?> _addClusterMarkers(List<List<Map<String, dynamic>>> clusters) async {
     if (_clusterAnnotationManager == null) {
-      if (state.mapController == null) return;
+      if (state.mapController == null) return null;
 
       _clusterAnnotationManager = await state.mapController!.annotations
           .createPointAnnotationManager(id: 'clusters-layer');
     }
 
-    if (_clusterAnnotationManager == null) return;
+    if (_clusterAnnotationManager == null) return null;
 
     final bytes = await rootBundle.load('assets/images/report_pin.png');
     final imageData = bytes.buffer.asUint8List();
@@ -245,7 +245,7 @@ extension MapBlocAnnotations on MapBloc {
                 firstReport['latitude'] as double,
               ),
             ),
-            iconSize: 0.5,
+            iconSize: 0.2,
             image: imageData,
             iconAnchor: mapbox.IconAnchor.BOTTOM,
           ),
@@ -256,18 +256,28 @@ extension MapBlocAnnotations on MapBloc {
     await _clusterAnnotationManager!.deleteAll();
     final annotations = await _clusterAnnotationManager!.createMulti(optionsList);
 
-    _clusterAnnotationManager!.addOnPointAnnotationClickListener((annotation) {
-      final clusterIndex = annotations.indexOf(annotation);
-      if (clusterIndex >= 0 && clusterIndex < clusters.length) {
-        add(ClusterMarkerClicked(clusters[clusterIndex]));
+    final Map<String, int> idMap = {};
+    if (annotations.length == clusters.length) {
+      for (int i = 0; i < annotations.length; i++) {
+        print("Annotation ID: ${annotations[i]!.id}");
+        print("cluster id: ${i}");
+        final internalId = annotations[i]!.id;
+        idMap[internalId] = i;
+        print("Mapping internal ID: $internalId -> mapboxId: $i"); // Debug
       }
-    } as mapbox.OnPointAnnotationClickListener);
+    } else {
+      print("Warning: Mismatch between created annotations and input features count.");
+    }
+    return idMap;
   }
 
   void _onClusterMarkerClicked(ClusterMarkerClicked event, Emitter<MapState> emit) {
+    print("clicked");
+    emit(ClusterAnnotationClicked(event.reports, state));
     emit(state.copyWith(
       showClusterReports: true,
       clusterReports: event.reports,
+      lastEvent: event,
     ));
   }
 

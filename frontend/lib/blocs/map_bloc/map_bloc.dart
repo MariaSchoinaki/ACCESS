@@ -134,6 +134,23 @@ class MapBloc extends Bloc<MapEvent, MapState> {
               }));
       print("[MapBloc] Annotation click listener added.");
     }
+    _clusterAnnotationManager!.addOnPointAnnotationClickListener(
+      PointAnnotationClickListener(
+        onAnnotationClick: (mapbox.PointAnnotation annotation) {
+          final String internalId = annotation.id;
+          final int? clusterIndex = state.clusterAnnotationIdMap[internalId];
+
+          if (clusterIndex! >= 0 && clusterIndex < state.clusters.length) {
+            add(ClusterMarkerClicked(state.clusters[clusterIndex]));
+          } else {
+            print("!!! MapBloc: Cluster index out of bounds for annotation ${annotation.id}, SKIPPING.");
+          }
+        },
+      ),
+    );
+
+    print("[MapBloc] Cluster annotation click listener added.");
+
     emit(state.copyWith(isMapReady: true));
     add(GetCurrentLocation());
     initTTS();
