@@ -57,7 +57,7 @@ class NotificationService {
   /// and then the provided override URL or a default URL.
   static String _resolveBaseUrl(String? overrideUrl) {
     const envUrl = String.fromEnvironment('SEARCH_API_URL');
-    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
+    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://192.168.1.15:9090');
   }
 
   /// Asynchronous method to initialize notification channels, background geolocation,

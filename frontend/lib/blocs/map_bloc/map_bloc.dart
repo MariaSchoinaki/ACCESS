@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+
+import 'package:http/http.dart' as http;
 import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:geolocator/geolocator.dart' as geolocator;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/mapbox_feature.dart';
@@ -40,7 +44,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   late List<mapbox.PointAnnotation?> createdAnnotations;
   StreamSubscription<geolocator.Position>? _positionSubscription;
   late StreamSubscription<CompassEvent> _compassSubscription;
-
+  late mapbox.PointAnnotationManager? _clusterAnnotationManager;
   final geolocator.GeolocatorPlatform _geolocator = geolocator.GeolocatorPlatform.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -83,6 +87,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<NavigationPositionUpdated>(_onNavigationPositionUpdated);
     on<ShowRouteRatingDialogRequested>(_onShowRouteRatingDialogRequested);
 
+    on<LoadClusters>(_onLoadClusters);
+    on<ClusterMarkerClicked>(_onClusterMarkerClicked);
+    on<HideClusterReports>(_onHideClusterReports);
   }
 
   Future<void> _onRequestLocationPermission(RequestLocationPermission event, Emitter<MapState> emit) async {
@@ -103,6 +110,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         .createPointAnnotationManager(id: 'categories-layer');
     _favoritesAnnotationManager = await state.mapController?.annotations
         .createPointAnnotationManager(id: 'favorites-layer');
+    _clusterAnnotationManager = await state.mapController?.annotations
+        .createPointAnnotationManager(id: 'clusters-layer');
+    add(LoadClusters());
     for (var e in pendingEvents) {
       add(e); // ή handleEvent(e)
     }

@@ -42,13 +42,13 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
         <div id="map"></div>
         <script>
           let pressTimer;
-          const LONG_PRESS_DELAY = 1000;
+          const LONG_PRESS_DELAY = 1500;
           let clusterMarkers = [];
     
           function addClusterMarkers(clusters) {
             clusterMarkers.forEach(marker => marker.remove());
             clusterMarkers = [];
-          
+            
             clusters.forEach((cluster, clusterIndex) => {
               const reports = cluster;
               if (reports.length > 0) {
@@ -76,7 +76,7 @@ class _MapBoxIframeViewState extends State<MapBoxIframeView> {
               }
             });
           }
-    
+          
           window.addEventListener('message', (e) => {
             if (e.data.type === 'executeCode') {
               try {

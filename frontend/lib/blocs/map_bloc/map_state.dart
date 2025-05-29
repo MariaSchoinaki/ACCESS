@@ -48,6 +48,10 @@ class MapState extends Equatable {
   final bool isOffRoute;
   final MapEvent? lastEvent;
   final bool isMapReady;
+  final List<List<Map<String, dynamic>>> clusters;
+  final bool showClusterReports;
+  final List<Map<String, dynamic>>? clusterReports;
+
 
   // Constructor with default values
   const MapState({
@@ -72,6 +76,9 @@ class MapState extends Equatable {
     this.isOffRoute = false,
     this.lastEvent,
     this.isMapReady = false,
+    this.clusters = const [],
+    this.showClusterReports = false,
+    this.clusterReports,
   });
 
   // Returns the initial state
@@ -100,6 +107,9 @@ class MapState extends Equatable {
     bool? isOffRoute,
     MapEvent? lastEvent,
     bool? isMapReady,
+    List<List<Map<String, dynamic>>>? clusters,
+    bool? showClusterReports,
+    List<Map<String, dynamic>>? clusterReports,
   }) {
     return MapState(
       mapController: mapController ?? this.mapController,
@@ -127,6 +137,9 @@ class MapState extends Equatable {
       isOffRoute: isOffRoute ?? this.isOffRoute,
       lastEvent: lastEvent ?? this.lastEvent,
       isMapReady: isMapReady ?? this.isMapReady,
+      clusters: clusters ?? this.clusters,
+      showClusterReports: showClusterReports ?? this.showClusterReports,
+      clusterReports: clusterReports ?? this.clusterReports,
     );
   }
 
@@ -188,3 +201,4 @@ class ActionFailed extends MapState {
   final String message;
   ActionFailed(this.message);
 }
+
