@@ -133,6 +133,15 @@ flutter pub get
 flutter run --dart-define=token=mapbox_token
 ```
 
+**To run web frontend:**
+```bash
+# Install Flutter dependencies
+flutter pub get
+
+# Select your browser and run the app
+flutter run --dart-define=token=public_mapbox_token
+```
+
 **To close backend:**
 ```bash
 docker stack rm access_stack
