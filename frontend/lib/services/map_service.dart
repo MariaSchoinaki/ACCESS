@@ -28,7 +28,7 @@ class MapService {
 
   static String _resolveBaseUrl(String? overrideUrl) {
     const envUrl = String.fromEnvironment('SEARCH_API_URL');
-    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://192.168.1.15:9090');
+    return envUrl.isNotEmpty ? envUrl : (overrideUrl ?? 'http://ip:9090');
   }
 
   /// Fetches route JSON between two points.
