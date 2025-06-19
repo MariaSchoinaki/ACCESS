@@ -88,16 +88,59 @@ It also has an mobile aplication for admins, where they can:
 
 ## 📦 Installation
 
+**Firstly clone the repo**
 ```bash
-# Clone the repo
 git clone https://github.com/EleniKechrioti/ACCESS.git 
+```
+change in the following lines the IP
+* In [search_service.dart](https://github.com/EleniKechrioti/ACCESS/blob/main/frontend/lib/services/search_service.dart) in line 42.
+* In [notification_service.dart](https://github.com/EleniKechrioti/ACCESS/blob/main/frontend/lib/services/notification_service.dart) in line 60.
+* In [map_service.dart](https://github.com/EleniKechrioti/ACCESS/blob/main/frontend/lib/services/map_service.dart) in line 31.
 
+**To run backend:**
+
+```bash
+# You need to install docker hub and create an account
+docker swarm init
+
+# Take your keys from mapbox, google maps and firebase
+echo "key" | docker secret create mapbox_token -
+echo "key" | docker secret create google_maps_key -
+docker secret create firebase_conf1.json services/update_service/your_firebase_conf.json
+docker secret create firebase_conf2.json services/notification_service/your_firebase_conf.json
+docker secret create firebase_conf3.json services/report_sync_service/your_firebase_conf.json
+docker secret create firebase_conf4.json services/report_map_service/your_firebase_conf.json
+
+# Build your containers
+docker build -f gateway/Dockerfile -t your_dockerhubname/access_gateway:latest .
+docker build -f services/notification_service/Dockerfile -t your_dockerhubname/access_notification_service:latest .
+docker build -f services/report_sync_service_service/Dockerfile -t your_dockerhubname/access_report_sync_service:latest .
+docker build -f services/search_service/Dockerfile -t your_dockerhubname/access_search_service:latest .
+docker build -f services/update_service/Dockerfile -t your_dockerhubname/access_update_service:latest .
+docker build -f services/map_service/Dockerfile -t your_dockerhubname/access_map_service:latest .
+
+# Finally deploy them. Don't forget to change in stack.yml the images to your_dockerhubusername
+docker stack deploy -c docker-compose.yml access_stack
+
+```
+
+**To run mobile frontend:**
+```bash
 # Install Flutter dependencies
 flutter pub get
 
-# Run the app
-flutter run
+# Select your mobile phone / emulator and run the app
+flutter run --dart-define=token=mapbox_token
 ```
+
+**To close backend:**
+```bash
+docker stack rm access_stack
+docker swarm leave --force
+# Optional/ removes all images, volumes, networks, containers
+docker system prune -a
+```
+
 
 # Contributors
 - [Anthippi Fatsea](https://github.com/Anthippi)
