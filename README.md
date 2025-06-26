@@ -1,14 +1,16 @@
-<div align="center">  <h1>ACCESS</h1> </div> 
+# 🗺️ ACCESS: Accessible City & Community Engagement Support System
+
 <div align="center">
     <img src =https://github.com/user-attachments/assets/e282bbde-a32d-4079-b9dc-67cb6d140c5e  width = "300px">
 </div>
+
+**Watch the Demo Video** [here](https://drive.google.com/file/d/1coYtmAbKNWtAcGz6Zxd1Ak_M5o4avgtl/view)
+-
 
 **ACCESS** is a mobile and web platform designed to empower people with disabilities and mobility limitations to navigate urban environments with ease and confidence.
 
 
 Built with Flutter, Dart, and modern geolocation technologies, ACCESS provides real-time accessibility data, user-generated feedback, and intelligent route planning based on accessibility scores.
-
-[Video](https://drive.google.com/file/d/1coYtmAbKNWtAcGz6Zxd1Ak_M5o4avgtl/view)
 
 ---
 
